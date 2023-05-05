@@ -61,7 +61,7 @@ require("packer").startup({
 		use({ "michaelb/sniprun", run = "bash ./install.sh" })
 		use({ "shortcuts/no-neck-pain.nvim", tag = "*" })
 		use({ "JuliaEditorSupport/julia-vim" })
-		use({ "hkupty/iron.nvim" })
+		use({ "Vigemus/iron.nvim" })
 		use({
 			"zbirenbaum/copilot.lua",
 			cmd = "Copilot",
@@ -80,8 +80,8 @@ require("packer").startup({
 				require("neorg").setup({
 					load = {
 						["core.defaults"] = {}, -- Loads default behaviour
-						["core.norg.concealer"] = {}, -- Adds pretty icons to your documents
-						["core.norg.dirman"] = { -- Manages Neorg workspaces
+						["core.concealer"] = {}, -- Adds pretty icons to your documents
+						["core.dirman"] = { -- Manages Neorg workspaces
 							config = {
 								workspaces = {
 									work = "~/notes/work",
@@ -99,15 +99,15 @@ require("packer").startup({
 
 		-- Eyecandy
 		use({ "nvim-treesitter/nvim-treesitter", run = ":TSUpdate" })
-		use("NLKNguyen/papercolor-theme")
+		use({ "kdheepak/monochrome.nvim" })
+
 		use("rcarriga/nvim-notify")
-		use("yamatsum/nvim-cursorline")
+
 		use("lukas-reineke/indent-blankline.nvim")
 		use({
 			"nvim-lualine/lualine.nvim",
 			requires = { "kyazdani42/nvim-web-devicons", opt = true },
 		})
-		use("karb94/neoscroll.nvim")
 		use("andweeb/presence.nvim")
 		use("kyazdani42/nvim-web-devicons")
 		use("petertriho/nvim-scrollbar")
@@ -129,13 +129,19 @@ require("packer").startup({
 				require("wpm").setup({})
 			end,
 		})
+		use({
+			"folke/todo-comments.nvim",
+			requires = "nvim-lua/plenary.nvim",
+			config = function()
+				require("todo-comments").setup()
+			end,
+		})
 	end,
 	config = { git = { clone_timeout = 360 } },
 })
 
 require("impatient")
 
-require("neoscroll").setup()
 require("nvim-web-devicons").setup()
 require("nvim-ts-autotag").setup()
 require("nvim-autopairs").setup({})
@@ -144,7 +150,9 @@ require("scrollbar").setup()
 require("gitsigns").setup()
 require("fidget").setup()
 
+-- Colorscheme
 vim.opt.termguicolors = true
+vim.cmd("colorscheme monochrome")
 
 require("plugin.lsp-definition")
 require("plugin.telescope-definition")
@@ -158,14 +166,16 @@ require("plugin.toggleterm-definition")
 require("plugin.iron-definition")
 require("plugin.lualine-definition")
 
-vim.wo.number = true
+-- General configuration
+vim.opt.cursorline = true
+
+vim.opt.number = true
+vim.opt.hlsearch = true
 
 vim.opt.tabstop = 4
 vim.opt.shiftwidth = 4
 vim.opt.expandtab = true
+vim.opt.ai = true
 vim.opt.autoread = true
-vim.opt.smartindent = true
-
-vim.cmd([[colorscheme PaperColor]])
 
 vim.notify = require("notify")

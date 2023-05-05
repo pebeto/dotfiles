@@ -2,20 +2,20 @@ local wpm = require("wpm")
 
 require("lualine").setup({
 	options = {
-		theme = "powerline",
-		component_separators = "|",
+		theme = "auto",
+		component_separators = "",
 		section_separators = { left = "", right = "" },
 	},
 	sections = {
 		lualine_a = {
-			{ "mode", separator = { left = "" }, right_padding = 2 },
+			{ "mode", right_padding = 2 },
 		},
 		lualine_b = { "filename", "branch" },
 		lualine_c = { "fileformat" },
 		lualine_x = { wpm.wpm, wpm.historic_graph},
 		lualine_y = { "filetype", "progress" },
 		lualine_z = {
-			{ "location", separator = { right = "" }, left_padding = 2 },
+			{ "location", left_padding = 2 },
 		},
 	},
 	inactive_sections = {
