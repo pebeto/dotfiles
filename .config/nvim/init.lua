@@ -24,6 +24,7 @@ require("packer").startup({
 			end,
 			requires = { { "nvim-tree/nvim-web-devicons" } },
 		})
+		use({ "jose-elias-alvarez/null-ls.nvim", requires = { { "nvim-lua/plenary.nvim" } } })
 
 		-- File utils
 		use({ "ms-jpq/chadtree", branch = "chad", run = "python3 -m chadtree deps" })
@@ -43,7 +44,6 @@ require("packer").startup({
 		})
 		use("windwp/nvim-ts-autotag")
 		use("windwp/nvim-autopairs")
-		use("mhartington/formatter.nvim")
 		use({
 			"ellisonleao/glow.nvim",
 			config = function()
@@ -58,7 +58,6 @@ require("packer").startup({
 				require("trouble").setup({})
 			end,
 		})
-		use({ "michaelb/sniprun", run = "bash ./install.sh" })
 		use({ "shortcuts/no-neck-pain.nvim", tag = "*" })
 		use({ "JuliaEditorSupport/julia-vim" })
 		use({ "Vigemus/iron.nvim" })
@@ -87,6 +86,7 @@ require("packer").startup({
 									work = "~/notes/work",
 									home = "~/notes/home",
 									study = "~/notes/study",
+									gsoc = "~/notes/gsoc",
 								},
 							},
 						},
@@ -99,7 +99,8 @@ require("packer").startup({
 
 		-- Eyecandy
 		use({ "nvim-treesitter/nvim-treesitter", run = ":TSUpdate" })
-		use({ "kdheepak/monochrome.nvim" })
+		-- use({ "kdheepak/monochrome.nvim" })
+		use("rebelot/kanagawa.nvim")
 
 		use("rcarriga/nvim-notify")
 
@@ -152,19 +153,19 @@ require("fidget").setup()
 
 -- Colorscheme
 vim.opt.termguicolors = true
-vim.cmd("colorscheme monochrome")
+-- vim.cmd("colorscheme monochrome")
+vim.cmd("colorscheme kanagawa-lotus")
 
-require("plugin.lsp-definition")
-require("plugin.telescope-definition")
-require("plugin.gitsigns-definition")
-require("plugin.treesitter-definition")
-require("plugin.formatter-definition")
-require("plugin.indent-blankline-definition")
-require("plugin.chadtree-definition")
-require("plugin.sniprun-definition")
-require("plugin.toggleterm-definition")
-require("plugin.iron-definition")
-require("plugin.lualine-definition")
+require("plugins.lsp-definition")
+require("plugins.iron-definition")
+require("plugins.lualine-definition")
+require("plugins.null_ls-definition")
+require("plugins.chadtree-definition")
+require("plugins.gitsigns-definition")
+require("plugins.telescope-definition")
+require("plugins.treesitter-definition")
+require("plugins.toggleterm-definition")
+require("plugins.indent-blankline-definition")
 
 -- General configuration
 vim.opt.cursorline = true
@@ -174,8 +175,8 @@ vim.opt.hlsearch = true
 
 vim.opt.tabstop = 4
 vim.opt.shiftwidth = 4
+vim.opt.smartindent = true
 vim.opt.expandtab = true
-vim.opt.ai = true
 vim.opt.autoread = true
 
 vim.notify = require("notify")

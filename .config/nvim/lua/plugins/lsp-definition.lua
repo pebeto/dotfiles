@@ -77,11 +77,18 @@ local on_attach = function(client, bufnr)
 end
 
 require("lspconfig").julials.setup({ on_attach = on_attach, capabilities = capabilities })
-require("lspconfig").pylsp.setup({ on_attach = on_attach, capabilities = capabilities })
-require("lspconfig").clangd.setup({ on_attach = on_attach, capabilities = capabilities })
+require("lspconfig").pyright.setup({ on_attach = on_attach, capabilities = capabilities })
 require("lspconfig").tsserver.setup({ on_attach = on_attach, capabilities = capabilities })
 require("lspconfig").texlab.setup({ on_attach = on_attach, capabilities = capabilities })
 require("lspconfig").lua_ls.setup({ on_attach = on_attach, capabilities = capabilities })
+require("lspconfig").clangd.setup({
+	on_attach = on_attach,
+	capabilities = capabilities,
+	cmd = {
+		"clangd",
+		"--offset-encoding=utf-16",
+	},
+})
 
 local keymap = vim.keymap.set
 
