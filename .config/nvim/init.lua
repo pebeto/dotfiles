@@ -15,7 +15,7 @@ require("packer").startup({
 		use("L3MON4D3/LuaSnip")
 		use("saadparwaiz1/cmp_luasnip")
 		use("rafamadriz/friendly-snippets")
-		use("j-hui/fidget.nvim")
+		use({ "j-hui/fidget.nvim", tag = "legacy" })
 		use({
 			"glepnir/lspsaga.nvim",
 			branch = "main",
@@ -24,11 +24,20 @@ require("packer").startup({
 			end,
 			requires = { { "nvim-tree/nvim-web-devicons" } },
 		})
-		use({ "jose-elias-alvarez/null-ls.nvim", requires = { { "nvim-lua/plenary.nvim" } } })
+		use({
+			"jose-elias-alvarez/null-ls.nvim",
+			requires = { { "nvim-lua/plenary.nvim" } },
+		})
 
 		-- File utils
-		use({ "ms-jpq/chadtree", branch = "chad", run = "python3 -m chadtree deps" })
-		use({ "nvim-telescope/telescope.nvim", requires = { { "nvim-lua/plenary.nvim" } } })
+		use({
+            "ms-jpq/chadtree", branch = "chad",
+            run = "python3 -m chadtree deps"
+        })
+		use({
+            "nvim-telescope/telescope.nvim",
+            requires = { { "nvim-lua/plenary.nvim" } }
+        })
 		use("akinsho/toggleterm.nvim")
 
 		-- Git
@@ -83,10 +92,7 @@ require("packer").startup({
 						["core.dirman"] = { -- Manages Neorg workspaces
 							config = {
 								workspaces = {
-									work = "~/notes/work",
-									home = "~/notes/home",
-									study = "~/notes/study",
-									gsoc = "~/notes/gsoc",
+									gsoc = "~/Sync/notes/gsoc",
 								},
 							},
 						},
@@ -137,6 +143,7 @@ require("packer").startup({
 				require("todo-comments").setup()
 			end,
 		})
+		use("Bekaboo/deadcolumn.nvim")
 	end,
 	config = { git = { clone_timeout = 360 } },
 })
@@ -178,5 +185,6 @@ vim.opt.shiftwidth = 4
 vim.opt.smartindent = true
 vim.opt.expandtab = true
 vim.opt.autoread = true
+vim.opt.colorcolumn = "80"
 
 vim.notify = require("notify")
