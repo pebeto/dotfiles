@@ -6,4 +6,3 @@ vim.api.nvim_set_keymap("n", "<Leader>fh", "<cmd>Telescope help_tags<cr>", { nor
 vim.api.nvim_set_keymap("n", "<Leader>fr", "<cmd>Telescope lsp_references<cr>", { noremap = true })
 vim.api.nvim_set_keymap("n", "<Leader>fd", "<cmd>Telescope lsp_definitions<cr>", { noremap = true })
 vim.api.nvim_set_keymap("n", "<Leader>fa", "<cmd>Telescope lsp_definitions<cr>", { noremap = true })
-vim.api.nvim_set_keymap("n", "<Leader>fgb", "<cmd>Telescope git_branches<cr>", { noremap = true })

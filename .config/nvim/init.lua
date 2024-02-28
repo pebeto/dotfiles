@@ -1,154 +1,133 @@
-require("packer").startup({
-	function()
-		use("wbthomason/packer.nvim")
-		use("lewis6991/impatient.nvim")
+local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
+if not vim.loop.fs_stat(lazypath) then
+    vim.fn.system({
+        "git",
+        "clone",
+        "--filter=blob:none",
+        "https://github.com/folke/lazy.nvim.git",
+        "--branch=stable", -- latest stable release
+        lazypath,
+    })
+end
+vim.opt.rtp:prepend(lazypath)
 
-		-- LSP
-		use("williamboman/mason.nvim")
-		use("williamboman/mason-lspconfig")
-		use("neovim/nvim-lspconfig")
-		use("hrsh7th/cmp-nvim-lsp")
-		use("hrsh7th/cmp-buffer")
-		use("hrsh7th/cmp-path")
-		use("hrsh7th/cmp-cmdline")
-		use("hrsh7th/nvim-cmp")
-		use("L3MON4D3/LuaSnip")
-		use("saadparwaiz1/cmp_luasnip")
-		use("rafamadriz/friendly-snippets")
-		use({ "j-hui/fidget.nvim", tag = "legacy" })
-		use({
-			"glepnir/lspsaga.nvim",
-			branch = "main",
-			config = function()
-				require("lspsaga").setup({})
-			end,
-			requires = { { "nvim-tree/nvim-web-devicons" } },
-		})
-		use({
-			"jose-elias-alvarez/null-ls.nvim",
-			requires = { { "nvim-lua/plenary.nvim" } },
-		})
-
-		-- File utils
-		use({
-            "ms-jpq/chadtree", branch = "chad",
-            run = "python3 -m chadtree deps"
-        })
-		use({
-            "nvim-telescope/telescope.nvim",
-            requires = { { "nvim-lua/plenary.nvim" } }
-        })
-		use("akinsho/toggleterm.nvim")
-
-		-- Git
-		use("lewis6991/gitsigns.nvim")
-		use({ "sindrets/diffview.nvim", requires = "nvim-lua/plenary.nvim" })
-
-		-- Utils
-		use({
-			"numToStr/Comment.nvim",
-			config = function()
-				require("Comment").setup()
-			end,
-		})
-		use("windwp/nvim-ts-autotag")
-		use("windwp/nvim-autopairs")
-		use({
-			"ellisonleao/glow.nvim",
-			config = function()
-				require("glow").setup()
-			end,
-		})
-		use("tpope/vim-surround")
-		use({
-			"folke/trouble.nvim",
-			requires = "kyazdani42/nvim-web-devicons",
-			config = function()
-				require("trouble").setup({})
-			end,
-		})
-		use({ "shortcuts/no-neck-pain.nvim", tag = "*" })
-		use({ "JuliaEditorSupport/julia-vim" })
-		use({ "Vigemus/iron.nvim" })
-		use({
-			"zbirenbaum/copilot.lua",
-			cmd = "Copilot",
-			event = "InsertEnter",
-			config = function()
-				require("copilot").setup({
-					panel = { auto_refresh = true },
-					suggestion = { auto_trigger = true },
-					filetypes = { markdown = true },
-				})
-			end,
-		})
-		use({
-			"nvim-neorg/neorg",
-			config = function()
-				require("neorg").setup({
-					load = {
-						["core.defaults"] = {}, -- Loads default behaviour
-						["core.concealer"] = {}, -- Adds pretty icons to your documents
-						["core.dirman"] = { -- Manages Neorg workspaces
-							config = {
-								workspaces = {
-									gsoc = "~/Sync/notes/gsoc",
-								},
-							},
-						},
-					},
-				})
-			end,
-			run = ":Neorg sync-parsers",
-			requires = "nvim-lua/plenary.nvim",
-		})
-
-		-- Eyecandy
-		use({ "nvim-treesitter/nvim-treesitter", run = ":TSUpdate" })
-		-- use({ "kdheepak/monochrome.nvim" })
-		use("rebelot/kanagawa.nvim")
-
-		use("rcarriga/nvim-notify")
-
-		use("lukas-reineke/indent-blankline.nvim")
-		use({
-			"nvim-lualine/lualine.nvim",
-			requires = { "kyazdani42/nvim-web-devicons", opt = true },
-		})
-		use("andweeb/presence.nvim")
-		use("kyazdani42/nvim-web-devicons")
-		use("petertriho/nvim-scrollbar")
-		use({
-			"utilyre/barbecue.nvim",
-			tag = "*",
-			requires = {
-				"SmiteshP/nvim-navic",
-				"nvim-tree/nvim-web-devicons", -- optional dependency
-			},
-			after = "nvim-web-devicons", -- keep this if you're using NvChad
-			config = function()
-				require("barbecue").setup({ create_autocmd = false })
-			end,
-		})
-		use({
-			"jcdickinson/wpm.nvim",
-			config = function()
-				require("wpm").setup({})
-			end,
-		})
-		use({
-			"folke/todo-comments.nvim",
-			requires = "nvim-lua/plenary.nvim",
-			config = function()
-				require("todo-comments").setup()
-			end,
-		})
-		use("Bekaboo/deadcolumn.nvim")
-	end,
-	config = { git = { clone_timeout = 360 } },
-})
-
-require("impatient")
+local plugins = {
+    "williamboman/mason.nvim",
+    "williamboman/mason-lspconfig",
+    "neovim/nvim-lspconfig",
+    "hrsh7th/cmp-nvim-lsp",
+    "hrsh7th/cmp-buffer",
+    "hrsh7th/cmp-path",
+    "hrsh7th/cmp-cmdline",
+    "hrsh7th/nvim-cmp",
+    "L3MON4D3/LuaSnip",
+    "saadparwaiz1/cmp_luasnip",
+    "rafamadriz/friendly-snippets",
+    "j-hui/fidget.nvim",
+    {
+        "nvimdev/lspsaga.nvim",
+        config = function()
+            require("lspsaga").setup({})
+        end,
+        dependencies = {
+            "nvim-treesitter/nvim-treesitter", -- optional
+            "nvim-tree/nvim-web-devicons" -- optional
+        }
+    },
+    {
+        "jose-elias-alvarez/null-ls.nvim",
+        dependencies = {
+            "nvim-lua/plenary.nvim"
+        }
+    },
+    {
+        "nvim-neo-tree/neo-tree.nvim",
+        branch = "v3.x",
+        dependencies = {
+            "nvim-lua/plenary.nvim",
+            "nvim-tree/nvim-web-devicons", -- not strictly required, but recommended
+            "MunifTanjim/nui.nvim", -- "3rd/image.nvim", -- Optional image support in preview window: See `# Preview Mode` for more information
+        }
+    },
+    {
+        "nvim-telescope/telescope.nvim",
+        tag = "0.1.5",
+        dependencies = { "nvim-lua/plenary.nvim" }
+    },
+    "akinsho/toggleterm.nvim",
+    "lewis6991/gitsigns.nvim",
+    {
+        "sindrets/diffview.nvim",
+        dependencies = {
+            "nvim-lua/plenary.nvim"
+        }
+    },
+    {
+        "numToStr/Comment.nvim",
+        lazy = false,
+    },
+    "windwp/nvim-ts-autotag",
+    "windwp/nvim-autopairs",
+    {
+        "ellisonleao/glow.nvim",
+        config = true,
+        cmd = "Glow"
+    },
+    "tpope/vim-surround",
+    "JuliaEditorSupport/julia-vim",
+    {
+        "zbirenbaum/copilot.lua",
+        cmd = "Copilot",
+        event = "InsertEnter",
+        config = function()
+            require("copilot").setup({
+                panel = {
+                    auto_refresh = true
+                },
+                suggestion = {
+                    auto_trigger = true
+                },
+                filetypes = {
+                    markdown = true
+                }
+            })
+        end
+    },
+    {
+        "nvim-treesitter/nvim-treesitter",
+        build = ":TSUpdate"
+    },
+    "yorickpeterse/vim-paper",
+    "rcarriga/nvim-notify",
+    {
+        "nvim-lualine/lualine.nvim",
+        dependencies = {
+            "kyazdani42/nvim-web-devicons",
+            lazy = true
+        }
+    },
+    "andweeb/presence.nvim",
+    "kyazdani42/nvim-web-devicons",
+    "petertriho/nvim-scrollbar",
+    {
+        "utilyre/barbecue.nvim",
+        name = "barbecue",
+        version = "*",
+        dependencies = {
+            "SmiteshP/nvim-navic",
+            "nvim-tree/nvim-web-devicons", -- optional dependency
+        }
+    },
+    {
+        "folke/todo-comments.nvim",
+        dependencies = {
+            "nvim-lua/plenary.nvim"
+        }
+    },
+    "Bekaboo/deadcolumn.nvim",
+    { "lukas-reineke/indent-blankline.nvim", main = "ibl", opts = {} }
+}
+require("lazy").setup(plugins)
 
 require("nvim-web-devicons").setup()
 require("nvim-ts-autotag").setup()
@@ -157,14 +136,13 @@ require("Comment").setup()
 require("scrollbar").setup()
 require("gitsigns").setup()
 require("fidget").setup()
+require("ibl").setup()
 
 -- Colorscheme
 vim.opt.termguicolors = true
--- vim.cmd("colorscheme monochrome")
-vim.cmd("colorscheme kanagawa-lotus")
+vim.cmd("colorscheme paper")
 
 require("plugins.lsp-definition")
-require("plugins.iron-definition")
 require("plugins.lualine-definition")
 require("plugins.null_ls-definition")
 require("plugins.chadtree-definition")
@@ -172,7 +150,6 @@ require("plugins.gitsigns-definition")
 require("plugins.telescope-definition")
 require("plugins.treesitter-definition")
 require("plugins.toggleterm-definition")
-require("plugins.indent-blankline-definition")
 
 -- General configuration
 vim.opt.cursorline = true

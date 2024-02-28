@@ -1,8 +1,11 @@
-local chadtree_settings = {
-	["options.show_hidden"] = false,
-	["ignore.name_glob"] = { ".*" },
-}
+require('neo-tree').setup({
+    filesystem = {
+        filtered_items = {
+            visible = true,
+            hide_dotfiles = false,
+            hide_gitignored = true
+        }
+    }
+})
 
-vim.api.nvim_set_var("chadtree_settings", chadtree_settings)
-
-vim.api.nvim_set_keymap("n", "<Leader>c", "<cmd>CHADopen<cr>", { noremap = true })
+vim.api.nvim_set_keymap("n", "<Leader>c", "<cmd>Neotree<cr>", { noremap = true })

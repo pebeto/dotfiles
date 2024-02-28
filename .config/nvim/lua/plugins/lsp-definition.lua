@@ -1,62 +1,42 @@
-vim.opt.completeopt = { "menu", "menuone", "noselect" }
 local cmp = require("cmp")
 local cmp_types = require("cmp.types")
 
 cmp.setup({
-	snippet = {
-		expand = function(args)
-			require("luasnip").lsp_expand(args.body)
-		end,
-	},
-	window = {
-		completion = cmp.config.window.bordered(),
-		documentation = cmp.config.window.bordered(),
-	},
-	formatting = {
-		fields = { "menu", "abbr", "kind" },
-		format = function(entry, item)
-			local menu_icon = {
-				nvim_lsp = "λ",
-				luasnip = "⋗",
-				buffer = "Ω",
-				path = "🖫",
-			}
-
-			item.menu = menu_icon[entry.source.name]
-			return item
-		end,
-	},
-	mapping = {
-		["<C-n>"] = function(fallback)
-			if cmp.visible() then
-				cmp.select_next_item({ behavior = cmp_types.cmp.SelectBehavior.Insert })
-			elseif
-				(function()
-					local line, col = unpack(vim.api.nvim_win_get_cursor(0))
-					return col ~= 0
-						and vim.api.nvim_buf_get_lines(0, line - 1, line, true)[1]:sub(col, col):match("%s") == nil
-				end)()
-			then
-				cmp.complete()
-			else
-				fallback()
-			end
-		end,
-		["<C-p>"] = cmp.mapping.select_prev_item({ behavior = cmp_types.cmp.SelectBehavior.Insert }),
-		["<C-u>"] = cmp.mapping.scroll_docs(-4),
-		["<C-d>"] = cmp.mapping.scroll_docs(4),
-		["<C-Space>"] = cmp.mapping.complete(),
-		["<C-e>"] = cmp.mapping.close(),
-		["<CR>"] = cmp.mapping.confirm({
-			select = true,
-		}),
-	},
-	sources = {
-		{ name = "path" },
-		{ name = "nvim_lsp", keyword_length = 3 },
-		{ name = "luasnip", keyword_length = 2 },
-		{ name = "buffer", keyword_length = 3 },
-	},
+    snippet = {
+        expand = function(args)
+            require("luasnip").lsp_expand(args.body)
+        end,
+    },
+    window = {
+        completion = cmp.config.window.bordered(),
+        documentation = cmp.config.window.bordered(),
+    },
+    formatting = {
+        fields = { "menu", "abbr", "kind" },
+        format = function(entry, item)
+            local menu_icon = {
+                nvim_lsp = "λ",
+                luasnip = "⋗",
+                buffer = "Ω",
+                path = "◳",
+            }
+            item.menu = menu_icon[entry.source.name]
+            return item
+        end,
+    },
+    mapping = cmp.mapping.preset.insert({
+      ['<C-b>'] = cmp.mapping.scroll_docs(-4),
+      ['<C-f>'] = cmp.mapping.scroll_docs(4),
+      ['<C-Space>'] = cmp.mapping.complete(),
+      ['<C-e>'] = cmp.mapping.abort(),
+      ['<CR>'] = cmp.mapping.confirm({ select = true }), -- Accept currently selected item. Set `select` to `false` to only confirm explicitly selected items.
+    }),
+    sources = {
+        { name = "path" },
+        { name = "nvim_lsp", keyword_length = 3 },
+        { name = "luasnip", keyword_length = 2 },
+        { name = "buffer", keyword_length = 3 },
+    },
 })
 
 require("mason").setup()
@@ -66,14 +46,14 @@ local capabilities = require("cmp_nvim_lsp").default_capabilities()
 
 -- Set LSP keymappings in on_attach (i.e. only in buffers with LSP active)
 local on_attach = function(client, bufnr)
-	local opts = { noremap = true, silent = true }
-	vim.api.nvim_buf_set_keymap(bufnr, "n", "K", "<cmd>lua vim.lsp.buf.hover()<CR>", opts)
-	vim.api.nvim_buf_set_keymap(bufnr, "n", "gd", "<cmd>lua vim.lsp.buf.definition()<CR>", opts)
-	vim.api.nvim_buf_set_keymap(bufnr, "n", "<leader>lrn", "<cmd>lua vim.lsp.buf.rename()<CR>", opts)
-	vim.api.nvim_buf_set_keymap(bufnr, "n", "<leader>lrr", "<cmd>lua vim.lsp.buf.references()<CR>", opts)
-	vim.api.nvim_buf_set_keymap(bufnr, "n", "<leader>lca", "<cmd>lua vim.lsp.buf.code_action()<CR>", opts)
-	vim.api.nvim_buf_set_keymap(bufnr, "n", "<leader>lqf", "<cmd>lua vim.lsp.buf.code_action({apply = true})<CR>", opts)
-	vim.api.nvim_buf_set_keymap(bufnr, "i", "<C-h>", "<cmd>lua vim.lsp.buf.signature_help()<CR>", opts)
+    local opts = { noremap = true, silent = true }
+    vim.api.nvim_buf_set_keymap(bufnr, "n", "K", "<cmd>lua vim.lsp.buf.hover()<CR>", opts)
+    vim.api.nvim_buf_set_keymap(bufnr, "n", "gd", "<cmd>lua vim.lsp.buf.definition()<CR>", opts)
+    vim.api.nvim_buf_set_keymap(bufnr, "n", "<leader>lrn", "<cmd>lua vim.lsp.buf.rename()<CR>", opts)
+    vim.api.nvim_buf_set_keymap(bufnr, "n", "<leader>lrr", "<cmd>lua vim.lsp.buf.references()<CR>", opts)
+    vim.api.nvim_buf_set_keymap(bufnr, "n", "<leader>lca", "<cmd>lua vim.lsp.buf.code_action()<CR>", opts)
+    vim.api.nvim_buf_set_keymap(bufnr, "n", "<leader>lqf", "<cmd>lua vim.lsp.buf.code_action({apply = true})<CR>", opts)
+    vim.api.nvim_buf_set_keymap(bufnr, "i", "<C-h>", "<cmd>lua vim.lsp.buf.signature_help()<CR>", opts)
 end
 
 require("lspconfig").julials.setup({ on_attach = on_attach, capabilities = capabilities })
@@ -82,12 +62,12 @@ require("lspconfig").tsserver.setup({ on_attach = on_attach, capabilities = capa
 require("lspconfig").texlab.setup({ on_attach = on_attach, capabilities = capabilities })
 require("lspconfig").lua_ls.setup({ on_attach = on_attach, capabilities = capabilities })
 require("lspconfig").clangd.setup({
-	on_attach = on_attach,
-	capabilities = capabilities,
-	cmd = {
-		"clangd",
-		"--offset-encoding=utf-16",
-	},
+    on_attach = on_attach,
+    capabilities = capabilities,
+    cmd = {
+        "clangd",
+        "--offset-encoding=utf-16",
+    },
 })
 
 local keymap = vim.keymap.set
@@ -96,7 +76,7 @@ local keymap = vim.keymap.set
 -- If there is no definition, it will instead be hidden
 -- When you use an action in finder like "open vsplit",
 -- you can use <C-t> to jump back
-keymap("n", "gh", "<cmd>Lspsaga lsp_finder<CR>")
+keymap("n", "gh", "<cmd>Lspsaga finder<CR>")
 
 -- Code action
 keymap({ "n", "v" }, "<leader>ca", "<cmd>Lspsaga code_action<CR>")
@@ -136,10 +116,10 @@ keymap("n", "]e", "<cmd>Lspsaga diagnostic_jump_next<CR>")
 
 -- Diagnostic jump with filters such as only jumping to an error
 keymap("n", "[E", function()
-	require("lspsaga.diagnostic"):goto_prev({ severity = vim.diagnostic.severity.ERROR })
+    require("lspsaga.diagnostic"):goto_prev({ severity = vim.diagnostic.severity.ERROR })
 end)
 keymap("n", "]E", function()
-	require("lspsaga.diagnostic"):goto_next({ severity = vim.diagnostic.severity.ERROR })
+    require("lspsaga.diagnostic"):goto_next({ severity = vim.diagnostic.severity.ERROR })
 end)
 
 -- Toggle outline
