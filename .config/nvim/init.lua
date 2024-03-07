@@ -97,7 +97,7 @@ local plugins = {
         "nvim-treesitter/nvim-treesitter",
         build = ":TSUpdate"
     },
-    "yorickpeterse/vim-paper",
+    "rebelot/kanagawa.nvim",
     "rcarriga/nvim-notify",
     {
         "nvim-lualine/lualine.nvim",
@@ -140,7 +140,7 @@ require("ibl").setup()
 
 -- Colorscheme
 vim.opt.termguicolors = true
-vim.cmd("colorscheme paper")
+vim.cmd("colorscheme kanagawa-lotus")
 
 require("plugins.lsp-definition")
 require("plugins.lualine-definition")
