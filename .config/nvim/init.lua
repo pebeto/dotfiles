@@ -27,7 +27,11 @@ local plugins = {
     {
         "nvimdev/lspsaga.nvim",
         config = function()
-            require("lspsaga").setup({})
+            require("lspsaga").setup({
+                lightbulb = {
+                    virtual_text = false
+                }
+            })
         end,
         dependencies = {
             "nvim-treesitter/nvim-treesitter", -- optional
@@ -35,10 +39,8 @@ local plugins = {
         }
     },
     {
-        "jose-elias-alvarez/null-ls.nvim",
-        dependencies = {
-            "nvim-lua/plenary.nvim"
-        }
+        'creativenull/efmls-configs-nvim',
+        dependencies = { 'neovim/nvim-lspconfig' },
     },
     {
         "nvim-neo-tree/neo-tree.nvim",
@@ -144,8 +146,8 @@ vim.cmd("colorscheme kanagawa-lotus")
 
 require("plugins.lsp-definition")
 require("plugins.lualine-definition")
-require("plugins.null_ls-definition")
-require("plugins.chadtree-definition")
+require("plugins.efmls-definition")
+require("plugins.neotree-definition")
 require("plugins.gitsigns-definition")
 require("plugins.telescope-definition")
 require("plugins.treesitter-definition")
