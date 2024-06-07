@@ -23,7 +23,6 @@ local plugins = {
     "L3MON4D3/LuaSnip",
     "saadparwaiz1/cmp_luasnip",
     "rafamadriz/friendly-snippets",
-    "j-hui/fidget.nvim",
     {
         "nvimdev/lspsaga.nvim",
         config = function()
@@ -137,7 +136,6 @@ require("nvim-autopairs").setup({})
 require("Comment").setup()
 require("scrollbar").setup()
 require("gitsigns").setup()
-require("fidget").setup()
 require("ibl").setup()
 
 -- Colorscheme
