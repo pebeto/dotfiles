@@ -34,7 +34,7 @@ local plugins = {
         end,
         dependencies = {
             "nvim-treesitter/nvim-treesitter", -- optional
-            "nvim-tree/nvim-web-devicons" -- optional
+            "nvim-tree/nvim-web-devicons"      -- optional
         }
     },
     {
@@ -47,7 +47,7 @@ local plugins = {
         dependencies = {
             "nvim-lua/plenary.nvim",
             "nvim-tree/nvim-web-devicons", -- not strictly required, but recommended
-            "MunifTanjim/nui.nvim", -- "3rd/image.nvim", -- Optional image support in preview window: See `# Preview Mode` for more information
+            "MunifTanjim/nui.nvim",        -- "3rd/image.nvim", -- Optional image support in preview window: See `# Preview Mode` for more information
         }
     },
     {
@@ -98,7 +98,12 @@ local plugins = {
         "nvim-treesitter/nvim-treesitter",
         build = ":TSUpdate"
     },
-    "rebelot/kanagawa.nvim",
+    {
+        "mcchrish/zenbones.nvim",
+        dependencies = {
+            "rktjmp/lush.nvim"
+        }
+    },
     "rcarriga/nvim-notify",
     {
         "nvim-lualine/lualine.nvim",
@@ -132,15 +137,17 @@ require("lazy").setup(plugins)
 
 require("nvim-web-devicons").setup()
 require("nvim-ts-autotag").setup()
-require("nvim-autopairs").setup({})
+require("nvim-autopairs").setup()
 require("Comment").setup()
 require("scrollbar").setup()
 require("gitsigns").setup()
 require("ibl").setup()
 
--- Colorscheme
+-- colorscheme
 vim.opt.termguicolors = true
-vim.cmd("colorscheme kanagawa-lotus")
+vim.opt.background = "light"
+vim.cmd("colorscheme forestbones")
+-- End colorscheme
 
 require("plugins.lsp-definition")
 require("plugins.lualine-definition")
