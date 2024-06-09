@@ -77,7 +77,7 @@ local keymap = vim.keymap.set
 keymap("n", "<leader>lf", "<cmd>Lspsaga finder<CR>")
 
 -- Code action
-keymap({ "n", "v" }, "<leader>ca", "<cmd>Lspsaga code_action<CR>")
+keymap({ "n", "v" }, "<leader>a", "<cmd>Lspsaga code_action<CR>")
 
 -- Rename all occurrences of the hovered word for the entire file
 keymap("n", "<leader>rn", "<cmd>Lspsaga rename<CR>")
@@ -139,8 +139,8 @@ keymap("n", "K", "<cmd>Lspsaga hover_doc<CR>")
 keymap("n", "<leader>K", "<cmd>Lspsaga hover_doc ++keep<CR>")
 
 -- Call hierarchy
-keymap("n", "<Leader>ci", "<cmd>Lspsaga incoming_calls<CR>")
-keymap("n", "<Leader>co", "<cmd>Lspsaga outgoing_calls<CR>")
+keymap("n", "<Leader>ic", "<cmd>Lspsaga incoming_calls<CR>")
+keymap("n", "<Leader>oc", "<cmd>Lspsaga outgoing_calls<CR>")
 
 -- Floating terminal
 keymap({ "n", "t" }, "<A-t>", "<cmd>Lspsaga term_toggle<CR>")
