@@ -93,12 +93,7 @@ local plugins = {
 		"nvim-treesitter/nvim-treesitter",
 		build = ":TSUpdate",
 	},
-	{
-		"mcchrish/zenbones.nvim",
-		dependencies = {
-			"rktjmp/lush.nvim",
-		},
-	},
+	"YorickPeterse/vim-paper",
 	"rcarriga/nvim-notify",
 	{
 		"nvim-lualine/lualine.nvim",
@@ -148,8 +143,7 @@ require("ibl").setup()
 
 -- colorscheme
 vim.opt.termguicolors = true
-vim.opt.background = "light"
-vim.cmd("colorscheme forestbones")
+vim.cmd("colorscheme paper")
 -- End colorscheme
 
 require("plugins.lsp-definition")
