@@ -45,7 +45,7 @@ local capabilities = require("cmp_nvim_lsp").default_capabilities()
 
 require("lspconfig").julials.setup({ on_attach = on_attach, capabilities = capabilities })
 require("lspconfig").pyright.setup({ on_attach = on_attach, capabilities = capabilities })
-require("lspconfig").tsserver.setup({ on_attach = on_attach, capabilities = capabilities })
+require("lspconfig").ts_ls.setup({ on_attach = on_attach, capabilities = capabilities })
 require("lspconfig").texlab.setup({ on_attach = on_attach, capabilities = capabilities })
 require("lspconfig").lua_ls.setup({ on_attach = on_attach, capabilities = capabilities })
 require("lspconfig").clangd.setup({
