@@ -6,7 +6,7 @@ if wezterm.configbuilder then
     config = wezterm.config_builder()
 end
 
-config.font = wezterm.font("JuliaMono Nerd Font Mono")
+config.font = wezterm.font("JuliaMono")
 config.font_size = 11.0
 
 config.color_scheme = "Grayscale (dark) (terminal.sexy)"
