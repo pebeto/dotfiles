@@ -23,4 +23,4 @@ local efmls_config = {
 
 require("lspconfig").efm.setup(vim.tbl_extend("force", efmls_config, {}))
 
-vim.api.nvim_set_keymap("n", "<Leader>i", "<cmd>lua vim.lsp.buf.format()<cr>", { noremap = true })
+vim.keymap.set("n", "<Leader>i", "<cmd>lua vim.lsp.buf.format()<CR>")

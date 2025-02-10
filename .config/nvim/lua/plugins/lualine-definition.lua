@@ -8,12 +8,17 @@ require("lualine").setup({
         lualine_a = {
             { "mode", right_padding = 2 },
         },
-        lualine_b = { "filename", "branch" },
-        lualine_c = { "fileformat" },
-        lualine_y = { "filetype", "progress" },
-        lualine_z = {
-            { "location", left_padding = 2 },
+        lualine_b = {
+            "branch",
+            {
+                "filename",
+                path = 3,
+            },
         },
+        lualine_c = { "fileformat" },
+        lualine_x = { "encoding" },
+        lualine_y = { "filetype", "progress" },
+        lualine_z = { "location" },
     },
     inactive_sections = {
         lualine_a = { "filename" },

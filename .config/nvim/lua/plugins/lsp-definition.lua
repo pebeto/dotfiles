@@ -67,61 +67,60 @@ require("lspconfig").clangd.setup({
 -- 	capabilities = capabilities,
 -- })
 require("lspconfig").java_language_server.setup({ on_attach = on_attach, capabilities = capabilities })
-
-local keymap = vim.keymap.set
+require("lspconfig").zls.setup({ on_attach = on_attach, capabilities = capabilities })
 
 -- LSP finder - Find the symbol's definition
 -- If there is no definition, it will instead be hidden
 -- When you use an action in finder like "open vsplit",
 -- you can use <C-t> to jump back
-keymap("n", "<leader>lf", "<cmd>Lspsaga finder<CR>")
+vim.keymap.set("n", "<leader>lf", "<cmd>Lspsaga finder<CR>")
 
 -- Code action
-keymap({ "n", "v" }, "<leader>a", "<cmd>Lspsaga code_action<CR>")
+vim.keymap.set({ "n", "v" }, "<leader>a", "<cmd>Lspsaga code_action<CR>")
 
 -- Rename all occurrences of the hovered word for the entire file
-keymap("n", "<leader>rn", "<cmd>Lspsaga rename<CR>")
+vim.keymap.set("n", "<leader>rn", "<cmd>Lspsaga rename<CR>")
 
 -- Rename all occurrences of the hovered word for the selected files
-keymap("n", "<leader>rn", "<cmd>Lspsaga rename ++project<CR>")
+vim.keymap.set("n", "<leader>rn", "<cmd>Lspsaga rename ++project<CR>")
 
 -- Peek definition
 -- You can edit the file containing the definition in the floating window
 -- It also supports open/vsplit/etc operations, do refer to "definition_action_keys"
 -- It also supports tagstack
 -- Use <C-t> to jump back
-keymap("n", "<leader>pd", "<cmd>Lspsaga peek_definition<CR>")
+vim.keymap.set("n", "<leader>pd", "<cmd>Lspsaga peek_definition<CR>")
 
 -- Go to definition
-keymap("n", "<leader>gd", "<cmd>Lspsaga goto_definition<CR>")
+vim.keymap.set("n", "<leader>gd", "<cmd>Lspsaga goto_definition<CR>")
 
 -- Show line diagnostics
 -- You can pass argument ++unfocus to
 -- unfocus the show_line_diagnostics floating window
-keymap("n", "<leader>sl", "<cmd>Lspsaga show_line_diagnostics<CR>")
+vim.keymap.set("n", "<leader>sl", "<cmd>Lspsaga show_line_diagnostics<CR>")
 
 -- Show cursor diagnostics
 -- Like show_line_diagnostics, it supports passing the ++unfocus argument
-keymap("n", "<leader>sc", "<cmd>Lspsaga show_cursor_diagnostics<CR>")
+vim.keymap.set("n", "<leader>sc", "<cmd>Lspsaga show_cursor_diagnostics<CR>")
 
 -- Show buffer diagnostics
-keymap("n", "<leader>sb", "<cmd>Lspsaga show_buf_diagnostics<CR>")
+vim.keymap.set("n", "<leader>sb", "<cmd>Lspsaga show_buf_diagnostics<CR>")
 
 -- Diagnostic jump
 -- You can use <C-o> to jump back to your previous location
-keymap("n", "[e", "<cmd>Lspsaga diagnostic_jump_prev<CR>")
-keymap("n", "]e", "<cmd>Lspsaga diagnostic_jump_next<CR>")
+vim.keymap.set("n", "[e", "<cmd>Lspsaga diagnostic_jump_prev<CR>")
+vim.keymap.set("n", "]e", "<cmd>Lspsaga diagnostic_jump_next<CR>")
 
 -- Diagnostic jump with filters such as only jumping to an error
-keymap("n", "[E", function()
+vim.keymap.set("n", "[E", function()
 	require("lspsaga.diagnostic"):goto_prev({ severity = vim.diagnostic.severity.ERROR })
 end)
-keymap("n", "]E", function()
+vim.keymap.set("n", "]E", function()
 	require("lspsaga.diagnostic"):goto_next({ severity = vim.diagnostic.severity.ERROR })
 end)
 
 -- Toggle outline
-keymap("n", "<leader>o", "<cmd>Lspsaga outline<CR>")
+vim.keymap.set("n", "<leader>o", "<cmd>Lspsaga outline<CR>")
 
 -- Hover Doc
 -- If there is no hover doc,
@@ -129,18 +128,18 @@ keymap("n", "<leader>o", "<cmd>Lspsaga outline<CR>")
 -- there is no information available.
 -- To disable it just use ":Lspsaga hover_doc ++quiet"
 -- Pressing the key twice will enter the hover window
-keymap("n", "K", "<cmd>Lspsaga hover_doc<CR>")
+vim.keymap.set("n", "K", "<cmd>Lspsaga hover_doc<CR>")
 
 -- If you want to keep the hover window in the top right hand corner,
 -- you can pass the ++keep argument
 -- Note that if you use hover with ++keep, pressing this kkey again will
 -- close the hover window. If you want to jump to the hover window
 -- you should use the wincmd command "<C-w>w"
-keymap("n", "<leader>K", "<cmd>Lspsaga hover_doc ++keep<CR>")
+vim.keymap.set("n", "<leader>K", "<cmd>Lspsaga hover_doc ++keep<CR>")
 
 -- Call hierarchy
-keymap("n", "<Leader>ic", "<cmd>Lspsaga incoming_calls<CR>")
-keymap("n", "<Leader>oc", "<cmd>Lspsaga outgoing_calls<CR>")
+vim.keymap.set("n", "<Leader>ic", "<cmd>Lspsaga incoming_calls<CR>")
+vim.keymap.set("n", "<Leader>oc", "<cmd>Lspsaga outgoing_calls<CR>")
 
 -- Floating terminal
-keymap({ "n", "t" }, "<A-t>", "<cmd>Lspsaga term_toggle<CR>")
+vim.keymap.set({ "n", "t" }, "<A-t>", "<cmd>Lspsaga term_toggle<CR>")
