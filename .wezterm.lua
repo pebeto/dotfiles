@@ -9,8 +9,6 @@ end
 config.font = wezterm.font("JuliaMono")
 config.font_size = 11.0
 
-config.color_scheme = "Grayscale (dark) (terminal.sexy)"
-
 config.use_fancy_tab_bar = false
 config.tab_bar_at_bottom = true
 config.hide_tab_bar_if_only_one_tab = true

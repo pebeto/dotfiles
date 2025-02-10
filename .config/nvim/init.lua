@@ -165,6 +165,6 @@ vim.opt.tabstop = 4
 vim.opt.shiftwidth = 4
 vim.opt.expandtab = true
 vim.opt.autoread = true
-vim.opt.colorcolumn = "80"
+vim.opt.colorcolumn = "92" -- Max line length inherited from Blue style (Julia)
 
 vim.notify = require("notify")

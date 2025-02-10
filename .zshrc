@@ -20,3 +20,8 @@ setopt prompt_subst
 # Prompt configuration
 PROMPT='${vcs_info_msg_0_} %~ $ '
 zstyle ':vcs_info:git:*' formats '%b'
+
+# Adding local bin to path
+PATH=$PATH:$HOME/.local/bin
+
+source ~/.miscrc
