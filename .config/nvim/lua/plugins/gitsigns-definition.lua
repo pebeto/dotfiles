@@ -48,8 +48,4 @@ require("gitsigns").setup({
 	},
 })
 
-vim.api.nvim_set_hl(
-  0,
-  "GitSignsCurrentLineBlame",
-  { link = "Visual" }
-)
+vim.api.nvim_set_hl(0, "GitSignsCurrentLineBlame", { link = "Visual" })

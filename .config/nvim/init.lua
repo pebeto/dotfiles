@@ -1,13 +1,13 @@
 local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
 if not vim.loop.fs_stat(lazypath) then
-    vim.fn.system({
-        "git",
-        "clone",
-        "--filter=blob:none",
-        "https://github.com/folke/lazy.nvim.git",
-        "--branch=stable", -- latest stable release
-        lazypath,
-    })
+	vim.fn.system({
+		"git",
+		"clone",
+		"--filter=blob:none",
+		"https://github.com/folke/lazy.nvim.git",
+		"--branch=stable", -- latest stable release
+		lazypath,
+	})
 end
 vim.opt.rtp:prepend(lazypath)
 
@@ -95,15 +95,15 @@ local plugins = {
 	},
 	"YorickPeterse/vim-paper",
 	{
-        "rcarriga/nvim-notify",
-        config = function()
-            vim.notify = require("notify").setup({
-                fps = 60,
-                stages = "slide",
-                render = "wrapped-compact",
-            })
-        end,
-    },
+		"rcarriga/nvim-notify",
+		config = function()
+			vim.notify = require("notify").setup({
+				fps = 60,
+				stages = "slide",
+				render = "wrapped-compact",
+			})
+		end,
+	},
 	{
 		"nvim-lualine/lualine.nvim",
 		dependencies = {
@@ -112,15 +112,15 @@ local plugins = {
 		},
 	},
 	"kyazdani42/nvim-web-devicons",
-    {
-        'Bekaboo/dropbar.nvim',
-        config = function()
-          local dropbar_api = require('dropbar.api')
-          vim.keymap.set('n', '<Leader>;', dropbar_api.pick, { desc = 'Pick symbols in winbar' })
-          vim.keymap.set('n', '[;', dropbar_api.goto_context_start, { desc = 'Go to start of current context' })
-          vim.keymap.set('n', '];', dropbar_api.select_next_context, { desc = 'Select next context' })
-        end
-    },
+	{
+		"Bekaboo/dropbar.nvim",
+		config = function()
+			local dropbar_api = require("dropbar.api")
+			vim.keymap.set("n", "<Leader>;", dropbar_api.pick, { desc = "Pick symbols in winbar" })
+			vim.keymap.set("n", "[;", dropbar_api.goto_context_start, { desc = "Go to start of current context" })
+			vim.keymap.set("n", "];", dropbar_api.select_next_context, { desc = "Select next context" })
+		end,
+	},
 	{
 		"folke/todo-comments.nvim",
 		dependencies = {
@@ -138,32 +138,32 @@ local plugins = {
 		end,
 		opts = {},
 	},
-    {
-        "nvim-neorg/neorg",
-        lazy = false,
-        version = "*",
-        config = function()
-            require("neorg").setup({
-                load = {
-                    ["core.defaults"] = {},
-                    ["core.concealer"] = {},
-                    ["core.dirman"] = {
-                        config = {
-                            workspaces = {
-                                notes = "~/Sync/notes",
-                                university = "~/Sync/notes/university",
-                                personal = "~/Sync/notes/personal",
-                                projects = "~/Sync/notes/projects",
-                            },
-                            default_workspace = "notes",
-                        },
-                    },
-                },
-            })
-            vim.wo.foldlevel = 99
-            vim.wo.conceallevel = 2
-        end,
-    },
+	{
+		"nvim-neorg/neorg",
+		lazy = false,
+		version = "*",
+		config = function()
+			require("neorg").setup({
+				load = {
+					["core.defaults"] = {},
+					["core.concealer"] = {},
+					["core.dirman"] = {
+						config = {
+							workspaces = {
+								notes = "~/Sync/notes",
+								university = "~/Sync/notes/university",
+								personal = "~/Sync/notes/personal",
+								projects = "~/Sync/notes/projects",
+							},
+							default_workspace = "notes",
+						},
+					},
+				},
+			})
+			vim.wo.foldlevel = 99
+			vim.wo.conceallevel = 2
+		end,
+	},
 }
 require("lazy").setup(plugins)
 
