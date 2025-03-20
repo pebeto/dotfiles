@@ -201,3 +201,25 @@ vim.opt.autoread = true
 vim.opt.colorcolumn = "92" -- Max line length inherited from Blue style (Julia)
 
 vim.notify = require("notify")
+
+vim.o.clipboard = "unnamedplus"
+
+-- OSC 52 clipboard integration
+local function paste()
+	return {
+		vim.fn.split(vim.fn.getreg(""), "\n"),
+		vim.fn.getregtype(""),
+	}
+end
+
+vim.g.clipboard = {
+	name = "OSC 52",
+	copy = {
+		["+"] = require("vim.ui.clipboard.osc52").copy("+"),
+		["*"] = require("vim.ui.clipboard.osc52").copy("*"),
+	},
+	paste = {
+		["+"] = paste,
+		["*"] = paste,
+	},
+}
