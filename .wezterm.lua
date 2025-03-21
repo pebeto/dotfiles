@@ -22,4 +22,8 @@ config.window_decorations = "NONE"
 
 config.enable_wayland = false
 config.warn_about_missing_glyphs = false
+
+config.enable_osc52 = true
+config.enable_osc52_paste = true
+
 return config
