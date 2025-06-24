@@ -93,7 +93,7 @@ local plugins = {
         "nvim-treesitter/nvim-treesitter",
         build = ":TSUpdate",
     },
-    "YorickPeterse/vim-paper",
+    "cideM/yui",
     {
         "rcarriga/nvim-notify",
         config = function()
