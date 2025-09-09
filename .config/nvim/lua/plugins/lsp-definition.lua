@@ -56,16 +56,6 @@ require("lspconfig").clangd.setup({
 		"--offset-encoding=utf-16",
 	},
 })
--- require("lspconfig").ccls.setup({
--- 	init_options = {
--- 		compilationDatabaseDirectory = "build",
--- 		cache = {
--- 			directory = "/tmp/ccls-cache",
--- 		},
--- 	},
--- 	on_attach = on_attach,
--- 	capabilities = capabilities,
--- })
 require("lspconfig").java_language_server.setup({ on_attach = on_attach, capabilities = capabilities })
 require("lspconfig").zls.setup({ on_attach = on_attach, capabilities = capabilities })
 
