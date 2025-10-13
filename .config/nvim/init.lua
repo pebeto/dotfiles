@@ -12,17 +12,31 @@ end
 vim.opt.rtp:prepend(lazypath)
 
 local plugins = {
-    "williamboman/mason.nvim",
-    "williamboman/mason-lspconfig",
-    "neovim/nvim-lspconfig",
-    "hrsh7th/cmp-nvim-lsp",
-    "hrsh7th/cmp-buffer",
-    "hrsh7th/cmp-path",
-    "hrsh7th/cmp-cmdline",
-    "hrsh7th/nvim-cmp",
-    "L3MON4D3/LuaSnip",
-    "saadparwaiz1/cmp_luasnip",
-    "rafamadriz/friendly-snippets",
+    {
+        "mason-org/mason-lspconfig.nvim",
+        opts = {},
+        dependencies = {
+            { "mason-org/mason.nvim", opts = {} },
+            "neovim/nvim-lspconfig",
+        },
+    },
+    {
+        'saghen/blink.cmp',
+        dependencies = { 'rafamadriz/friendly-snippets' },
+        version = '1.*',
+        opts = {
+            keymap = { preset = 'default' },
+            appearance = {
+                nerd_font_variant = 'mono'
+            },
+            completion = { documentation = { auto_show = false } },
+            sources = {
+                default = { 'lsp', 'path', 'snippets', 'buffer' },
+            },
+            fuzzy = { implementation = "prefer_rust_with_warning" }
+        },
+        opts_extend = { "sources.default" }
+    },
     {
         "nvimdev/lspsaga.nvim",
         config = function()
@@ -166,13 +180,6 @@ local plugins = {
     },
 }
 require("lazy").setup(plugins)
-
-require("nvim-web-devicons").setup()
-require("nvim-ts-autotag").setup()
-require("nvim-autopairs").setup()
-require("Comment").setup()
-require("gitsigns").setup()
-require("ibl").setup()
 
 require("config")
 
