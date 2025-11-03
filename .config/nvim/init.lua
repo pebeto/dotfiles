@@ -178,6 +178,13 @@ local plugins = {
             vim.wo.conceallevel = 2
         end,
     },
+    {
+        'MeanderingProgrammer/render-markdown.nvim',
+        dependencies = { 'nvim-treesitter/nvim-treesitter', 'nvim-tree/nvim-web-devicons' },
+        ---@module 'render-markdown'
+        ---@type render.md.UserConfig
+        opts = {},
+    }
 }
 require("lazy").setup(plugins)
 

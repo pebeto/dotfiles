@@ -1,4 +1,5 @@
 vim.lsp.config('julials', {})
+vim.lsp.enable('julials')
 vim.lsp.config('pyright', {})
 vim.lsp.config('ts_ls', {})
 vim.lsp.config('texlab', {})

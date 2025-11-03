@@ -23,4 +23,12 @@ config.window_decorations = "NONE"
 config.enable_wayland = true
 config.warn_about_missing_glyphs = false
 
+config.keys = {
+  {
+    key = 'F11',
+    -- mods = 'SHIFT|CTRL',
+    action = wezterm.action.ToggleFullScreen,
+  },
+}
+
 return config

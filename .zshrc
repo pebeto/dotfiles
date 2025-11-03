@@ -11,6 +11,9 @@ autoload -Uz compinit
 compinit
 # End of lines added by compinstall
 
+# GPG configuration
+export GPG_TTY=$(tty)
+
 # Git integration
 autoload -Uz vcs_info
 precmd_vcs_info() { vcs_info }
