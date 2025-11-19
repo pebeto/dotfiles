@@ -13,6 +13,10 @@ vim.opt.rtp:prepend(lazypath)
 
 local plugins = {
     {
+        "nvim-treesitter/nvim-treesitter",
+        build = ":TSUpdate",
+    },
+    {
         "mason-org/mason-lspconfig.nvim",
         opts = {},
         dependencies = {
@@ -102,10 +106,6 @@ local plugins = {
                 },
             })
         end,
-    },
-    {
-        "nvim-treesitter/nvim-treesitter",
-        build = ":TSUpdate",
     },
     "cideM/yui",
     {

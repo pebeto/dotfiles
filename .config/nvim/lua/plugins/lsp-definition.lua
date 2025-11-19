@@ -10,8 +10,6 @@ vim.lsp.config('clangd', {
         "--offset-encoding=utf-16",
     },
 })
-vim.lsp.config('java_language_server', {})
-vim.lsp.config('zls', {})
 
 -- LSP finder - Find the symbol's definition
 -- If there is no definition, it will instead be hidden
