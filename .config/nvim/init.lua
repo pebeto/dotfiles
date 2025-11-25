@@ -107,7 +107,7 @@ local plugins = {
             })
         end,
     },
-    "cideM/yui",
+    "pebeto/dookie.nvim",
     {
         "rcarriga/nvim-notify",
         config = function()
@@ -118,23 +118,7 @@ local plugins = {
             })
         end,
     },
-    {
-        "nvim-lualine/lualine.nvim",
-        dependencies = {
-            "kyazdani42/nvim-web-devicons",
-            lazy = true,
-        },
-    },
     "kyazdani42/nvim-web-devicons",
-    {
-        "Bekaboo/dropbar.nvim",
-        config = function()
-            local dropbar_api = require("dropbar.api")
-            vim.keymap.set("n", "<Leader>;", dropbar_api.pick, { desc = "Pick symbols in winbar" })
-            vim.keymap.set("n", "[;", dropbar_api.goto_context_start, { desc = "Go to start of current context" })
-            vim.keymap.set("n", "];", dropbar_api.select_next_context, { desc = "Select next context" })
-        end,
-    },
     {
         "folke/todo-comments.nvim",
         dependencies = {
@@ -177,13 +161,6 @@ local plugins = {
             vim.wo.foldlevel = 99
             vim.wo.conceallevel = 2
         end,
-    },
-    {
-        'MeanderingProgrammer/render-markdown.nvim',
-        dependencies = { 'nvim-treesitter/nvim-treesitter', 'nvim-tree/nvim-web-devicons' },
-        ---@module 'render-markdown'
-        ---@type render.md.UserConfig
-        opts = {},
     }
 }
 require("lazy").setup(plugins)
@@ -191,7 +168,6 @@ require("lazy").setup(plugins)
 require("config")
 
 require("plugins.lsp-definition")
-require("plugins.lualine-definition")
 require("plugins.efmls-definition")
 require("plugins.neotree-definition")
 require("plugins.gitsigns-definition")

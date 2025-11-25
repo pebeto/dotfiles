@@ -163,6 +163,9 @@ bindsym XF86AudioMicMute exec amixer set Capture toggle
 bindsym XF86MonBrightnessUp exec backlight +
 bindsym XF86MonBrightnessDown exec backlight -
 
+# Screenshot
+bindsym Print exec grim ~/Pictures/Screenshots/screenshot-$(date +'%Y%m%d-%H%M%S').png
+
 ### Resizing containers:
 mode "resize" {
     # left will shrink the containers width

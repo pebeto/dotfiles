@@ -12,7 +12,7 @@ vim.opt.smartindent = true -- Insert indents automatically
 vim.opt.hlsearch = true      -- Highlight search results
 vim.opt.colorcolumn = "92"   -- Highlight column 80
 vim.opt.termguicolors = true -- Enable 24-bit RGB color in the TUI
-vim.cmd("colorscheme yui") -- Set colorscheme to yui
+vim.cmd("colorscheme dookie") -- Set colorscheme to yui
 
 -- File settings
 vim.opt.autoread = true -- Automatically read files when changed outside of Vim
