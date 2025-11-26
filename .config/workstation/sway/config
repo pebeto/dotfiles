@@ -18,7 +18,7 @@ set $term wezterm
 set $menu fuzzel | xargs swaymsg exec --
 
 ### Wallpaper
-# output * bg /no/wallpaper/for/now fill
+output "*" bg ../../wallpaper.jpeg stretch
 output DP-2 position 1920 0 mode 2560x1440@165Hz
 output HDMI-A-2 position 0 0 mode 1920x1080@75Hz
 
@@ -144,6 +144,9 @@ bindsym XF86AudioMute exec amixer set Master toggle
 # Mic mute toggle
 bindsym XF86AudioMicMute exec amixer set Capture toggle
 
+# Screenshot
+bindsym Print exec grim ~/Pictures/Screenshots/screenshot-$(date +'%Y%m%d-%H%M%S').png
+
 ### Status bar
 bar {
     position top
@@ -152,10 +155,10 @@ bar {
     status_command while ~/.config/sway/barspec.sh; do sleep 1; done
 
     colors {
-        statusline #ffffff
         background #323232
-        inactive_workspace #32323200 #32323200 #ffffff
-        focused_workspace #32323200 #ffa500 #000000
+        statusline #ffffff
+        inactive_workspace #323232 #323232 #ffffff
+        focused_workspace #323232 #ffa500 #000000
     }
 }
 
