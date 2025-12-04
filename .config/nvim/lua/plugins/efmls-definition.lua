@@ -21,6 +21,6 @@ local efmls_config = {
 	},
 }
 
-vim.lsp.config('efm', vim.tbl_extend("force", efmls_config, {}))
+vim.lsp.config("efm", vim.tbl_extend("force", efmls_config, {}))
 
 vim.keymap.set("n", "<Leader>i", "<cmd>lua vim.lsp.buf.format()<CR>")
