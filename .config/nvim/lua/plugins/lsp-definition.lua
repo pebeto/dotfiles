@@ -18,35 +18,35 @@ vim.lsp.config("clangd", {
 vim.keymap.set("n", "<leader>lf", "<cmd>Lspsaga finder<CR>")
 
 -- Code action
-vim.keymap.set({ "n", "v" }, "<leader>a", "<cmd>Lspsaga code_action<CR>")
+vim.keymap.set({ "n", "v" }, "<leader>la", "<cmd>Lspsaga code_action<CR>")
 
 -- Rename all occurrences of the hovered word for the entire file
-vim.keymap.set("n", "<leader>rn", "<cmd>Lspsaga rename<CR>")
+vim.keymap.set("n", "<leader>lr", "<cmd>Lspsaga rename<CR>")
 
 -- Rename all occurrences of the hovered word for the selected files
-vim.keymap.set("n", "<leader>rn", "<cmd>Lspsaga rename ++project<CR>")
+vim.keymap.set("n", "<leader>lr", "<cmd>Lspsaga rename ++project<CR>")
 
 -- Peek definition
 -- You can edit the file containing the definition in the floating window
 -- It also supports open/vsplit/etc operations, do refer to "definition_action_keys"
 -- It also supports tagstack
 -- Use <C-t> to jump back
-vim.keymap.set("n", "<leader>pd", "<cmd>Lspsaga peek_definition<CR>")
+vim.keymap.set("n", "<leader>lpd", "<cmd>Lspsaga peek_definition<CR>")
 
 -- Go to definition
-vim.keymap.set("n", "<leader>gd", "<cmd>Lspsaga goto_definition<CR>")
+vim.keymap.set("n", "<leader>lgd", "<cmd>Lspsaga goto_definition<CR>")
 
 -- Show line diagnostics
 -- You can pass argument ++unfocus to
 -- unfocus the show_line_diagnostics floating window
-vim.keymap.set("n", "<leader>sl", "<cmd>Lspsaga show_line_diagnostics<CR>")
+vim.keymap.set("n", "<leader>lld", "<cmd>Lspsaga show_line_diagnostics<CR>")
 
 -- Show cursor diagnostics
 -- Like show_line_diagnostics, it supports passing the ++unfocus argument
-vim.keymap.set("n", "<leader>sc", "<cmd>Lspsaga show_cursor_diagnostics<CR>")
+vim.keymap.set("n", "<leader>lcd", "<cmd>Lspsaga show_cursor_diagnostics<CR>")
 
 -- Show buffer diagnostics
-vim.keymap.set("n", "<leader>sb", "<cmd>Lspsaga show_buf_diagnostics<CR>")
+vim.keymap.set("n", "<leader>lbd", "<cmd>Lspsaga show_buf_diagnostics<CR>")
 
 -- Diagnostic jump
 -- You can use <C-o> to jump back to your previous location
@@ -62,7 +62,7 @@ vim.keymap.set("n", "]E", function()
 end)
 
 -- Toggle outline
-vim.keymap.set("n", "<leader>o", "<cmd>Lspsaga outline<CR>")
+vim.keymap.set("n", "<leader>lo", "<cmd>Lspsaga outline<CR>")
 
 -- Hover Doc
 -- If there is no hover doc,
@@ -80,8 +80,8 @@ vim.keymap.set("n", "K", "<cmd>Lspsaga hover_doc<CR>")
 vim.keymap.set("n", "<leader>K", "<cmd>Lspsaga hover_doc ++keep<CR>")
 
 -- Call hierarchy
-vim.keymap.set("n", "<Leader>ic", "<cmd>Lspsaga incoming_calls<CR>")
-vim.keymap.set("n", "<Leader>oc", "<cmd>Lspsaga outgoing_calls<CR>")
+vim.keymap.set("n", "<Leader>lic", "<cmd>Lspsaga incoming_calls<CR>")
+vim.keymap.set("n", "<Leader>loc", "<cmd>Lspsaga outgoing_calls<CR>")
 
 -- Floating terminal
 vim.keymap.set({ "n", "t" }, "<A-t>", "<cmd>Lspsaga term_toggle<CR>")

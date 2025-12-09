@@ -1,6 +1,7 @@
 -- Line settings
 vim.opt.cursorline = true -- Highlight the current line
 vim.opt.number = true -- Line numbers
+vim.opt.conceallevel = 2 -- Show concealed text
 
 -- Tab settings
 vim.opt.tabstop = 4 -- Number of spaces a <Tab> counts for

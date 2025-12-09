@@ -131,32 +131,19 @@ local plugins = {
 		end,
 		opts = {},
 	},
-	{
-		"nvim-neorg/neorg",
-		lazy = false,
-		version = "*",
-		config = function()
-			require("neorg").setup({
-				load = {
-					["core.defaults"] = {},
-					["core.concealer"] = {},
-					["core.dirman"] = {
-						config = {
-							workspaces = {
-								notes = "~/Sync/notes",
-								university = "~/Sync/notes/university",
-								personal = "~/Sync/notes/personal",
-								projects = "~/Sync/notes/projects",
-							},
-							default_workspace = "notes",
-						},
-					},
-				},
-			})
-			vim.wo.foldlevel = 99
-			vim.wo.conceallevel = 2
-		end,
-	},
+    {
+        'nvim-orgmode/orgmode',
+        event = 'VeryLazy',
+        ft = { 'org' },
+        config = function()
+            local org = require('orgmode')
+
+            org.setup({
+                org_agenda_files = '~/Sync/orgfiles/**/*',
+                org_default_notes_file = '~/Sync/orgfiles/refile.org',
+            })
+        end,
+    },
 }
 require("lazy").setup(plugins)
 require("todo-comments").setup()
