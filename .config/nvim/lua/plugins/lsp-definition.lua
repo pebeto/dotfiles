@@ -1,14 +1,21 @@
-vim.lsp.config("julials", {})
+local capabilities = require("blink.cmp").get_lsp_capabilities()
+
+vim.lsp.config("julials", {
+    filetypes = { "julia" },
+    capabilities = capabilities,
+})
 vim.lsp.enable("julials")
-vim.lsp.config("pyright", {})
-vim.lsp.config("ts_ls", {})
-vim.lsp.config("texlab", {})
-vim.lsp.config("lua_ls", {})
+
+vim.lsp.config("pyright", { capabilities = capabilities })
+vim.lsp.config("ts_ls", { capabilities = capabilities })
+vim.lsp.config("texlab", { capabilities = capabilities })
+vim.lsp.config("lua_ls", { capabilities = capabilities })
 vim.lsp.config("clangd", {
-	cmd = {
-		"clangd",
-		"--offset-encoding=utf-16",
-	},
+    cmd = {
+        "clangd",
+        "--offset-encoding=utf-16",
+    },
+    capabilities = capabilities,
 })
 
 -- LSP finder - Find the symbol's definition
@@ -55,10 +62,10 @@ vim.keymap.set("n", "]e", "<cmd>Lspsaga diagnostic_jump_next<CR>")
 
 -- Diagnostic jump with filters such as only jumping to an error
 vim.keymap.set("n", "[E", function()
-	require("lspsaga.diagnostic"):goto_prev({ severity = vim.diagnostic.severity.ERROR })
+    require("lspsaga.diagnostic"):goto_prev({ severity = vim.diagnostic.severity.ERROR })
 end)
 vim.keymap.set("n", "]E", function()
-	require("lspsaga.diagnostic"):goto_next({ severity = vim.diagnostic.severity.ERROR })
+    require("lspsaga.diagnostic"):goto_next({ severity = vim.diagnostic.severity.ERROR })
 end)
 
 -- Toggle outline
