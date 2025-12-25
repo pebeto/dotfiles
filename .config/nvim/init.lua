@@ -110,12 +110,6 @@ local plugins = {
         end,
     },
     "kyazdani42/nvim-web-devicons",
-    {
-        "folke/todo-comments.nvim",
-        dependencies = {
-            "nvim-lua/plenary.nvim",
-        },
-    },
     "Bekaboo/deadcolumn.nvim",
     {
         "folke/which-key.nvim",
@@ -141,7 +135,6 @@ local plugins = {
     },
 }
 require("lazy").setup(plugins)
-require("todo-comments").setup()
 
 require("config")
 
