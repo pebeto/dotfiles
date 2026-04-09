@@ -27,7 +27,7 @@ zstyle ':vcs_info:git:*' formats '%b'
 # Adding local bin to path
 PATH=$PATH:$HOME/.local/bin
 
-alias sway='dbus-run-session sway'
+alias sway='sway --unsupported-gpu'
 alias ls='ls --color=auto'
 alias grep='grep --color=auto'
 alias fgrep='fgrep --color=auto'

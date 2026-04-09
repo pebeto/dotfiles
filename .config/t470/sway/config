@@ -1,3 +1,5 @@
+exec dbus-update-activation-environment --systemd WAYLAND_DISPLAY SWAYSOCK XDG_CURRENT_DESKTOP=sway
+
 # For screen color temperature adjustment
 exec gammastep -l -8.11:-79.02
 
@@ -10,7 +12,7 @@ set $down j
 set $up k
 set $right l
 # Terminal emulator
-set $term wezterm
+set $term foot
 # Application launcher
 set $menu fuzzel | xargs swaymsg exec --
 
@@ -35,6 +37,7 @@ input type:keyboard {
 }
 # Switch between layouts with the keyboard shortcut
 bindsym XF86Keyboard input type:keyboard xkb_switch_layout next
+bindsym $mod+Shift+p input type:keyboard xkb_switch_layout next
 
 ### Touchpad configuration
 input "2:7:SynPS/2_Synaptics_TouchPad" {
@@ -164,7 +167,10 @@ bindsym XF86MonBrightnessUp exec backlight +
 bindsym XF86MonBrightnessDown exec backlight -
 
 # Screenshot
-bindsym Print exec grim ~/Pictures/Screenshots/screenshot-$(date +'%Y%m%d-%H%M%S').png
+bindsym Print exec grim -g "$(slurp)" - | wl-copy
+
+# Screenshot and save
+bindsym Shift+Print exec grim -g "$(slurp)" ~/Pictures/Screenshots/screenshot-$(date +'%Y%m%d-%H%M%S').png
 
 ### Resizing containers:
 mode "resize" {

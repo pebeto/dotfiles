@@ -1,5 +1,4 @@
-exec dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP=sway
-exec systemctl --user import-environment WAYLAND_DISPLAY XDG_CURRENT_DESKTOP
+exec dbus-update-activation-environment --systemd WAYLAND_DISPLAY SWAYSOCK XDG_CURRENT_DESKTOP=sway
 
 # For screen color temperature adjustment
 exec gammastep -l -8.11:-79.02
@@ -13,7 +12,7 @@ set $down j
 set $up k
 set $right l
 # Terminal emulator
-set $term wezterm
+set $term foot
 # Application launcher
 set $menu fuzzel | xargs swaymsg exec --
 
@@ -29,6 +28,8 @@ exec_always dunst
 input type:keyboard {
     xkb_layout us,latam
 }
+# Switch between layouts with the keyboard shortcut
+bindsym $mod+Shift+p input type:keyboard xkb_switch_layout next
 
 ### Key bindings
 # Start a terminal
@@ -145,7 +146,10 @@ bindsym XF86AudioMute exec amixer set Master toggle
 bindsym XF86AudioMicMute exec amixer set Capture toggle
 
 # Screenshot
-bindsym Print exec grim ~/Pictures/Screenshots/screenshot-$(date +'%Y%m%d-%H%M%S').png
+bindsym Print exec grim -g "$(slurp)" - | wl-copy
+
+# Screenshot and save
+bindsym Shift+Print exec grim -g "$(slurp)" ~/Pictures/Screenshots/screenshot-$(date +'%Y%m%d-%H%M%S').png
 
 ### Status bar
 bar {
