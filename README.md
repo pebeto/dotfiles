@@ -1,2 +1,2 @@
-# dotfiles
+# my dotfiles
 ![wallpaper](.config/wallpaper.jpeg)
