@@ -1,2 +1,0 @@
--- Neovim 0.12: Treesitter highlighting is enabled natively.
--- nvim-treesitter is kept purely for parser management (:TSInstall/:TSUpdate).

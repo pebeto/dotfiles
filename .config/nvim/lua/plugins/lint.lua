@@ -11,8 +11,6 @@ require("lint").linters_by_ft = {
 	dockerfile = { "hadolint" },
 }
 
-vim.api.nvim_create_autocmd("BufWritePost", {
-	callback = function()
-		require("lint").try_lint()
-	end,
-})
+vim.keymap.set("n", "<leader>ll", function()
+	require("lint").try_lint()
+end, { desc = "Run linter" })

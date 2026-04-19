@@ -17,13 +17,9 @@ require("conform").setup({
 		latex = { "latexindent" },
 		tex = { "latexindent" },
 	},
-	format_after_save = {
-		lsp_fallback = true,
-		async = true,
-		timeout_ms = 1000,
-	},
+	format_after_save = false,
 })
 
 vim.keymap.set("n", "<leader>i", function()
-	require("conform").format({ async = true, lsp_fallback = true })
+	require("conform").format({ async = true, lsp_format = "fallback" })
 end, { desc = "Format buffer" })

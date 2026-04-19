@@ -48,10 +48,25 @@ require("lazy").setup({
 	-- Productivity
 	{ "akinsho/toggleterm.nvim" },
 	{ "lewis6991/gitsigns.nvim" },
-	{ "windwp/nvim-ts-autotag" },
-	{ "windwp/nvim-autopairs" },
-	{ "kylechui/nvim-surround" },
+	{ "windwp/nvim-ts-autotag", opts = {} },
+	{ "windwp/nvim-autopairs", opts = {} },
+	{ "kylechui/nvim-surround", opts = {} },
 	{ "JuliaEditorSupport/julia-vim" },
+	{ "rafamadriz/friendly-snippets" },
+	{
+		"saghen/blink.cmp",
+		version = "*",
+		opts = {
+			keymap = { preset = "default" },
+			sources = {
+				default = { "lsp", "buffer", "snippets", "path" },
+			},
+			snippets = { preset = "default" },
+			completion = {
+				documentation = { auto_show = true, auto_show_delay_ms = 200 },
+			},
+		},
+	},
 	{
 		"MeanderingProgrammer/render-markdown.nvim",
 		dependencies = { "nvim-mini/mini.icons" },
@@ -102,6 +117,5 @@ require("plugins.lint")
 require("plugins.oil")
 require("plugins.gitsigns")
 require("plugins.telescope")
-require("plugins.treesitter")
 require("plugins.toggleterm")
 require("plugins.extras")
