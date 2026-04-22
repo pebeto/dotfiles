@@ -46,7 +46,11 @@ input "2:7:SynPS/2_Synaptics_TouchPad" {
     natural_scroll enabled
     middle_emulation enabled
 }
-#
+### TrackPoint configuration
+input "2:10:TPPS/2_IBM_TrackPoint" {
+    pointer_accel -0.5
+    dwt enabled
+}
 
 ### Key bindings
 # Start a terminal
