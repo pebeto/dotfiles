@@ -33,7 +33,11 @@ require("lazy").setup({
 	{
 		"stevearc/oil.nvim",
 		opts = {},
-		dependencies = { { "nvim-mini/mini.icons", opts = {} } },
+		dependencies = {
+			{ "nvim-mini/mini.icons", opts = {} },
+			{ "malewicz1337/oil-git.nvim" },
+			{ "JezerM/oil-lsp-diagnostics.nvim", opts = {} },
+		},
 		lazy = false,
 	},
 	{

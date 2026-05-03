@@ -15,6 +15,8 @@ set $right l
 set $term foot
 # Application launcher
 set $menu fuzzel | xargs swaymsg exec --
+# Hardware-key indicator script
+set $indicators ~/.config/sway/indicators.sh
 
 ### Wallpaper
 output "*" bg ../../wallpaper.jpeg stretch
@@ -36,8 +38,8 @@ input type:keyboard {
     xkb_layout us,latam
 }
 # Switch between layouts with the keyboard shortcut
-bindsym XF86Keyboard input type:keyboard xkb_switch_layout next
-bindsym $mod+Shift+p input type:keyboard xkb_switch_layout next
+bindsym XF86Keyboard exec $indicators layout
+bindsym $mod+Shift+p exec $indicators layout
 
 ### Touchpad configuration
 input "2:7:SynPS/2_Synaptics_TouchPad" {
@@ -158,17 +160,20 @@ bindsym $mod+Shift+minus move scratchpad
 bindsym $mod+minus scratchpad show
 
 ### Function keys
-# Volume up and down
-bindsym XF86AudioRaiseVolume exec amixer set Master 5%+
-bindsym XF86AudioLowerVolume exec amixer set Master 5%-
-# Volume mute toggle
-bindsym XF86AudioMute exec amixer set Master toggle
+# Volume up/down/mute
+bindsym XF86AudioRaiseVolume exec $indicators up
+bindsym XF86AudioLowerVolume exec $indicators down
+bindsym XF86AudioMute        exec $indicators mute
 # Mic mute toggle
-bindsym XF86AudioMicMute exec amixer set Capture toggle
+bindsym XF86AudioMicMute     exec $indicators mic
 
-# Brightness up and down
-bindsym XF86MonBrightnessUp exec backlight +
-bindsym XF86MonBrightnessDown exec backlight -
+# Brightness up/down (ACPI handles the change; script just notifies)
+bindsym XF86MonBrightnessUp   exec $indicators brightup
+bindsym XF86MonBrightnessDown exec $indicators brightdown
+
+# Radio toggles (ACPI handles the change; script just notifies)
+bindsym XF86WLAN      exec $indicators wifi
+bindsym XF86Bluetooth exec $indicators bluetooth
 
 # Screenshot
 bindsym Print exec grim -g "$(slurp)" - | wl-copy
@@ -204,7 +209,8 @@ bar {
     position top
 
     # When the status_command prints a new line to stdout, swaybar updates.
-    status_command while ~/.config/sway/barspec.sh; do sleep 1; done
+    status_command ~/.config/sway/barspec.sh
+    # Use the i3bar JSON protocol (barspec.sh emits JSON; bar handles colors/clicks)
 
     colors {
         background #323232
