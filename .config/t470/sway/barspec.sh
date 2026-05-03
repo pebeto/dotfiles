@@ -171,7 +171,6 @@ while true; do
     bat1=$(battery_segment 1)
     lay=$(layout_short)
     wifi=$(wifi_label)
-    bt=$(radio_state bluetooth)
     dt=$(date "+%Y-%m-%d %H:%M:%S")
 
     # Volume label — dim gray when muted, like off-state radios
@@ -201,7 +200,6 @@ while true; do
     fi
 
     wifi_color=""; [ "$wifi" = "Off" ] && wifi_color="$COLOR_DIM"
-    bt_color="";   [ "$bt" = "Off" ]   && bt_color="$COLOR_DIM"
 
     {
         printf '['
@@ -212,7 +210,6 @@ while true; do
             printf '%s,%s,'  "$(block battery "$bat_text" "$bat_color")"   "$(sep)"
         fi
         printf '%s,%s,'  "$(block wifi      "WiFi: $wifi"  "$wifi_color")" "$(sep)"
-        printf '%s,%s,'  "$(block bluetooth "BT: $bt"      "$bt_color")"   "$(sep)"
         printf '%s,%s,'  "$(block layout    "Layout: $lay")"               "$(sep)"
         printf '%s'      "$(block time      "$dt")"
         printf '],\n'
