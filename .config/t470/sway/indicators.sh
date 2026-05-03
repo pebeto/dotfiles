@@ -1,22 +1,18 @@
 #!/bin/bash
-# Hardware-key handler for sway. For ACPI-driven keys (brightness, wifi,
-# bluetooth) we don't perform the change ourselves — the kernel ACPI
-# handler does that in parallel. We just wait briefly for it to settle
-# and then notify with the resulting state. Volume/mic/layout are driven
-# from userspace (amixer, swaymsg) so we do those ourselves.
+# Notification-only handler for kernel/EC-driven hardware keys. The
+# kernel performs the state change in parallel; we wait briefly for
+# it to settle, then dunstify the resulting state and nudge the bar
+# to refresh. Userspace actions (volume/mic/layout) are inlined in
+# the sway config — they don't notify because the bar already shows
+# them.
 
-BACKLIGHT=/sys/class/backlight/intel_backlight
 BAR_REFRESH_FIFO="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/sway-bar-refresh"
 ACPI_SETTLE=0.15
 
 notify() {
-    # notify <app> <icon> <stack_tag> <body> [int_value]
-    local app=$1 icon=$2 tag=$3 body=$4 value=${5:-}
-    if [ -n "$value" ]; then
-        dunstify -a "$app" -i "$icon" -h "string:x-dunst-stack-tag:$tag" -h "int:value:$value" "$body"
-    else
-        dunstify -a "$app" -i "$icon" -h "string:x-dunst-stack-tag:$tag" "$body"
-    fi
+    # notify <app> <icon> <stack_tag> <body>
+    local app=$1 icon=$2 tag=$3 body=$4
+    dunstify -a "$app" -i "$icon" -h "string:x-dunst-stack-tag:$tag" "$body"
 }
 
 bar_refresh() {
@@ -30,19 +26,11 @@ radio_state() {
     [ "$soft" = "blocked" ] && echo "Off" || echo "On"
 }
 
-acpi_brightness() {
-    sleep "$ACPI_SETTLE"
-    local cur max bright
-    cur=$(< "$BACKLIGHT/brightness")
-    max=$(< "$BACKLIGHT/max_brightness")
-    bright=$(( cur * 100 / max ))
-    notify "Brightness" "display-brightness" "bright" "Brightness: ${bright}%" "$bright"
-}
-
 acpi_radio() {
     # acpi_radio <wifi|bluetooth>
     sleep "$ACPI_SETTLE"
-    local kind=$1 state=$(radio_state "$1")
+    local kind=$1 state
+    state=$(radio_state "$1")
     case "$kind" in
         wifi)
             notify "WiFi" "network-wireless" "wifi" "WiFi: $state"
@@ -55,47 +43,28 @@ acpi_radio() {
     esac
 }
 
-audio_volume() {
-    # audio_volume <up|down|mute>
-    case "$1" in
-        up)   amixer set Master 5%+    > /dev/null ;;
-        down) amixer set Master 5%-    > /dev/null ;;
-        mute) amixer set Master toggle > /dev/null ;;
+fnlock_state() {
+    # ThinkPad FnLock state: 1 = locked (F-keys primary), 0 = unlocked.
+    local v
+    v=$(cat /sys/class/leds/tpacpi::fnlock/brightness 2>/dev/null)
+    case "$v" in
+        1) echo "On" ;;
+        0) echo "Off" ;;
+        *) echo "?" ;;
     esac
-    if amixer get Master 2>/dev/null | grep -q '\[off\]'; then
-        notify "Volume" "audio-volume-muted" "volume" "Muted"
-    else
-        local vol
-        vol=$(amixer get Master 2>/dev/null | grep -m1 -oE '[0-9]+%')
-        vol=${vol%\%}
-        notify "Volume" "audio-volume-high" "volume" "Volume: ${vol}%" "$vol"
-    fi
 }
 
-audio_mic() {
-    amixer set Capture toggle > /dev/null
-    if amixer get Capture 2>/dev/null | grep -q '\[off\]'; then
-        notify "Microphone" "microphone-sensitivity-muted" "mic" "Microphone Muted"
-    else
-        notify "Microphone" "microphone-sensitivity-high" "mic" "Microphone On"
-    fi
-}
-
-layout_switch() {
-    swaymsg input type:keyboard xkb_switch_layout next > /dev/null
-    sleep 0.05
-    local name
-    name=$(swaymsg -t get_inputs 2>/dev/null | grep -m1 "xkb_active_layout_name" | cut -d '"' -f4)
-    notify "Keyboard" "input-keyboard" "layout" "Layout: $name"
+acpi_fnlock() {
+    sleep "$ACPI_SETTLE"
+    local state
+    state=$(fnlock_state)
+    notify "FnLock" "input-keyboard" "fnlock" "FnLock: $state"
 }
 
 case "$1" in
-    up|down|mute)        audio_volume "$1" ;;
-    mic)                 audio_mic ;;
-    brightup|brightdown) acpi_brightness ;;
-    wifi|bluetooth)      acpi_radio "$1" ;;
-    layout)              layout_switch ;;
-    *)                   exit 1 ;;
+    wifi|bluetooth) acpi_radio "$1" ;;
+    fnlock)         acpi_fnlock ;;
+    *)              exit 1 ;;
 esac
 
 bar_refresh

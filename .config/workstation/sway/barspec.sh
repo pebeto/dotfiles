@@ -81,7 +81,7 @@ dispatch_click() {
     case "$1" in
         *'"name": "volume"'*|*'"name":"volume"'*) amixer set Master toggle > /dev/null ;;
         *'"name": "time"'*|*'"name":"time"'*)     toggle_cal_popup ;;
-        *'"name": "layout"'*|*'"name":"layout"'*) ~/.config/sway/indicators.sh layout ;;
+        *'"name": "layout"'*|*'"name":"layout"'*) swaymsg input type:keyboard xkb_switch_layout next > /dev/null ;;
         *) return ;;
     esac
     echo > "$BAR_REFRESH_FIFO" 2>/dev/null
@@ -131,6 +131,6 @@ while true; do
         printf '],\n'
     }
 
-    # Sleep up to 1s, but wake immediately when indicators.sh writes to the fifo
+    # Sleep up to 1s, but wake immediately when a key binding writes to the fifo
     read -t 1 -u 3
 done

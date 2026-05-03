@@ -15,8 +15,9 @@ set $right l
 set $term foot
 # Application launcher
 set $menu fuzzel | xargs swaymsg exec --
-# Hardware-key indicator script
-set $indicators ~/.config/sway/indicators.sh
+# Bar-refresh fifo: writing to it makes barspec.sh re-render immediately
+# instead of waiting for its 1s tick.
+set $bar_refresh $XDG_RUNTIME_DIR/sway-bar-refresh
 
 ### Wallpaper
 output "*" bg ../../wallpaper.jpeg stretch
@@ -36,8 +37,8 @@ input type:keyboard {
     xkb_layout us,latam
 }
 # Switch between layouts with the keyboard shortcut
-bindsym XF86Keyboard exec $indicators layout
-bindsym $mod+Shift+p exec $indicators layout
+bindsym XF86Keyboard exec swaymsg input type:keyboard xkb_switch_layout next && echo > $bar_refresh
+bindsym $mod+Shift+p exec swaymsg input type:keyboard xkb_switch_layout next && echo > $bar_refresh
 
 ### Key bindings
 # Start a terminal
@@ -146,11 +147,11 @@ bindsym $mod+minus scratchpad show
 
 ### Function keys
 # Volume up/down/mute
-bindsym XF86AudioRaiseVolume exec $indicators up
-bindsym XF86AudioLowerVolume exec $indicators down
-bindsym XF86AudioMute        exec $indicators mute
-# Mic mute toggle
-bindsym XF86AudioMicMute     exec $indicators mic
+bindsym XF86AudioRaiseVolume exec amixer set Master 5%+    > /dev/null && echo > $bar_refresh
+bindsym XF86AudioLowerVolume exec amixer set Master 5%-    > /dev/null && echo > $bar_refresh
+bindsym XF86AudioMute        exec amixer set Master toggle > /dev/null && echo > $bar_refresh
+# Mic mute toggle (no bar entry, no refresh)
+bindsym XF86AudioMicMute     exec amixer set Capture toggle > /dev/null
 
 # Screenshot
 bindsym Print exec grim -g "$(slurp)" - | wl-copy
