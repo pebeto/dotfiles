@@ -26,6 +26,11 @@ output HDMI-A-2 position 0 0 mode 1920x1080@75Hz
 ### Notifications
 exec_always dunst
 
+### Calendar popup (toggled by clicking the time block in the status bar)
+# Right edge flush with the output: anchor at 100 ppt then shift left by the
+# window width so the right edge sits at the output's right edge.
+for_window [app_id="cal-popup"] floating enable, sticky enable, border none, resize set 180 px 180 px, move position 100 ppt 0 ppt, move left 180 px
+
 ### Keyboard configuration
 input type:keyboard {
     xkb_layout us,latam

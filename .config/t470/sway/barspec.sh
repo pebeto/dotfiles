@@ -115,9 +115,27 @@ sep() {
         "$SEP_COLOR"
 }
 
+toggle_cal_popup() {
+    local pidfile="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/cal-popup.pid"
+    if [ -f "$pidfile" ] && kill -0 "$(cat "$pidfile")" 2>/dev/null; then
+        kill "$(cat "$pidfile")" 2>/dev/null
+        rm -f "$pidfile"
+    else
+        # Enable xterm mouse tracking after `cal` so clicks inside foot send an
+        # escape sequence to stdin; `read -n1` then consumes the first byte
+        # (any click or keypress) and exits, which closes the foot window.
+        foot --app-id=cal-popup \
+             -- bash -c 'cal; printf "\033[?1000h"; read -rsn1; printf "\033[?1000l"' \
+             >/dev/null 2>&1 &
+        echo $! > "$pidfile"
+    fi
+}
+
 dispatch_click() {
     case "$1" in
-        *'"name":"volume"'*) amixer set Master toggle > /dev/null ;;
+        *'"name": "volume"'*|*'"name":"volume"'*) amixer set Master toggle > /dev/null ;;
+        *'"name": "time"'*|*'"name":"time"'*)     toggle_cal_popup ;;
+        *'"name": "layout"'*|*'"name":"layout"'*) ~/.config/sway/indicators.sh layout ;;
         *) return ;;
     esac
     echo > "$BAR_REFRESH_FIFO" 2>/dev/null
