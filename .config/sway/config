@@ -1,0 +1,194 @@
+### Single sway config shared across machines. Per-host bits (outputs,
+### touchpad rules, hardware keys, $bar_bg) live in hosts/<name>.conf and
+### are selected via the ~/.config/sway-host.conf symlink each machine
+### creates once during setup.
+
+exec dbus-update-activation-environment --systemd WAYLAND_DISPLAY SWAYSOCK XDG_CURRENT_DESKTOP=sway
+
+# For screen color temperature adjustment
+exec gammastep -l -8.11:-79.02
+
+### Variables
+# Logo key
+set $mod Mod4
+# Home row direction keys
+set $left h
+set $down j
+set $up k
+set $right l
+# Terminal emulator
+set $term foot
+# Application launcher
+set $menu fuzzel | xargs swaymsg exec --
+# Bar-refresh fifo: writing to it makes barspec.sh re-render immediately
+# instead of waiting for its 1s tick.
+set $bar_refresh $XDG_RUNTIME_DIR/sway-bar-refresh
+
+### Per-host bits (sets $bar_bg, optional $indicators, outputs, inputs,
+### hardware-key bindings). $mod and $bar_refresh are already defined.
+include ~/.config/sway-host.conf
+
+### Wallpaper (host configs may add output-specific position/mode rules
+### above this line). Path resolves relative to this file's real location
+### in the dotfiles repo: .config/sway/config → .config/wallpaper.jpeg.
+output "*" bg ../wallpaper.jpeg stretch
+
+### Notifications
+exec_always dunst
+
+### Calendar popup (toggled by clicking the time block in the status bar)
+# Right edge flush with the output: anchor at 100 ppt then shift left by the
+# window width so the right edge sits at the output's right edge.
+for_window [app_id="cal-popup"]  floating enable, sticky enable, border none, resize set 180 px 180 px, move position 100 ppt 0 ppt, move left 180 px
+
+### btop popup (toggled by clicking the temp/cpu block in the status bar)
+for_window [app_id="btop-popup"] floating enable, resize set 80 ppt 80 ppt, move position center
+
+### Idle inhibit while any window is fullscreen (videos, games, etc.)
+for_window [class=".*"]   inhibit_idle fullscreen
+for_window [app_id=".*"]  inhibit_idle fullscreen
+
+### Idle configuration
+# Lock after 300s, power off outputs after another 300s (resumes on wake),
+# and lock before suspend.
+exec swayidle -w \
+         timeout 300 'swaylock --font JuliaMono -l -k -f -c 000000' \
+         timeout 600 'swaymsg "output * power off"' resume 'swaymsg "output * power on"' \
+         before-sleep 'swaylock --font JuliaMono -l -k -f -c 000000'
+
+### Keyboard configuration
+input type:keyboard {
+    xkb_layout us,latam
+}
+# Switch between layouts with the keyboard shortcut
+bindsym XF86Keyboard exec swaymsg input type:keyboard xkb_switch_layout next && echo > $bar_refresh
+bindsym $mod+Shift+p exec swaymsg input type:keyboard xkb_switch_layout next && echo > $bar_refresh
+
+### Key bindings
+bindsym $mod+Return    exec $term
+bindsym $mod+Shift+q   kill
+bindsym $mod+d         exec $menu
+floating_modifier $mod normal
+bindsym $mod+Shift+c   reload
+bindsym $mod+Shift+e   exec swaynag -t warning -m 'You pressed the exit shortcut. Do you really want to exit sway? This will end your Wayland session.' -B 'Yes, exit sway' 'swaymsg exit'
+bindsym $mod+Escape    exec swaylock --font JuliaMono -l -k -f -c 000000
+
+### Moving around
+bindsym $mod+$left  focus left
+bindsym $mod+$down  focus down
+bindsym $mod+$up    focus up
+bindsym $mod+$right focus right
+bindsym $mod+Left   focus left
+bindsym $mod+Down   focus down
+bindsym $mod+Up     focus up
+bindsym $mod+Right  focus right
+
+bindsym $mod+Shift+$left  move left
+bindsym $mod+Shift+$down  move down
+bindsym $mod+Shift+$up    move up
+bindsym $mod+Shift+$right move right
+bindsym $mod+Shift+Left   move left
+bindsym $mod+Shift+Down   move down
+bindsym $mod+Shift+Up     move up
+bindsym $mod+Shift+Right  move right
+
+### Workspaces
+# Pressing the current workspace's key jumps back to the previous one.
+workspace_auto_back_and_forth yes
+
+bindsym $mod+1 workspace number 1
+bindsym $mod+2 workspace number 2
+bindsym $mod+3 workspace number 3
+bindsym $mod+4 workspace number 4
+bindsym $mod+5 workspace number 5
+bindsym $mod+6 workspace number 6
+bindsym $mod+7 workspace number 7
+bindsym $mod+8 workspace number 8
+bindsym $mod+9 workspace number 9
+bindsym $mod+0 workspace number 10
+
+bindsym $mod+Shift+1 move container to workspace number 1
+bindsym $mod+Shift+2 move container to workspace number 2
+bindsym $mod+Shift+3 move container to workspace number 3
+bindsym $mod+Shift+4 move container to workspace number 4
+bindsym $mod+Shift+5 move container to workspace number 5
+bindsym $mod+Shift+6 move container to workspace number 6
+bindsym $mod+Shift+7 move container to workspace number 7
+bindsym $mod+Shift+8 move container to workspace number 8
+bindsym $mod+Shift+9 move container to workspace number 9
+bindsym $mod+Shift+0 move container to workspace number 10
+
+### Layout
+bindsym $mod+b splith
+bindsym $mod+v splitv
+bindsym $mod+s layout stacking
+bindsym $mod+w layout tabbed
+bindsym $mod+e layout toggle split
+bindsym $mod+f fullscreen
+bindsym $mod+Shift+space floating toggle
+bindsym $mod+space      focus mode_toggle
+bindsym $mod+a          focus parent
+
+### Scratchpad
+bindsym $mod+Shift+minus move scratchpad
+bindsym $mod+minus       scratchpad show
+
+### Function keys
+# Volume up/down/mute
+bindsym XF86AudioRaiseVolume exec amixer set Master 5%+    > /dev/null && echo > $bar_refresh
+bindsym XF86AudioLowerVolume exec amixer set Master 5%-    > /dev/null && echo > $bar_refresh
+bindsym XF86AudioMute        exec amixer set Master toggle > /dev/null && echo > $bar_refresh
+# Mic mute toggle (no bar entry, no refresh)
+bindsym XF86AudioMicMute     exec amixer set Capture toggle > /dev/null
+
+# Media keys (MPRIS-aware via playerctl)
+bindsym XF86AudioPlay  exec playerctl play-pause
+bindsym XF86AudioPause exec playerctl play-pause
+bindsym XF86AudioNext  exec playerctl next
+bindsym XF86AudioPrev  exec playerctl previous
+
+# Screenshot
+bindsym Print exec grim -g "$(slurp)" - | wl-copy
+
+# Screenshot and save
+bindsym Shift+Print exec grim -g "$(slurp)" ~/Pictures/Screenshots/screenshot-$(date +'%Y%m%d-%H%M%S').png
+
+### Resizing containers
+mode "resize" {
+    bindsym $left  resize shrink width  10px
+    bindsym $down  resize grow   height 10px
+    bindsym $up    resize shrink height 10px
+    bindsym $right resize grow   width  10px
+
+    bindsym Left  resize shrink width  10px
+    bindsym Down  resize grow   height 10px
+    bindsym Up    resize shrink height 10px
+    bindsym Right resize grow   width  10px
+
+    bindsym Return mode "default"
+    bindsym Escape mode "default"
+}
+bindsym $mod+r mode "resize"
+
+### Status Bar
+# $bar_bg is defined by the per-host include above.
+bar {
+    position top
+
+    # When the status_command prints a new line to stdout, swaybar updates.
+    status_command ~/.config/sway/barspec.sh
+    # Use the i3bar JSON protocol (barspec.sh emits JSON; bar handles colors/clicks)
+
+    colors {
+        background         $bar_bg
+        statusline         #ffffff
+        inactive_workspace $bar_bg $bar_bg #ffffff
+        focused_workspace  $bar_bg #ffa500 #000000
+    }
+}
+
+### Misc configs
+title_align center
+font pango:JuliaMono Regular 10
+
+include /usr/local/etc/sway/config.d/*
