@@ -136,7 +136,7 @@ done
 echo
 echo "Dependencies (referenced by the sway config / barspec)"
 missing=()
-for cmd in sway swaymsg swayidle swaylock playerctl amixer grim slurp wl-copy dunst foot fuzzel gammastep swaynag sensors rfkill iw dunstify btop brightnessctl iwctl; do
+for cmd in sway swaymsg swayidle swaylock playerctl amixer grim slurp swappy wl-copy dunst foot fuzzel gammastep swaynag sensors rfkill iw dunstify btop brightnessctl iwctl; do
     if command -v "$cmd" >/dev/null 2>&1; then
         printf '  ok      %s\n' "$cmd"
     else

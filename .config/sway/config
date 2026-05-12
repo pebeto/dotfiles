@@ -147,11 +147,11 @@ bindsym XF86AudioPause exec playerctl play-pause
 bindsym XF86AudioNext  exec playerctl next
 bindsym XF86AudioPrev  exec playerctl previous
 
-# Screenshot
+# Screenshot region → clipboard (quick path)
 bindsym Print exec grim -g "$(slurp)" - | wl-copy
 
-# Screenshot and save
-bindsym Shift+Print exec grim -g "$(slurp)" ~/Pictures/Screenshots/screenshot-$(date +'%Y%m%d-%H%M%S').png
+# Screenshot region → swappy (annotate, then Ctrl+S to save / Ctrl+C to copy)
+bindsym Shift+Print exec grim -g "$(slurp)" - | swappy -f -
 
 ### Resizing containers
 mode "resize" {
