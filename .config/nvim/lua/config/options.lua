@@ -21,8 +21,8 @@ vim.cmd("colorscheme dookie")
 
 -- Notifications (must be early so conform/lint can use vim.notify)
 require("notify").setup({
-	fps = 60,
-	stages = "slide",
-	render = "wrapped-compact",
+    fps = 60,
+    stages = "slide",
+    render = "wrapped-compact",
 })
 vim.notify = require("notify")

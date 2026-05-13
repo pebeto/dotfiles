@@ -1,7 +1,7 @@
 local builtin = require("telescope.builtin")
 
 local function pick(key, func, desc)
-	vim.keymap.set("n", key, func, { desc = desc })
+    vim.keymap.set("n", key, func, { desc = desc })
 end
 
 pick("<leader>ff", builtin.find_files, "Telescope: Find files")
@@ -13,5 +13,5 @@ pick("<leader>fr", builtin.lsp_references, "Telescope: LSP references")
 pick("<leader>fd", builtin.lsp_definitions, "Telescope: LSP definitions")
 pick("<leader>fa", builtin.commands, "Telescope: Commands")
 pick("<leader>fn", function()
-	require("telescope").extensions.notify.notify()
+    require("telescope").extensions.notify.notify()
 end, "Telescope: Notifications")
