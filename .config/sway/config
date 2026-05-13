@@ -67,7 +67,7 @@ bindsym $mod+Shift+p exec swaymsg input type:keyboard xkb_switch_layout next && 
 ### Key bindings
 bindsym $mod+Return    exec $term
 bindsym $mod+Shift+q   kill
-bindsym $mod+d         exec $menu
+bindsym $mod+space     exec $menu
 floating_modifier $mod normal
 bindsym $mod+Shift+c   reload
 bindsym $mod+Shift+e   exec swaynag -t warning -m 'You pressed the exit shortcut. Do you really want to exit sway? This will end your Wayland session.' -B 'Yes, exit sway' 'swaymsg exit'
@@ -126,7 +126,6 @@ bindsym $mod+w layout tabbed
 bindsym $mod+e layout toggle split
 bindsym $mod+f fullscreen
 bindsym $mod+Shift+space floating toggle
-bindsym $mod+space      focus mode_toggle
 bindsym $mod+a          focus parent
 
 ### Scratchpad
