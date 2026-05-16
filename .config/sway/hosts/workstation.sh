@@ -14,15 +14,15 @@ SENSORS=""
 cpu_temp() { awk '/CPU Package:/ {gsub("\\+|°C","",$3); print $3; exit}' <<< "$SENSORS"; }
 gpu_temp() { nvidia-smi --query-gpu=temperature.gpu --format=csv,noheader,nounits 2>/dev/null; }
 
-# Color the temp block on the hottest of CPU/GPU.
-hottest_color() {
+# Hottest of multiple temperature values (strips decimals; ignores ? / empty).
+hottest_temp() {
     local hottest=0 v
     for v in "$@"; do
         [ -z "$v" ] || [ "$v" = "?" ] && continue
         v=${v%.*}
         [ "$v" -gt "$hottest" ] 2>/dev/null && hottest=$v
     done
-    threshold_color "$hottest" 70 85
+    printf '%s' "$hottest"
 }
 
 while true; do
@@ -34,11 +34,13 @@ while true; do
     lay=$(layout_short)
     dt=$(date "+%Y-%m-%d %H:%M:%S")
 
-    temp_text="CPU: ${cpu:-?}°C ~ GPU: ${gpu:-?}°C"
-    temp_color=$(hottest_color "$cpu" "$gpu")
+    sys_text="CPU: ${cpu:-?}°C ~ GPU: ${gpu:-?}°C ~ RAM: ${mem}%"
+    sys_color=$(worst_color "$(hottest_temp "$cpu" "$gpu") 70 85" "$mem 80 90")
 
-    mem_text="Mem: ${mem}%"
-    mem_color=$(threshold_color "$mem" 80 90)
+    # Focus mode label — green dot when active, dim "Focus" when off.
+    if focus_on; then focus_text="● FOCUS"; focus_color="$COLOR_FOCUS"
+    else              focus_text="Focus";   focus_color="$COLOR_DIM"
+    fi
 
     # Volume label — dim gray when muted
     vol_color=""
@@ -51,10 +53,10 @@ while true; do
 
     {
         printf '['
-        printf '%s,%s,'  "$(block temp   "$temp_text" "$temp_color")" "$(sep)"
-        printf '%s,%s,'  "$(block memory "$mem_text"  "$mem_color")"  "$(sep)"
-        printf '%s,%s,'  "$(block volume "$vol_text"  "$vol_color")"  "$(sep)"
-        printf '%s,%s,'  "$(block layout "Layout: $lay")"             "$(sep)"
+        printf '%s,%s,'  "$(block focus  "$focus_text" "$focus_color")" "$(sep)"
+        printf '%s,%s,'  "$(block temp   "$sys_text"   "$sys_color")"   "$(sep)"
+        printf '%s,%s,'  "$(block volume "$vol_text"   "$vol_color")"   "$(sep)"
+        printf '%s,%s,'  "$(block layout "Layout: $lay")"               "$(sep)"
         printf '%s'      "$(block time   "$dt")"
         printf '],\n'
     }

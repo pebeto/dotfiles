@@ -87,8 +87,9 @@ cpu_max_temp() {
 while true; do
     SENSORS=$(sensors 2>/dev/null)
     cpu=$(cpu_temps)
-    cpu_color=$(threshold_color "$(cpu_max_temp)" 70 85)
     mem=$(memory_pct)
+    sys_text="$cpu ~ RAM: ${mem}%"
+    sys_color=$(worst_color "$(cpu_max_temp) 70 85" "$mem 80 90")
     bri=$(brightness_pct)
     vol=$(volume_pct)
     bat0=$(battery_segment 0)
@@ -97,7 +98,10 @@ while true; do
     wifi=$(wifi_label)
     dt=$(date "+%Y-%m-%d %H:%M:%S")
 
-    mem_color=$(threshold_color "$mem" 80 90)
+    # Focus mode label — green dot when active, dim "Focus" when off.
+    if focus_on; then focus_text="● FOCUS"; focus_color="$COLOR_FOCUS"
+    else              focus_text="Focus";   focus_color="$COLOR_DIM"
+    fi
 
     # Volume label — dim gray when muted, like off-state radios
     vol_color=""
@@ -129,15 +133,15 @@ while true; do
 
     {
         printf '['
-        printf '%s,%s,'  "$(block cpu        "$cpu"         "$cpu_color")"  "$(sep)"
-        printf '%s,%s,'  "$(block memory     "Mem: ${mem}%" "$mem_color")"  "$(sep)"
-        printf '%s,%s,'  "$(block brightness "Brightness: $bri")"           "$(sep)"
-        printf '%s,%s,'  "$(block volume     "$vol_text" "$vol_color")"     "$(sep)"
+        printf '%s,%s,'  "$(block focus      "$focus_text"  "$focus_color")" "$(sep)"
+        printf '%s,%s,'  "$(block cpu        "$sys_text"    "$sys_color")"   "$(sep)"
+        printf '%s,%s,'  "$(block brightness "Brightness: $bri")"            "$(sep)"
+        printf '%s,%s,'  "$(block volume     "$vol_text"    "$vol_color")"   "$(sep)"
         if [ -n "$bat_text" ]; then
-            printf '%s,%s,'  "$(block battery "$bat_text" "$bat_color")"    "$(sep)"
+            printf '%s,%s,'  "$(block battery "$bat_text"   "$bat_color")"   "$(sep)"
         fi
-        printf '%s,%s,'  "$(block wifi      "WiFi: $wifi"  "$wifi_color")"  "$(sep)"
-        printf '%s,%s,'  "$(block layout    "Layout: $lay")"                "$(sep)"
+        printf '%s,%s,'  "$(block wifi      "WiFi: $wifi"   "$wifi_color")"  "$(sep)"
+        printf '%s,%s,'  "$(block layout    "Layout: $lay")"                 "$(sep)"
         printf '%s'      "$(block time      "$dt")"
         printf '],\n'
     }

@@ -14,6 +14,12 @@ SEP_COLOR="${SEP_COLOR:-#b7b19c}"
 COLOR_DIM="${COLOR_DIM:-#b7b19c}"
 COLOR_WARN="${COLOR_WARN:-#ffaa00}"
 COLOR_LOW="${COLOR_LOW:-#ff5555}"
+COLOR_FOCUS="${COLOR_FOCUS:-#88cc88}"
+
+FOCUS_STATE_FILE="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/focus-mode.state"
+
+# focus_on returns 0 if focus mode is active.
+focus_on() { [ -f "$FOCUS_STATE_FILE" ]; }
 
 threshold_color() {
     # threshold_color <value> <warn> <crit> -> emits COLOR_WARN or COLOR_LOW
@@ -28,6 +34,26 @@ threshold_color() {
     elif [ "$v" -ge "$warn" ] 2>/dev/null; then
         printf '%s' "$COLOR_WARN"
     fi
+}
+
+worst_color() {
+    # worst_color "<value> <warn> <crit>" ["<value> <warn> <crit>" ...]
+    # Returns COLOR_LOW if any spec hits crit, else COLOR_WARN if any hits
+    # warn, else nothing. Lets one combined block reflect the worst metric.
+    local worst=0 spec v warn crit c
+    for spec in "$@"; do
+        read -r v warn crit <<< "$spec"
+        c=$(threshold_color "$v" "$warn" "$crit")
+        if [ "$c" = "$COLOR_LOW" ] && [ "$worst" -lt 2 ]; then
+            worst=2
+        elif [ "$c" = "$COLOR_WARN" ] && [ "$worst" -lt 1 ]; then
+            worst=1
+        fi
+    done
+    case "$worst" in
+        2) printf '%s' "$COLOR_LOW" ;;
+        1) printf '%s' "$COLOR_WARN" ;;
+    esac
 }
 
 memory_pct() {
@@ -121,6 +147,7 @@ dispatch_click() {
                 5) brightnessctl set 5%- > /dev/null 2>&1 ;;
             esac ;;
         *'"name": "wifi"'*|*'"name":"wifi"'*)     ~/.config/sway/wifi-picker.sh >/dev/null 2>&1 & ;;
+        *'"name": "focus"'*|*'"name":"focus"'*)   ~/.config/sway/focus-toggle.sh ;;
         *'"name": "time"'*|*'"name":"time"'*)     toggle_cal_popup ;;
         *'"name": "temp"'*|*'"name":"temp"'*)     toggle_btop_popup ;;
         *'"name": "cpu"'*|*'"name":"cpu"'*)       toggle_btop_popup ;;
