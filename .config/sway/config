@@ -65,8 +65,9 @@ bindsym XF86Keyboard exec swaymsg input type:keyboard xkb_switch_layout next && 
 bindsym $mod+Shift+p exec swaymsg input type:keyboard xkb_switch_layout next && echo > $bar_refresh
 
 ### Key bindings
-bindsym $mod+Return    exec $term
-bindsym $mod+Shift+q   kill
+bindsym $mod+Return       exec $term
+bindsym $mod+Shift+Return exec ~/.config/sway/foot-here.sh
+bindsym $mod+Shift+q      kill
 bindsym $mod+space     exec $menu
 floating_modifier $mod normal
 bindsym $mod+Shift+c   reload
