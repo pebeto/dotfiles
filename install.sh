@@ -46,7 +46,7 @@ SKIP=(.git .gitignore README.md install.sh)
 # .config/ entries that need per-file linking instead of a whole-dir
 # symlink — typically because ~/.config/<name>/ already exists as a real
 # dir managed by another tool (e.g. systemd creates ~/.config/systemd/).
-CONFIG_SPECIAL=(systemd)
+CONFIG_SPECIAL=(systemd opencode)
 
 skip_entry() {
     local name=$1 s
@@ -154,6 +154,23 @@ if [ -d "$systemd_src" ]; then
     fi
 else
     printf '  WARN    %s missing\n' "$systemd_src"
+    n_warn=$((n_warn + 1))
+fi
+
+echo
+echo "Opencode config (per-file: opencode itself drops bun.lock, node_modules, etc.)"
+opencode_src="$DOTFILES/.config/opencode"
+opencode_dst="$CONFIG_DST/opencode"
+if [ -d "$opencode_src" ]; then
+    [ "$DRY" = 1 ] || mkdir -p "$opencode_dst"
+    shopt -s nullglob
+    for f in "$opencode_src"/*.json; do
+        name=$(basename "$f")
+        link "$f" "$opencode_dst/$name"
+    done
+    shopt -u nullglob
+else
+    printf '  WARN    %s missing\n' "$opencode_src"
     n_warn=$((n_warn + 1))
 fi
 

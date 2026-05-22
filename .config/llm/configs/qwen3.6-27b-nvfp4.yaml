@@ -1,0 +1,22 @@
+model: sakamakismile/Qwen3.6-27B-Text-NVFP4-MTP
+host: 0.0.0.0
+port: 8000
+tensor-parallel-size: 1
+max-num-seqs: 4
+enable-prefix-caching: true
+enable-chunked-prefill: true
+kv-cache-dtype: fp8
+quantization: modelopt
+gpu-memory-utilization: 0.9
+max-model-len: auto
+dtype: bfloat16
+enable-auto-tool-choice: true
+chat-template: /workspace/templates/chat_template.jinja
+tool-call-parser: qwen3_coder
+reasoning-parser: qwen3
+default-chat-template-kwargs: '{"preserve_thinking": true}'
+# `language-model-only` skips loading the MTP head baked into this
+# checkpoint (model name has the -MTP suffix). Required when MTP is off
+# to avoid spurious weight-loading errors.
+language-model-only: true
+trust-remote-code: true
