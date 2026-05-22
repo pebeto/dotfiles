@@ -116,6 +116,8 @@ toggle_cal_popup() {
     fi
 }
 
+toggle_agenda_popup() { ~/.config/sway/agenda.sh show; }
+
 toggle_btop_popup() {
     local pidfile="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/btop-popup.pid"
     if [ -f "$pidfile" ] && kill -0 "$(cat "$pidfile")" 2>/dev/null; then
@@ -149,6 +151,7 @@ dispatch_click() {
         *'"name": "wifi"'*|*'"name":"wifi"'*)     ~/.config/sway/wifi-picker.sh >/dev/null 2>&1 & ;;
         *'"name": "focus"'*|*'"name":"focus"'*)   ~/.config/sway/focus-toggle.sh ;;
         *'"name": "time"'*|*'"name":"time"'*)     toggle_cal_popup ;;
+        *'"name": "agenda"'*|*'"name":"agenda"'*) toggle_agenda_popup ;;
         *'"name": "temp"'*|*'"name":"temp"'*)     toggle_btop_popup ;;
         *'"name": "cpu"'*|*'"name":"cpu"'*)       toggle_btop_popup ;;
         *'"name": "layout"'*|*'"name":"layout"'*) swaymsg input type:keyboard xkb_switch_layout next > /dev/null ;;

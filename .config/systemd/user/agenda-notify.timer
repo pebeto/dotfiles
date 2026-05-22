@@ -1,0 +1,10 @@
+[Unit]
+Description=Daily morning agenda notification
+
+[Timer]
+OnCalendar=*-*-* 09:00:00
+Persistent=true
+Unit=agenda-notify.service
+
+[Install]
+WantedBy=timers.target

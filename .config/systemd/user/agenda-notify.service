@@ -1,0 +1,6 @@
+[Unit]
+Description=Morning dunst notification with today's org-mode agenda
+
+[Service]
+Type=oneshot
+ExecStart=%h/.config/sway/agenda.sh notify

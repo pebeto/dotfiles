@@ -56,3 +56,14 @@ alias fgrep='fgrep --color=auto'
 alias egrep='egrep --color=auto'
 
 source ~/.miscrc
+
+# bun completions
+[ -s "$HOME/.bun/_bun" ] && source "$HOME/.bun/_bun"
+
+# bun
+export BUN_INSTALL="$HOME/.bun"
+export PATH="$BUN_INSTALL/bin:$PATH"
+
+
+# Added by Antigravity CLI installer
+export PATH="$HOME/.local/bin:$PATH"

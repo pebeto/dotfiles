@@ -43,9 +43,20 @@ CONFIG_DST="${XDG_CONFIG_HOME:-$HOME/.config}"
 # Repo-root entries that are NOT deployed.
 SKIP=(.git .gitignore README.md install.sh)
 
+# .config/ entries that need per-file linking instead of a whole-dir
+# symlink — typically because ~/.config/<name>/ already exists as a real
+# dir managed by another tool (e.g. systemd creates ~/.config/systemd/).
+CONFIG_SPECIAL=(systemd)
+
 skip_entry() {
     local name=$1 s
     for s in "${SKIP[@]}"; do [ "$name" = "$s" ] && return 0; done
+    return 1
+}
+
+config_special() {
+    local name=$1 s
+    for s in "${CONFIG_SPECIAL[@]}"; do [ "$name" = "$s" ] && return 0; done
     return 1
 }
 
@@ -102,6 +113,7 @@ echo
 echo "Configs -> $CONFIG_DST"
 for entry in "$DOTFILES"/.config/*; do
     name=$(basename "$entry")
+    config_special "$name" && continue
     link "$entry" "$CONFIG_DST/$name"
 done
 shopt -u dotglob nullglob
@@ -123,6 +135,29 @@ else
 fi
 
 echo
+echo "Systemd user units"
+systemd_src="$DOTFILES/.config/systemd/user"
+systemd_dst="$CONFIG_DST/systemd/user"
+if [ -d "$systemd_src" ]; then
+    [ "$DRY" = 1 ] || mkdir -p "$systemd_dst"
+    shopt -s nullglob
+    for unit in "$systemd_src"/*.service "$systemd_src"/*.timer; do
+        name=$(basename "$unit")
+        link "$unit" "$systemd_dst/$name"
+    done
+    shopt -u nullglob
+    if [ "$DRY" = 0 ]; then
+        systemctl --user daemon-reload 2>/dev/null || true
+        # Enable+start the agenda timers. `|| true` because a fresh box may
+        # not have a user session bus yet — re-running after login fixes it.
+        systemctl --user enable --now agenda-refresh.timer agenda-notify.timer 2>/dev/null || true
+    fi
+else
+    printf '  WARN    %s missing\n' "$systemd_src"
+    n_warn=$((n_warn + 1))
+fi
+
+echo
 echo "Misc directories"
 for dir in "$HOME/Pictures/Screenshots"; do
     if [ -d "$dir" ]; then
@@ -136,7 +171,7 @@ done
 echo
 echo "Dependencies (referenced by the sway config / barspec)"
 missing=()
-for cmd in sway swaymsg swayidle swaylock playerctl amixer grim slurp swappy wl-copy dunst foot fuzzel gammastep swaynag sensors rfkill iw dunstify btop brightnessctl iwctl jq; do
+for cmd in sway swaymsg swayidle swaylock playerctl amixer grim slurp swappy wl-copy dunst foot fuzzel gammastep swaynag sensors rfkill iw dunstify btop brightnessctl iwctl jq emacs; do
     if command -v "$cmd" >/dev/null 2>&1; then
         printf '  ok      %s\n' "$cmd"
     else

@@ -1,0 +1,10 @@
+[Unit]
+Description=Refresh org-mode agenda cache every 5 minutes
+
+[Timer]
+OnBootSec=30s
+OnUnitActiveSec=5min
+Unit=agenda-refresh.service
+
+[Install]
+WantedBy=timers.target

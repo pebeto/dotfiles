@@ -67,17 +67,7 @@ wifi_label() {
 
 SENSORS=""
 
-# Both functions parse the cached output to avoid forking `sensors` twice.
-cpu_temps() {
-    awk '
-        /Core/ {
-            gsub("\\+|°C","",$3)
-            printf "%sCore %d: %s°C", sep, n, $3
-            sep=" ~ "
-            n++
-        }' <<< "$SENSORS"
-}
-
+# Max core temp from cached sensors output (avoids forking `sensors` twice).
 cpu_max_temp() {
     awk '
         /Core/ { gsub("\\+|°C","",$3); if ($3+0 > m) m=$3+0 }
@@ -86,17 +76,27 @@ cpu_max_temp() {
 
 while true; do
     SENSORS=$(sensors 2>/dev/null)
-    cpu=$(cpu_temps)
+    cpu=$(cpu_max_temp)
     mem=$(memory_pct)
-    sys_text="$cpu ~ RAM: ${mem}%"
-    sys_color=$(worst_color "$(cpu_max_temp) 70 85" "$mem 80 90")
+    sys_text="CPU: ${cpu}°C ~ RAM: ${mem}%"
+    sys_color=$(worst_color "$cpu 70 85" "$mem 80 90")
     bri=$(brightness_pct)
     vol=$(volume_pct)
     bat0=$(battery_segment 0)
     bat1=$(battery_segment 1)
     lay=$(layout_short)
     wifi=$(wifi_label)
-    dt=$(date "+%Y-%m-%d %H:%M:%S")
+    agenda=$(~/.config/sway/agenda.sh count 2>/dev/null)
+    dt=$(date "+%a %d %H:%M")
+
+    # Agenda label — dim when nothing scheduled, warn color when ≥5 items.
+    agenda_text="Agenda: ${agenda:-?}"
+    agenda_color=""
+    if [ "${agenda:-0}" = "0" ]; then
+        agenda_color="$COLOR_DIM"
+    elif [ "${agenda:-0}" -ge 5 ] 2>/dev/null; then
+        agenda_color="$COLOR_WARN"
+    fi
 
     # Focus mode label — green dot when active, dim "Focus" when off.
     if focus_on; then focus_text="● FOCUS"; focus_color="$COLOR_FOCUS"
@@ -134,6 +134,7 @@ while true; do
     {
         printf '['
         printf '%s,%s,'  "$(block focus      "$focus_text"  "$focus_color")" "$(sep)"
+        printf '%s,%s,'  "$(block layout    "Layout: $lay")"                 "$(sep)"
         printf '%s,%s,'  "$(block cpu        "$sys_text"    "$sys_color")"   "$(sep)"
         printf '%s,%s,'  "$(block brightness "Brightness: $bri")"            "$(sep)"
         printf '%s,%s,'  "$(block volume     "$vol_text"    "$vol_color")"   "$(sep)"
@@ -141,7 +142,7 @@ while true; do
             printf '%s,%s,'  "$(block battery "$bat_text"   "$bat_color")"   "$(sep)"
         fi
         printf '%s,%s,'  "$(block wifi      "WiFi: $wifi"   "$wifi_color")"  "$(sep)"
-        printf '%s,%s,'  "$(block layout    "Layout: $lay")"                 "$(sep)"
+        printf '%s,%s,'  "$(block agenda    "$agenda_text" "$agenda_color")" "$(sep)"
         printf '%s'      "$(block time      "$dt")"
         printf '],\n'
     }

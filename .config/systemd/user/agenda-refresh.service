@@ -1,0 +1,6 @@
+[Unit]
+Description=Refresh cached org-mode agenda for swaybar
+
+[Service]
+Type=oneshot
+ExecStart=%h/.config/sway/agenda.sh refresh
