@@ -66,7 +66,9 @@ show() {
         rm -f "$POPUP_PID"
         return
     fi
-    [ -s "$CACHE_TEXT" ] || refresh
+    # Always refresh on open so a popup never shows stale data — the
+    # 5-min systemd cadence is too coarse for "I just edited my agenda".
+    refresh
     # Same xterm mouse-tracking trick as the cal popup: any click or keypress
     # inside the foot window closes it.
     foot --app-id=agenda-popup \
