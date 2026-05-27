@@ -36,13 +36,28 @@ output "*" bg ../wallpaper.jpeg stretch
 ### Notifications
 exec_always dunst
 
+### Window border colors
+# Sway has no per-app border color, so these apply to every window.
+# Focused: quiet mid-gray chrome that recedes; the split-direction
+# indicator flashes orange (matches the bar accent) when about to split.
+# Unfocused: darker still, so the focused window is clearly the active one.
+# Order: border bg text indicator child_border.
+client.focused          #555555 #323232 #ffffff #ffa500 #555555
+client.focused_inactive  #404040 #262626 #cccccc #404040 #404040
+client.focused_tab_title #555555 #2a2a2a #ffffff #ffa500 #555555
+client.unfocused         #2a2a2a #1a1a1a #888888 #2a2a2a #2a2a2a
+client.urgent            #b85c57 #b85c57 #ffffea #b85c57 #b85c57
+
 ### Calendar popup (toggled by clicking the time block in the status bar)
 # Right edge flush with the output: anchor at 100 ppt then shift left by the
 # window width so the right edge sits at the output's right edge.
-for_window [app_id="cal-popup"]  floating enable, sticky enable, border none, resize set 180 px 180 px, move position 100 ppt 0 ppt, move left 180 px
+for_window [app_id="cal-popup"]  floating enable, sticky enable, border pixel 3, resize set 200 px 200 px, move position 100 ppt 0 ppt, move left 195 px
+
+### Agenda popup (toggled by clicking the agenda block in the status bar)
+for_window [app_id="agenda-popup"] floating enable, sticky enable, border pixel 3, resize set 480 px 360 px, move position 100 ppt 0 ppt, move left 480 px
 
 ### btop popup (toggled by clicking the temp/cpu block in the status bar)
-for_window [app_id="btop-popup"] floating enable, resize set 80 ppt 80 ppt, move position center
+for_window [app_id="btop-popup"] floating enable, border pixel 3, resize set 80 ppt 80 ppt, move position center
 
 ### Idle inhibit while any window is fullscreen (videos, games, etc.)
 for_window [class=".*"]   inhibit_idle fullscreen

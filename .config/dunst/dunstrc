@@ -57,9 +57,9 @@
     default_icon = dialog-information
 
 [urgency_critical]
-    background = "#900000"
-    foreground = "#ffffff"
-    frame_color = "#ff0000"
+    background = "#ffffea"
+    foreground = "#b85c57"
+    frame_color = "#b85c57"
     timeout = 0
     override_pause_level = 60
     default_icon = dialog-warning

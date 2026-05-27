@@ -15,6 +15,7 @@ CACHE_DIR="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/agenda"
 CACHE_TEXT="$CACHE_DIR/today.txt"
 CACHE_COUNT="$CACHE_DIR/today.count"
 POPUP_PID="$CACHE_DIR/popup.pid"
+SCRIPT="$(readlink -f "$0")"
 
 mkdir -p "$CACHE_DIR"
 
@@ -51,13 +52,37 @@ refresh() {
 
     local count
     count=$(printf '%s\n' "$out" | sed -n 's/^AGENDA_COUNT=//p' | head -1)
-    printf '%s\n' "$out" | sed '/^AGENDA_COUNT=/d' > "$CACHE_TEXT"
+    # Drop the AGENDA_COUNT marker and emacs' "Day-agenda (Wxx):" banner,
+    # then squeeze blank-line runs. Cache stays plain text so notify()'s
+    # grep and dunst still work.
+    printf '%s\n' "$out" \
+        | sed -e '/^AGENDA_COUNT=/d' -e '/^\(Day\|Week\)-agenda/d' \
+        | cat -s \
+        > "$CACHE_TEXT"
     printf '%s' "${count:-0}" > "$CACHE_COUNT"
 }
 
 count() {
     [ -s "$CACHE_COUNT" ] || refresh
     cat "$CACHE_COUNT"
+}
+
+pretty() {
+    [ -s "$CACHE_TEXT" ] || refresh
+    # ANSI escapes are added only at display time so the cache used by
+    # count/notify stays plain text.
+    local B=$'\e[1m' R=$'\e[0m'
+    local r=$'\e[31m' g=$'\e[32m' y=$'\e[33m' c=$'\e[36m' m=$'\e[35m'
+    sed -E \
+        -e "1s/^([A-Z].*)/${B}\\1${R}/" \
+        -e "s/\\bTODO\\b/${r}TODO${R}/g" \
+        -e "s/\\bDONE\\b/${g}DONE${R}/g" \
+        -e "s/\\bNEXT\\b/${y}NEXT${R}/g" \
+        -e "s/\\bWAITING\\b/${m}WAITING${R}/g" \
+        -e "s/Scheduled:/${c}Scheduled:${R}/g" \
+        -e "s/Deadline:/${r}Deadline:${R}/g" \
+        -e "s/[0-9]{2}:[0-9]{2}(-[0-9]{2}:[0-9]{2})?/${c}&${R}/g" \
+        "$CACHE_TEXT"
 }
 
 show() {
@@ -72,7 +97,7 @@ show() {
     # Same xterm mouse-tracking trick as the cal popup: any click or keypress
     # inside the foot window closes it.
     foot --app-id=agenda-popup \
-         -- bash -c "cat '$CACHE_TEXT'; printf '\033[?1000h'; read -rsn1; printf '\033[?1000l'" \
+         -- bash -c "'$SCRIPT' pretty; printf '\033[?1000h'; read -rsn1; printf '\033[?1000l'" \
          >/dev/null 2>&1 &
     echo $! > "$POPUP_PID"
 }
@@ -96,7 +121,8 @@ notify() {
 case "$1" in
     refresh) refresh ;;
     count)   count ;;
+    pretty)  pretty ;;
     show)    show ;;
     notify)  notify ;;
-    *) echo "usage: $0 {refresh|count|show|notify}" >&2; exit 1 ;;
+    *) echo "usage: $0 {refresh|count|pretty|show|notify}" >&2; exit 1 ;;
 esac
