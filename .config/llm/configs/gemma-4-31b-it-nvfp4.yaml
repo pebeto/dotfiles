@@ -1,0 +1,16 @@
+model: RedHatAI/gemma-4-31B-it-NVFP4
+host: 0.0.0.0
+port: 8000
+tensor-parallel-size: 1
+max-num-seqs: 2
+enable-prefix-caching: true
+enable-chunked-prefill: true
+max-num-batched-tokens: 8192
+kv-cache-dtype: fp8
+gpu-memory-utilization: 0.9
+max-model-len: auto
+dtype: bfloat16
+enable-auto-tool-choice: true
+tool-call-parser: gemma4
+reasoning-parser: gemma4
+limit-mm-per-prompt: '{"image": 0}'
