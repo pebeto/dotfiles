@@ -1,6 +1,14 @@
 {
   "$schema": "https://opencode.ai/config.json",
-  "lsp": true,
+  "lsp": {
+    "julia": {
+      "command": ["julia", "--startup-file=no", "--history-file=no", "-e", "using LanguageServer; runserver()"],
+      "extensions": [".jl"]
+    }
+  },
+  "tools": {
+    "toolbox*": false
+  },
   "agent": {
     "plan": {
       "mode": "primary",
@@ -20,6 +28,17 @@
       "permission": {
         "edit": "allow",
         "bash": "allow"
+      }
+    },
+    "db": {
+      "mode": "subagent",
+      "temperature": 0.1,
+      "description": "Database specialist. Use for SQL queries, schema/table inspection, and data lookups against Postgres (via the MCP Toolbox). Returns results; does not edit code.",
+      "tools": {
+        "toolbox*": true
+      },
+      "permission": {
+        "edit": "deny"
       }
     }
   },
@@ -60,30 +79,30 @@
   },
   "plugin": [
     "superpowers@git+https://github.com/obra/superpowers.git",
-    "opencode-pty"
+    "opencode-pty",
+    "opencode-snip@latest"
   ],
   "mcp": {
     "agentmemory": {
       "type": "local",
       "command": ["bunx", "-y", "@agentmemory/agentmemory", "mcp"],
+      "env": {
+        "AGENTMEMORY_TOOLS": "core"
+      },
       "enabled": true
     },
     "web-search": {
       "type": "local",
       "command": ["bunx", "-y", "one-search-mcp"],
       "env": {
-        "SEARCH_PROVIDER": "local"
+        "SEARCH_PROVIDER": "searxng",
+        "SEARCH_API_URL": "http://127.0.0.1:8080"
       },
       "enabled": true
     },
     "markitdown": {
       "type": "local",
       "command": ["uvx", "markitdown-mcp"],
-      "enabled": true
-    },
-    "fetch": {
-      "type": "local",
-      "command": ["uvx", "mcp-server-fetch"],
       "enabled": true
     },
     "playwright": {
@@ -96,7 +115,17 @@
         "--executable-path",
         "/usr/bin/helium-browser"
       ],
+      "enabled": false
+    },
+    "context7": {
+      "type": "local",
+      "command": ["bunx", "-y", "@upstash/context7-mcp"],
       "enabled": true
+    },
+    "toolbox": {
+      "type": "local",
+      "command": ["bunx", "-y", "@toolbox-sdk/server", "--prebuilt=postgres", "--stdio"],
+      "enabled": false
     }
   }
 }

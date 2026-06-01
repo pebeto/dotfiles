@@ -58,6 +58,14 @@ require("lazy").setup({
     { "windwp/nvim-autopairs", opts = {} },
     { "kylechui/nvim-surround", opts = {} },
     { "JuliaEditorSupport/julia-vim" },
+    {
+        "Olical/conjure",
+        ft = { "julia" },
+        init = function()
+            vim.g["conjure#client#julia#stdio#command"] = "julia --banner=no --color=no -i"
+            vim.g["conjure#client_on_load"] = false
+        end,
+    },
     { "rafamadriz/friendly-snippets" },
     {
         "saghen/blink.cmp",
