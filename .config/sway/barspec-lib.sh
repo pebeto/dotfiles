@@ -134,7 +134,18 @@ toggle_btop_popup() {
 dispatch_click() {
     local line=$1 btn=1
     # i3bar buttons: 1=left, 2=middle, 3=right, 4=scroll-up, 5=scroll-down
+    # (6/7 = horizontal scroll on some devices)
     [[ "$line" =~ \"button\"[[:space:]]*:[[:space:]]*([0-9]+) ]] && btn=${BASH_REMATCH[1]}
+
+    # Scroll events only make sense on blocks that step a value (volume,
+    # brightness). Everywhere else a stray scroll over the bar must not
+    # toggle popups, focus mode, or the keyboard layout — those need a
+    # real click (button 1-3).
+    case "$line" in
+        *'"name": "volume"'*|*'"name":"volume"'*) ;;
+        *'"name": "brightness"'*|*'"name":"brightness"'*) ;;
+        *) [ "$btn" -ge 4 ] 2>/dev/null && return ;;
+    esac
 
     case "$line" in
         *'"name": "volume"'*|*'"name":"volume"'*)

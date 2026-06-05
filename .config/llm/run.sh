@@ -55,6 +55,7 @@ fi
 
 exec docker run --rm -it --gpus all \
   -v ~/.cache/huggingface:/root/.cache/huggingface \
+  -v ~/.cache/vllm:/root/.cache/vllm \
   -v "$TEMPLATES_DIR:/workspace/templates:ro" \
   -v "$CONFIGS_DIR:/workspace/configs:ro" \
   --env "HF_TOKEN=${HF_TOKEN:-}" \

@@ -70,19 +70,61 @@ count() {
 pretty() {
     [ -s "$CACHE_TEXT" ] || refresh
     # ANSI escapes are added only at display time so the cache used by
-    # count/notify stays plain text.
-    local B=$'\e[1m' R=$'\e[0m'
-    local r=$'\e[31m' g=$'\e[32m' y=$'\e[33m' c=$'\e[36m' m=$'\e[35m'
-    sed -E \
-        -e "1s/^([A-Z].*)/${B}\\1${R}/" \
-        -e "s/\\bTODO\\b/${r}TODO${R}/g" \
-        -e "s/\\bDONE\\b/${g}DONE${R}/g" \
-        -e "s/\\bNEXT\\b/${y}NEXT${R}/g" \
-        -e "s/\\bWAITING\\b/${m}WAITING${R}/g" \
-        -e "s/Scheduled:/${c}Scheduled:${R}/g" \
-        -e "s/Deadline:/${r}Deadline:${R}/g" \
-        -e "s/[0-9]{2}:[0-9]{2}(-[0-9]{2}:[0-9]{2})?/${c}&${R}/g" \
-        "$CACHE_TEXT"
+    # count/notify stays plain text. Entries are grouped under one yellow
+    # header per category instead of repeating "category:" on every line,
+    # and long entries wrap with a hanging indent at the real terminal
+    # width (pretty runs inside the foot popup, so tput sees it).
+    local cols
+    cols=$(tput cols 2>/dev/null) || cols=80
+    awk -v width="${cols:-80}" \
+        -v B=$'\e[1m' -v D=$'\e[2m' -v R=$'\e[0m' \
+        -v r=$'\e[31m' -v g=$'\e[32m' -v y=$'\e[33m' -v c=$'\e[36m' -v m=$'\e[35m' '
+    function colorize(s) {
+        gsub(/\<TODO\>/,    r "TODO" R, s)
+        gsub(/\<DONE\>/,    g "DONE" R, s)
+        gsub(/\<NEXT\>/,    y "NEXT" R, s)
+        gsub(/\<WAITING\>/, m "WAITING" R, s)
+        gsub(/Scheduled:/,  c "Scheduled:" R, s)
+        gsub(/Deadline:/,   r "Deadline:" R, s)
+        gsub(/[0-9][0-9]:[0-9][0-9](-[0-9][0-9]:[0-9][0-9])?/, c "&" R, s)
+        return s
+    }
+    # Wrap at word boundaries; continuation lines align under the bullet
+    # text. Wrapping happens on plain text and colorize() runs per output
+    # line, so escape codes never skew the width math.
+    function wrap(text, first, cont,    words, n, i, line) {
+        n = split(text, words, /[ \t]+/)
+        line = first words[1]
+        for (i = 2; i <= n; i++) {
+            if (length(line) + 1 + length(words[i]) > width) {
+                print colorize(line)
+                line = cont words[i]
+            } else {
+                line = line " " words[i]
+            }
+        }
+        print colorize(line)
+    }
+    NR == 1 && /^[A-Za-z]/ {
+        gsub(/  +/, " ")            # org pads the day name; tidy it
+        sub(/^[A-Za-z]+/, "&,")     # "Wednesday 3 June" -> "Wednesday, 3 June"
+        print B $0 R
+        next
+    }
+    /^[ \t]+[A-Za-z0-9_-]+:([ \t]|$)/ {
+        line = $0
+        sub(/^[ \t]+/, "", line)
+        cat = line; sub(/:.*/, "", cat)
+        text = line; sub(/^[A-Za-z0-9_-]+:[ \t]*/, "", text)
+        if (cat != curcat) { print ""; print y cat R; curcat = cat }
+        wrap(text, "  \xe2\x80\xa2 ", "    ")
+        entries++
+        next
+    }
+    /^[ \t]*$/ { next }             # grouping provides its own spacing
+    { print; other++ }              # e.g. the "(no org dir at ...)" fallback
+    END { if (NR && !entries && !other) print "\n" D "(nothing scheduled)" R }
+    ' "$CACHE_TEXT"
 }
 
 show() {
