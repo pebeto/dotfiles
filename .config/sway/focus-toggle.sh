@@ -4,7 +4,7 @@
 # timers resume from where they were paused rather than restarting.
 #
 # State is tracked by the existence of $STATE_FILE under $XDG_RUNTIME_DIR
-# (tmpfs — wiped on reboot, so focus is never persistently "on").
+# (tmpfs, wiped on reboot, so focus never persists as "on").
 
 set -u
 

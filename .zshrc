@@ -45,7 +45,7 @@ export PATH
 # Helium browser as the Chrome executable for tools that probe $CHROME_EXECUTABLE.
 export CHROME_EXECUTABLE=/usr/bin/helium-browser
 
-# nvm — load system node by default
+# nvm: load system node by default
 source /usr/share/nvm/init-nvm.sh
 nvm use system >/dev/null
 

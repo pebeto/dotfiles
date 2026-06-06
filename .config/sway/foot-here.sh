@@ -1,7 +1,7 @@
 #!/bin/bash
 # Open a new foot in the focused foot window's current working directory
-# (the deepest descendant process — typically the shell, which tracks the
-# cwd the user is actually in). If the focused window isn't a foot, fall
+# (the deepest descendant process, usually the shell, which tracks the
+# cwd the user is in). If the focused window isn't a foot, fall
 # back to $HOME so the binding behaves like the unmodified $mod+Return.
 
 set -u

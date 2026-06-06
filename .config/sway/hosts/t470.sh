@@ -10,8 +10,8 @@ SEP_COLOR="#5e5e5e"
 COLOR_DIM="#888888"
 COLOR_LOW="#ff5555"
 # Battery turns red only when one pack is fully depleted (0%) AND the
-# other is at or below this threshold — i.e. the system has effectively
-# lost one battery and the survivor is also low.
+# other is at or below this threshold: one battery is gone and the
+# survivor is also low.
 BAT_PARTNER_THRESHOLD=15
 
 read_sysfs() { [ -r "$1" ] && cat "$1"; }
@@ -89,7 +89,7 @@ while true; do
     agenda=$(~/.config/sway/agenda.sh count 2>/dev/null)
     dt=$(date "+%a %d %H:%M")
 
-    # Agenda label — dim when nothing scheduled, warn color when ≥5 items.
+    # Agenda label: dim when nothing scheduled, warn color when ≥5 items.
     agenda_text="Agenda: ${agenda:-?}"
     agenda_color=""
     if [ "${agenda:-0}" = "0" ]; then
@@ -98,12 +98,12 @@ while true; do
         agenda_color="$COLOR_WARN"
     fi
 
-    # Focus mode label — green dot when active, dim "Focus" when off.
+    # Focus mode label: green dot when active, dim "Focus" when off.
     if focus_on; then focus_text="● FOCUS"; focus_color="$COLOR_FOCUS"
     else              focus_text="Focus";   focus_color="$COLOR_DIM"
     fi
 
-    # Volume label — dim gray when muted, like off-state radios
+    # Volume label: dim gray when muted, like off-state radios
     vol_color=""
     if volume_muted; then
         vol_text="Volume: Muted"

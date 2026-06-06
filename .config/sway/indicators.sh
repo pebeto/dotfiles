@@ -1,9 +1,9 @@
 #!/bin/bash
 # Notification-only handler for kernel/EC-driven hardware keys. The
-# kernel performs the state change in parallel; we wait briefly for
-# it to settle, then dunstify the resulting state and nudge the bar
-# to refresh. Userspace actions (volume/mic/layout) are inlined in
-# the sway config — they don't notify because the bar already shows
+# kernel performs the state change in parallel; we wait for it to
+# settle, then dunstify the resulting state and nudge the bar to
+# refresh. Userspace actions (volume/mic/layout) are inlined in the
+# sway config; they don't notify because the bar already shows
 # them.
 
 BAR_REFRESH_FIFO="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/sway-bar-refresh"

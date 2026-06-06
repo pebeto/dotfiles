@@ -1,8 +1,8 @@
 #!/bin/bash
 # Today's org-mode agenda for the swaybar, dunst notifications, and a
 # click-to-toggle popup. `emacs --batch` is slow to cold-start, so the
-# bar never invokes it directly — a systemd timer calls `refresh` every
-# few minutes and writes two cache files; the bar just `cat`s the count.
+# bar never invokes it directly. A systemd timer calls `refresh` every few
+# minutes and writes two cache files; the bar `cat`s the count.
 #
 # Subcommands:
 #   refresh  re-render today's agenda via emacs --batch; update cache
@@ -133,8 +133,8 @@ show() {
         rm -f "$POPUP_PID"
         return
     fi
-    # Always refresh on open so a popup never shows stale data — the
-    # 5-min systemd cadence is too coarse for "I just edited my agenda".
+    # Always refresh on open so a popup never shows stale data. The 5-min
+    # systemd cadence is too coarse for "I just edited my agenda".
     refresh
     # Same xterm mouse-tracking trick as the cal popup: any click or keypress
     # inside the foot window closes it.
@@ -157,7 +157,7 @@ notify() {
     fi
     dunstify -a "Agenda" -i "x-office-calendar" \
         -h "string:x-dunst-stack-tag:agenda" \
-        "Agenda — $n today" "$body"
+        "Agenda: $n today" "$body"
 }
 
 case "$1" in

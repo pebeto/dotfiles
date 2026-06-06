@@ -1,0 +1,6 @@
+[Unit]
+Description=Warn via dunst when the battery is low
+
+[Service]
+Type=oneshot
+ExecStart=%h/.config/sway/battery-notify.sh

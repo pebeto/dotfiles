@@ -36,11 +36,16 @@ output "*" bg ../wallpaper.jpeg stretch
 ### Notifications
 exec_always dunst
 
+### Clipboard history: cliphist records every clipboard selection; recall it
+### with the XF86Favorites key (see below). exec_always so a config reload
+### also starts it; the pgrep guard keeps it to a single watcher instance.
+exec_always pgrep -x wl-paste >/dev/null || wl-paste --watch cliphist store
+
 ### Window border colors
 # Sway has no per-app border color, so these apply to every window.
 # Focused: quiet mid-gray chrome that recedes; the split-direction
 # indicator flashes orange (matches the bar accent) when about to split.
-# Unfocused: darker still, so the focused window is clearly the active one.
+# Unfocused: darker still, so the focused window stands out as active.
 # Order: border bg text indicator child_border.
 client.focused          #555555 #323232 #ffffff #ffa500 #555555
 client.focused_inactive  #404040 #262626 #cccccc #404040 #404040
@@ -167,6 +172,13 @@ bindsym Print exec grim -g "$(slurp)" - | wl-copy
 
 # Screenshot region → swappy (annotate, then Ctrl+S to save / Ctrl+C to copy)
 bindsym Shift+Print exec grim -g "$(slurp)" - | swappy -f -
+
+# Screen recording region → ~/Videos/Screencasts (toggle: press once to pick
+# a region and start, press again to stop). Video analogue of the keys above.
+bindsym XF86Display exec ~/.config/sway/screen-record.sh
+
+# Clipboard history picker: pick a past selection via fuzzel, paste it back.
+bindsym XF86Favorites exec ~/.config/sway/clip-menu.sh
 
 ### Resizing containers
 mode "resize" {

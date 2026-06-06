@@ -139,7 +139,7 @@ dispatch_click() {
 
     # Scroll events only make sense on blocks that step a value (volume,
     # brightness). Everywhere else a stray scroll over the bar must not
-    # toggle popups, focus mode, or the keyboard layout — those need a
+    # toggle popups, focus mode, or the keyboard layout; those need a
     # real click (button 1-3).
     case "$line" in
         *'"name": "volume"'*|*'"name":"volume"'*) ;;

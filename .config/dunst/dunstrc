@@ -1,4 +1,4 @@
-# dunst configuration — see dunst(5) for the full reference. Only values
+# dunst configuration. See dunst(5) for the full reference. Only values
 # that differ from upstream defaults are listed here.
 
 [global]
@@ -20,7 +20,7 @@
     show_age_threshold = 60
     ellipsize = middle
 
-    # Icons — recursive lookup against Adwaita; legacy icon_path removed.
+    # Icons: recursive lookup against Adwaita; legacy icon_path removed.
     enable_recursive_icon_lookup = true
     icon_theme = Adwaita
     min_icon_size = 32
@@ -35,7 +35,7 @@
     browser = /usr/bin/xdg-open
     always_run_script = true
 
-    # Wayland — stay above fullscreen apps
+    # Wayland: stay above fullscreen apps
     layer = top
 
     # Mouse

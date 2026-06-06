@@ -1,6 +1,6 @@
 #!/bin/bash
 # Fuzzel-based WiFi picker for iwd-based systems. Lists nearby networks via
-# iwctl, prompts via fuzzel --dmenu, and connects — asking for a passphrase
+# iwctl, prompts via fuzzel --dmenu, and connects, asking for a passphrase
 # via fuzzel --password only when the network isn't already known to iwd.
 #
 # Invoked from barspec-lib.sh when the user clicks the "wifi" bar block.

@@ -35,7 +35,7 @@ while true; do
     agenda=$(~/.config/sway/agenda.sh count 2>/dev/null)
     dt=$(date "+%a %d %H:%M")
 
-    # Agenda label — dim when nothing scheduled, warn color when ≥5 items.
+    # Agenda label: dim when nothing scheduled, warn color when ≥5 items.
     agenda_text="Agenda: ${agenda:-?}"
     agenda_color=""
     if [ "${agenda:-0}" = "0" ]; then
@@ -47,12 +47,12 @@ while true; do
     sys_text="CPU: ${cpu:-?}°C ~ GPU: ${gpu:-?}°C ~ RAM: ${mem}%"
     sys_color=$(worst_color "$(hottest_temp "$cpu" "$gpu") 70 85" "$mem 80 90")
 
-    # Focus mode label — green dot when active, dim "Focus" when off.
+    # Focus mode label: green dot when active, dim "Focus" when off.
     if focus_on; then focus_text="● FOCUS"; focus_color="$COLOR_FOCUS"
     else              focus_text="Focus";   focus_color="$COLOR_DIM"
     fi
 
-    # Volume label — dim gray when muted
+    # Volume label: dim gray when muted
     vol_color=""
     if volume_muted; then
         vol_text="Volume: Muted"

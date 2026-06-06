@@ -7,7 +7,7 @@
 #   ~/.config/sway-host.sh     selects which hosts/<HOST>.sh is active
 #
 # Existing symlinks pointing at the right target are left alone. Existing
-# files or symlinks pointing elsewhere are reported and skipped — nothing
+# files or symlinks pointing elsewhere are reported and skipped; nothing
 # is overwritten unless you pass --force-host (only re-points the two
 # sway host shims, since switching profiles is the expected workflow).
 
@@ -44,7 +44,7 @@ CONFIG_DST="${XDG_CONFIG_HOME:-$HOME/.config}"
 SKIP=(.git .gitignore README.md install.sh LICENSE)
 
 # .config/ entries that need per-file linking instead of a whole-dir
-# symlink — typically because ~/.config/<name>/ already exists as a real
+# symlink, usually because ~/.config/<name>/ already exists as a real
 # dir managed by another tool (e.g. systemd creates ~/.config/systemd/).
 CONFIG_SPECIAL=(systemd opencode)
 
@@ -95,7 +95,7 @@ link() {
 
 echo "Dotfiles: $DOTFILES"
 echo "Host:     $HOST"
-[ "$DRY" = 1 ] && echo "(dry run — no changes)"
+[ "$DRY" = 1 ] && echo "(dry run, no changes)"
 echo
 
 [ "$DRY" = 1 ] || mkdir -p "$CONFIG_DST"
@@ -149,8 +149,8 @@ if [ -d "$systemd_src" ]; then
     if [ "$DRY" = 0 ]; then
         systemctl --user daemon-reload 2>/dev/null || true
         # Enable+start the agenda timers. `|| true` because a fresh box may
-        # not have a user session bus yet — re-running after login fixes it.
-        systemctl --user enable --now agenda-refresh.timer agenda-notify.timer 2>/dev/null || true
+        # not have a user session bus yet; re-running after login fixes it.
+        systemctl --user enable --now agenda-refresh.timer agenda-notify.timer battery-notify.timer 2>/dev/null || true
     fi
 else
     printf '  WARN    %s missing\n' "$systemd_src"
@@ -176,7 +176,7 @@ fi
 
 echo
 echo "Misc directories"
-for dir in "$HOME/Pictures/Screenshots"; do
+for dir in "$HOME/Pictures/Screenshots" "$HOME/Videos/Screencasts"; do
     if [ -d "$dir" ]; then
         printf '  ok      %s\n' "$dir"
     else
@@ -188,7 +188,7 @@ done
 echo
 echo "Dependencies (referenced by the sway config / barspec)"
 missing=()
-for cmd in sway swaymsg swayidle swaylock playerctl amixer grim slurp swappy wl-copy dunst foot fuzzel gammastep swaynag sensors rfkill iw dunstify btop brightnessctl iwctl jq emacs; do
+for cmd in sway swaymsg swayidle swaylock playerctl amixer grim slurp swappy wl-copy wl-paste dunst foot fuzzel gammastep swaynag sensors rfkill iw dunstify btop brightnessctl iwctl bluetoothctl cliphist wf-recorder jq emacs; do
     if command -v "$cmd" >/dev/null 2>&1; then
         printf '  ok      %s\n' "$cmd"
     else
