@@ -73,6 +73,14 @@ source ~/.miscrc
 export BUN_INSTALL="$HOME/.bun"
 export PATH="$BUN_INSTALL/bin:$PATH"
 
-
-# Added by Antigravity CLI installer
-export PATH="$HOME/.local/bin:$PATH"
+# fzf: interactive fuzzy finder (Ctrl-R history, Ctrl-T files, Alt-C cd).
+# fd is the file/dir source (fast, respects .gitignore, includes dotfiles
+# but skips .git); ripgrep stays the content-search tool used elsewhere.
+if command -v fzf >/dev/null; then
+    source <(fzf --zsh)
+    if command -v fd >/dev/null; then
+        export FZF_DEFAULT_COMMAND='fd --type f --hidden --follow --exclude .git'
+        export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
+        export FZF_ALT_C_COMMAND='fd --type d --hidden --follow --exclude .git'
+    fi
+fi

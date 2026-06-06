@@ -41,7 +41,7 @@ DOTFILES="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CONFIG_DST="${XDG_CONFIG_HOME:-$HOME/.config}"
 
 # Repo-root entries that are NOT deployed.
-SKIP=(.git .gitignore README.md install.sh)
+SKIP=(.git .gitignore README.md install.sh LICENSE)
 
 # .config/ entries that need per-file linking instead of a whole-dir
 # symlink — typically because ~/.config/<name>/ already exists as a real
