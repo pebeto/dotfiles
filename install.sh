@@ -198,6 +198,26 @@ for cmd in sway swaymsg swayidle swaylock playerctl amixer grim slurp swappy wl-
 done
 
 echo
+echo "Local LLM stack (.config/llm)"
+if command -v llama-server >/dev/null 2>&1; then
+    printf '  ok      llama-server\n'
+else
+    printf '  MISSING llama-server (needed by run.sh)\n'
+    n_warn=$((n_warn + 1))
+fi
+# one-search-mcp's browser finder probes fixed paths like /usr/bin/chromium
+if [ -e /usr/bin/chromium ]; then
+    printf '  ok      /usr/bin/chromium (one-search-mcp scrape/map)\n'
+elif [ -x /usr/bin/helium-browser ]; then
+    printf '  TODO    one-search-mcp scrape/map needs /usr/bin/chromium. Point it at helium:\n'
+    printf '            sudo ln -s /usr/bin/helium-browser /usr/bin/chromium\n'
+    n_warn=$((n_warn + 1))
+else
+    printf '  WARN    no /usr/bin/chromium and no /usr/bin/helium-browser; scrape/map will fail\n'
+    n_warn=$((n_warn + 1))
+fi
+
+echo
 echo "Summary: $n_link new/relinked, $n_ok already correct, $n_warn warning(s)"
 if [ ${#missing[@]} -gt 0 ]; then
     echo "Missing commands: ${missing[*]}"

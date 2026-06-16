@@ -6,9 +6,6 @@
       "extensions": [".jl"]
     }
   },
-  "tools": {
-    "toolbox*": false
-  },
   "agent": {
     "plan": {
       "mode": "primary",
@@ -30,38 +27,50 @@
         "bash": "allow"
       }
     },
-    "db": {
-      "mode": "subagent",
-      "temperature": 0.1,
-      "description": "Database specialist. Use for SQL queries, schema/table inspection, and data lookups against Postgres (via the MCP Toolbox). Returns results; does not edit code.",
-      "prompt": "You are a database specialist. Run the requested SQL and return the results. Do not write or edit application code. <|think_off|>",
-      "tools": {
-        "toolbox*": true
-      },
+    "research": {
+      "mode": "primary",
+      "temperature": 0.7,
+      "top_p": 0.8,
+      "presence_penalty": 1.5,
+      "description": "Web research and Q&A. Searches the web and synthesizes a cited answer. Cannot write code or run shell.",
+      "prompt": "You are a research assistant. Answer the user's question using web search, then synthesize a direct, cited answer. Rules: 1. Search deliberately: run one focused query first, add a second or third only if it misses, and never repeat a query you already ran. 2. Use the results you get; if the first search answers the question, answer it instead of hunting for a better hit. 3. Cite the URLs you drew from. 4. Stay factual: if the searches do not answer the question, say so and report what you found instead of looping. 5. Do not write or edit files, and do not run shell commands.",
       "permission": {
-        "edit": "deny"
+        "edit": "deny",
+        "bash": "deny"
       }
     }
   },
   "provider": {
-    "vLLM": {
+    "local": {
       "npm": "@ai-sdk/openai-compatible",
-      "name": "vLLM",
+      "name": "llama.cpp",
       "options": {
         "baseURL": "http://localhost:8000/v1",
         "timeout": 1800000,
         "chunkTimeout": 1800000
       },
       "models": {
-        "sakamakismile/Qwen3.6-27B-Text-NVFP4-MTP": {
-          "name": "sakamakismile/Qwen3.6-27B-Text-NVFP4-MTP",
+        "qwen3.6-27b": {
+          "name": "qwen3.6-27b",
           "options": {
-            "top_p": 0.95,
+            "temperature": 0.7,
+            "top_p": 0.8,
             "top_k": 20,
-            "presence_penalty": 0
+            "presence_penalty": 1.5
           },
           "limit": {
-            "context": 170000,
+            "context": 131072,
+            "output": 16384
+          }
+        },
+        "devstral-small-2": {
+          "name": "devstral-small-2",
+          "options": {
+            "temperature": 0.4,
+            "top_p": 0.95
+          },
+          "limit": {
+            "context": 131072,
             "output": 16384
           }
         }
@@ -96,27 +105,10 @@
       "command": ["uvx", "markitdown-mcp"],
       "enabled": true
     },
-    "playwright": {
-      "type": "local",
-      "command": [
-        "npx",
-        "-y",
-        "@playwright/mcp@latest",
-        "--headless",
-        "--executable-path",
-        "/usr/bin/helium-browser"
-      ],
-      "enabled": false
-    },
     "context7": {
       "type": "local",
       "command": ["bunx", "-y", "@upstash/context7-mcp"],
       "enabled": true
-    },
-    "toolbox": {
-      "type": "local",
-      "command": ["bunx", "-y", "@toolbox-sdk/server", "--prebuilt=postgres", "--stdio"],
-      "enabled": false
     }
   }
 }

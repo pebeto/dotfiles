@@ -1,0 +1,63 @@
+# Qwen3.6-27B research / general-purpose model, served natively by llama.cpp.
+# (Devstral handles coding; this one handles web research, Q&A, and reasoning.)
+#
+# froggeric's MTP GGUF has the FIXED chat template baked into its metadata --
+# the original template mishandled <think>/</think>, which is what caused the
+# random mid-generation truncation. It also bundles the MTP head for built-in
+# speculative decoding. Needs llama.cpp build >= 9180.
+#
+# run.sh translates each "flag: value" below into a llama-server long option:
+#   key: value -> --key value      key: true -> --key      key: false -> (omitted)
+
+# Pre-downloaded to disk so llama.cpp mmaps it (low host RAM) instead of holding
+# a live `-hf` download in committed RAM -- that's what OOM'd this 30GB box.
+# Re-fetch: curl -fL -C - -o <this path> \
+#   https://huggingface.co/froggeric/Qwen3.6-27B-MTP-GGUF/resolve/main/Qwen3.6-27B-Q5_K_M-mtp.gguf
+model: /home/pebeto/.cache/llama.cpp/Qwen3.6-27B-Q5_K_M-mtp.gguf
+alias: qwen3.6-27b
+host: 0.0.0.0
+port: 8000
+
+n-gpu-layers: 99          # all 64 layers on the GPU
+ctx-size: 131072
+
+# Flash attention is REQUIRED for the quantized KV cache below. It works on the
+# CUDA build; the installed Vulkan build may not support it for this model's
+# head_dim=256. If startup errors on FA/KV, either install llama.cpp-cuda
+# (recommended on the 5090) or fall back to f16 KV: set `flash-attn: auto`,
+# delete the two cache-type lines, and drop ctx-size to 65536.
+flash-attn: on
+cache-type-k: q8_0
+cache-type-v: q8_0
+
+# Built-in MTP speculative decoding. Same-vocab by construction, so it's safe.
+# Never pair this model with a cross-vocab DRAFT model -- that silently corrupts
+# tool-call / JSON tokens while still showing high acceptance and tok/s.
+spec-type: draft-mtp
+spec-draft-n-max: 2
+
+jinja: true               # required for template-based tool calling
+
+# Qwen3.6 non-thinking (instruct) preset for research/general use.
+# presence-penalty 1.5 is Qwen's recommended guard against repetition and the
+# over-searching that bit the agent earlier.
+temp: 0.7
+top-p: 0.8
+top-k: 20
+min-p: 0.0
+presence-penalty: 1.5
+
+# JSON tool-call template (llama.cpp's own Qwen2.5 reference: ChatML + Hermes
+# JSON, `<tool_call>{"name":...,"arguments":...}</tool_call>`). The Qwen3.5/3.6
+# family is XML-native (qwen3_coder format), but llama.cpp's XML/peg-native
+# parser is buggy (#20612/#20164: duplicate/invalid params -> "failed to parse
+# at pos N"). The JSON format is grammar-constrained by llama.cpp, so the model
+# CANNOT emit duplicate/malformed params -- tool calls always parse. This
+# template is non-thinking, which is what we want for agentic tool use anyway.
+chat-template-file: qwen-json-tools.jinja
+
+# Want maximum reasoning for chat/research with little tool use? Enable thinking:
+# remove the chat-template-file line above (falls back to the GGUF's embedded
+# template), add  chat-template-kwargs: '{"enable_thinking": true}', raise temp to
+# 1.0. Trade-off: thinking + tool calls is less reliable in llama.cpp (XML parse
+# path), so keep the JSON template when the agent needs dependable web-search.

@@ -55,7 +55,7 @@ alias grep='grep --color=auto'
 alias fgrep='fgrep --color=auto'
 alias egrep='egrep --color=auto'
 
-# Local LLM server (vLLM in docker). Configs live in ~/.config/llm/configs.
+# Local LLM server (llama.cpp). Configs live in ~/.config/llm/configs.
 llm() { ~/.config/llm/run.sh "$@"; }
 _llm() {
     local -a models
