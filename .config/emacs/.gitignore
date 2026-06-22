@@ -1,6 +1,6 @@
-# This dir is symlinked into the repo. Only the two source files are tracked;
-# anything Emacs generates here is ignored (most state is redirected to
-# ~/.cache and ~/.local/share by early-init.el / init.el, this is a backstop).
+# This dir symlinks into the repo. Track only the source files; ignore anything
+# Emacs generates (most state goes to ~/.cache and ~/.local/share; this is a
+# backstop).
 *
 !.gitignore
 !early-init.el

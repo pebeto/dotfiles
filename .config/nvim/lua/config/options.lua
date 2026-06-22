@@ -19,10 +19,8 @@ vim.opt.autoread = true -- Auto-reload files changed externally
 
 vim.cmd("colorscheme dookie")
 
--- Notifications (must be early so conform/lint can use vim.notify)
-require("notify").setup({
-    fps = 60,
-    stages = "slide",
-    render = "wrapped-compact",
-})
-vim.notify = require("notify")
+-- Notifications (must be early so conform/lint can use vim.notify).
+-- mini.notify also shows LSP progress (a lighter stand-in for the removed
+-- fidget.nvim).
+require("mini.notify").setup()
+vim.notify = require("mini.notify").make_notify()

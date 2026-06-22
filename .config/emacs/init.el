@@ -50,6 +50,23 @@
 (load custom-file 'noerror 'nomessage)
 
 ;;;; ---------------------------------------------------------------------------
+;;;; PATH: make GUI/daemon Emacs see your shell tools
+;;;; ---------------------------------------------------------------------------
+;; Launched from Sway/fuzzel or as a daemon, Emacs inherits a bare session
+;; PATH (/usr/bin, ...) and never sources ~/.zshrc, so juliaup's `julia` and
+;; npm-global binaries go missing and eglot/apheleia can't start them. Mirror
+;; the user-bin dirs from ~/.zshrc onto exec-path and PATH.
+(dolist (dir '("~/.juliaup/bin"   ; julia (juliaup) -> needed by eglot-jl
+               "~/.julia/bin"     ; Julia-installed apps
+               "~/.npm-global/bin"
+               "~/.bun/bin"
+               "~/.local/bin"))
+  (let ((d (expand-file-name dir)))
+    (when (file-directory-p d)
+      (add-to-list 'exec-path d)
+      (setenv "PATH" (concat d path-separator (getenv "PATH"))))))
+
+;;;; ---------------------------------------------------------------------------
 ;;;; Package system: built-in package.el + use-package (Emacs 30)
 ;;;; ---------------------------------------------------------------------------
 
@@ -75,7 +92,7 @@
 
 (global-display-line-numbers-mode 1)              ; number
 (global-hl-line-mode 1)                           ; cursorline
-(global-display-fill-column-indicator-mode 1)     ; colorcolumn (always-on; see notes)
+(global-display-fill-column-indicator-mode 1)     ; colorcolumn (always on)
 (electric-pair-mode 1)                            ; nvim-autopairs
 (electric-indent-mode 1)                          ; smartindent (on by default)
 (delete-selection-mode 1)
@@ -188,7 +205,7 @@
 
 ;;;; ---------------------------------------------------------------------------
 ;;;; LSP  (eglot, built-in)  ── nvim-lspconfig / mason
-;;;; You install the servers yourself (see notes); eglot wires them in.
+;;;; You install the servers yourself; eglot connects to them.
 ;;;; ---------------------------------------------------------------------------
 
 (use-package eglot
@@ -216,15 +233,15 @@
                '((latex-mode tex-mode plain-tex-mode) . ("texlab"))))
 ;; clangd (c/c++) and typescript-language-server (js/ts) are eglot defaults.
 
-;; Hover docs land in the echo area automatically (eldoc). `K` in vim ≈ eldoc.
+;; Hover docs show in the echo area via eldoc (vim's `K`).
 (setq eldoc-echo-area-use-multiline-p t)
 (global-eldoc-mode 1)
 
 ;;;; ---------------------------------------------------------------------------
 ;;;; Diagnostics & linting  (flymake, built-in)  ── nvim-lint + diagnostics
-;;;; eglot feeds flymake LSP diagnostics; flymake-collection adds the external
-;;;; linters (flake8, eslint, markdownlint, hadolint, …). See notes to pin an
-;;;; exact linter per language.
+;;;; eglot feeds flymake LSP diagnostics; flymake-collection adds external
+;;;; linters (flake8, eslint, markdownlint, hadolint). Set
+;;;; flymake-collection-config to pin an exact linter per language.
 ;;;; ---------------------------------------------------------------------------
 
 (use-package flymake
@@ -238,7 +255,7 @@
   :custom
   (flymake-show-diagnostics-at-end-of-line 'short)) ; inline message ≈ virtual_text
 
-;; lcd  "show diagnostic at cursor" — flymake stores it as help-echo at point.
+;; lcd  show diagnostic at cursor; flymake stores it as help-echo at point.
 (global-set-key (kbd "C-c l c") #'display-local-help)
 
 (use-package flymake-collection
@@ -267,8 +284,8 @@
 
 ;;;; ---------------------------------------------------------------------------
 ;;;; Git  (magit + diff-hl)  ── gitsigns.nvim
-;;;; diff-hl draws the fringe signs and does hunk-level ops in the file buffer;
-;;;; magit is the full porcelain (and far beyond what gitsigns does).
+;;;; diff-hl draws the fringe signs and stages/reverts hunks in the buffer;
+;;;; magit is the full Git porcelain.
 ;;;; ---------------------------------------------------------------------------
 
 (use-package magit
@@ -291,8 +308,8 @@
 
 ;;;; ---------------------------------------------------------------------------
 ;;;; File browser  (dired + wdired, built-in)  ── oil.nvim
-;;;; wdired (C-x C-q) makes the listing editable exactly like oil: rename/move/
-;;;; delete by editing text, C-c C-c to apply. This is what oil was modelled on.
+;;;; wdired (C-x C-q) makes the listing editable like oil: edit names as text,
+;;;; C-c C-c to apply.
 ;;;; ---------------------------------------------------------------------------
 
 (use-package dired
@@ -308,7 +325,7 @@
 ;;;; ---------------------------------------------------------------------------
 ;;;; Terminal  (eshell popup)  ── toggleterm.nvim
 ;;;; eshell is the built-in Lisp shell. Swap the `(eshell)` call for `(eat)` or
-;;;; `(vterm)` if you want a full TTY for TUI apps like btop (see notes).
+;;;; `(vterm)` for a full TTY (TUI apps like btop).
 ;;;; ---------------------------------------------------------------------------
 
 (add-to-list 'display-buffer-alist
@@ -346,7 +363,7 @@
   (markdown-fontify-code-blocks-natively t))
 
 ;;;; ---------------------------------------------------------------------------
-;;;; Org  (built-in — this is the real thing nvim-orgmode emulates)
+;;;; Org  (built-in; the real thing nvim-orgmode emulates)
 ;;;; org-modern replaces org-bullets with a cleaner look.
 ;;;; ---------------------------------------------------------------------------
 
@@ -390,10 +407,10 @@
 
 (defun dookie/copilot-maybe ()
   "Enable `copilot-mode', but only once the language server is installed.
-Until you run \\[copilot-install-server], copilot.el signals
+Before you run \\[copilot-install-server], copilot.el signals
 \"@github/copilot-language-server is not installed\" on every window-focus
-change — which spams *Messages* and can even interrupt package installs.
-Staying off until the server exists avoids all of that."
+change. That spams *Messages* and can interrupt package installs, so this
+stays off until the server exists."
   (require 'copilot)
   (when (ignore-errors (copilot-installed-version))
     (copilot-mode 1)))
@@ -409,8 +426,8 @@ Staying off until the server exists avoids all of that."
               ("M-["   . copilot-previous-completion) ; <M-[>
               ("M-RET" . copilot-accept-completion-by-word))
   :custom
-  ;; Default is ~/.config/emacs/.cache/copilot — i.e. inside the symlinked
-  ;; repo. Keep the server (node_modules) in the XDG cache instead.
+  ;; Default is ~/.config/emacs/.cache/copilot, inside the symlinked repo.
+  ;; Keep the server (node_modules) in the XDG cache instead.
   (copilot-install-dir (dookie/cache "copilot"))
   :config
   (setq copilot-indent-offset-warning-disable t))

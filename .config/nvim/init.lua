@@ -18,14 +18,11 @@ require("lazy").setup({
     { "nvim-treesitter/nvim-treesitter" },
 
     -- LSP
-    {
-        "mason-org/mason-lspconfig.nvim",
-        opts = { servers = { lua_ls = {} } },
-        dependencies = {
-            { "mason-org/mason.nvim", opts = {} },
-            { "neovim/nvim-lspconfig" },
-        },
-    },
+    -- mason installs the servers/formatters/linters; lspconfig ships their
+    -- definitions. Servers are enabled natively in plugins/lsp.lua via
+    -- vim.lsp.config/enable, so the mason-lspconfig bridge isn't needed.
+    { "mason-org/mason.nvim", opts = {} },
+    { "neovim/nvim-lspconfig" },
     { "stevearc/conform.nvim", opts = {} },
     { "mfussenegger/nvim-lint" },
 
@@ -52,6 +49,8 @@ require("lazy").setup({
     -- Productivity
     { "akinsho/toggleterm.nvim" },
     { "lewis6991/gitsigns.nvim" },
+    { "folke/flash.nvim" },
+    { "MagicDuck/grug-far.nvim" },
     { "windwp/nvim-ts-autotag", opts = {} },
     { "windwp/nvim-autopairs", opts = {} },
     { "kylechui/nvim-surround", opts = {} },
@@ -102,7 +101,7 @@ require("lazy").setup({
 
     -- Custom
     { "pebeto/dookie.nvim" },
-    { "rcarriga/nvim-notify" },
+    { "nvim-mini/mini.notify" },
     { "nvim-mini/mini.icons" },
     { "Bekaboo/deadcolumn.nvim" },
 
@@ -133,4 +132,6 @@ require("plugins.oil")
 require("plugins.gitsigns")
 require("plugins.telescope")
 require("plugins.toggleterm")
+require("plugins.flash")
+require("plugins.grugfar")
 require("plugins.extras")
