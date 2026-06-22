@@ -28,8 +28,6 @@ require("lazy").setup({
     },
     { "stevearc/conform.nvim", opts = {} },
     { "mfussenegger/nvim-lint" },
-    -- LSP progress UI (so SymbolServer.jl indexing etc. is visible).
-    { "j-hui/fidget.nvim", opts = {} },
 
     -- UI / Navigation
     {
