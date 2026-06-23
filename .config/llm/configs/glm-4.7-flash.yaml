@@ -1,0 +1,72 @@
+# GLM-4.7-Flash (Zhipu / Z.AI) -- agentic coding + reasoning + tool calling in ONE
+# model, served by llama.cpp. Added to replace the experimental qwen3-coder-next and
+# qwen3.6-27b-think trials: it's a 30B-A3B MoE (~3B active) that does coding, thinking,
+# AND reliable tool calls together -- the combination Qwen3.6 can't do on llama.cpp
+# (its thinking+tool path leaks tool calls into reasoning_content, #22684).
+#
+# WHY IT'S RELIABLE WHERE QWEN ISN'T: GLM's jinja chat template encodes BOTH the
+# thinking blocks and the tool-call format, and llama.cpp has a dedicated GLM tool
+# parser -- so thinking + tools coexist (it leads tau2-Bench interactive tool use and
+# is run agentically with opencode). The #1 reported gotcha is just forgetting --jinja.
+#
+# Coding note: ~59% SWE-bench Verified -- a bit under Devstral's ~68% on pure
+# autonomous bug-fixing, but it adds the thinking + agentic tool use Devstral lacks,
+# and at ~Q4 it fits fully in VRAM with room to spare (no head_dim-256 KV blowup like
+# Qwen3.6). Verify the exact numbers/sizes against the live model card.
+#
+# PREREQUISITE -- pre-download the GGUF to disk so llama.cpp mmaps it (low host RAM,
+# no load-time OOM on this 30GB box), exactly like the Devstral config:
+#   curl -fL -C - -o /home/pebeto/.cache/llama.cpp/GLM-4.7-Flash-UD-Q4_K_XL.gguf \
+#     https://huggingface.co/unsloth/GLM-4.7-Flash-GGUF/resolve/main/GLM-4.7-Flash-UD-Q4_K_XL.gguf
+#   # ~13-18 GB. If unsloth ships it under a quant subfolder or as split shards,
+#   # adjust the URL/path and point `model` at the -00001-of-0000N shard. On this 32 GB
+#   # card you have headroom for a higher quant (UD-Q5_K_XL / Q6_K) for more quality.
+#
+# run.sh translates each "flag: value" below into a llama-server long option:
+#   key: value -> --key value      key: true -> --key      key: false -> (omitted)
+
+model: /home/pebeto/.cache/llama.cpp/GLM-4.7-Flash-UD-Q4_K_XL.gguf
+alias: glm-4.7-flash
+host: 0.0.0.0
+port: 8000
+
+# Small MoE (~13-18 GB at Q4) fits entirely in the 32 GB VRAM -- all layers on GPU,
+# no --n-cpu-moe offload needed.
+n-gpu-layers: 99
+
+# GLM-4.7-Flash is an MLA model (loads as arch 'deepseek2'): its KV cache is
+# latent-compressed, so context is CHEAP -- in testing, 131072 cost only ~3 GB over
+# the 32768 baseline (21 GB total, 11 GB VRAM still free). Native train length is
+# 202752, so you can push ctx-size that high if you want even more. (A head_dim-256
+# model like Qwen3.6 needs a tiny ctx cap because its KV is huge; MLA is the opposite
+# -- cheap context.) 32768 was far too low for agentic use in opencode (system prompt
+# + tools + output reserve + thinking left no usable budget).
+ctx-size: 131072
+
+# Single-user serving (one slot gets the whole KV budget) + no host-RAM prompt cache
+# (the default 8 GB cache is pure OOM pressure on this 30 GB box), same as devstral.
+parallel: 1
+cache-ram: 0
+
+# FA + quantized KV verified loading cleanly for this MLA/deepseek2 model on the
+# installed CUDA build. If a future build errors on FA/KV for MLA, set
+# `flash-attn: auto` and delete the two cache-type lines (MLA KV is tiny regardless).
+flash-attn: on
+cache-type-k: q8_0
+cache-type-v: q8_0
+
+# REQUIRED: --jinja loads GLM's embedded template, which encodes the thinking blocks
+# AND the tool-call format. Without it, BOTH thinking and tool calls break (the single
+# most common GLM bug report). No chat-template-file override -- the embedded template
+# is the correct one.
+jinja: true
+
+# Thinking is on by default via the template. To control it explicitly, uncomment:
+#   reasoning: on        # force thinking ('off' disables, 'auto' = template default)
+#   reasoning-budget: 8192   # optional: cap thinking length (-1 = unrestricted)
+
+# GLM-4.7-Flash recommended sampling (from the local/opencode guide). Drop temp to
+# ~0.6 if you want more deterministic agentic edits.
+temp: 1.0
+top-p: 0.95
+min-p: 0.01
