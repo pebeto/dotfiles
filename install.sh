@@ -46,7 +46,9 @@ SKIP=(.git .gitignore README.md install.sh LICENSE VIM2EMACS.md)
 # .config/ entries that need per-file linking instead of a whole-dir
 # symlink, usually because ~/.config/<name>/ already exists as a real
 # dir managed by another tool (e.g. systemd creates ~/.config/systemd/).
-CONFIG_SPECIAL=(systemd opencode)
+# `qwen` is special for a second reason: qwen-code reads ~/.qwen (not XDG),
+# so its block below links the file there, not into ~/.config/qwen.
+CONFIG_SPECIAL=(systemd opencode qwen)
 
 skip_entry() {
     local name=$1 s
@@ -175,6 +177,24 @@ else
 fi
 
 echo
+echo "Qwen Code config (per-file into ~/.qwen: qwen-code reads ~/.qwen, not XDG,"
+echo "and writes its own creds/logs there, so only settings.json is linked)"
+qwen_src="$DOTFILES/.config/qwen"
+qwen_dst="$HOME/.qwen"
+if [ -d "$qwen_src" ]; then
+    [ "$DRY" = 1 ] || mkdir -p "$qwen_dst"
+    shopt -s nullglob
+    for f in "$qwen_src"/*.json; do
+        name=$(basename "$f")
+        link "$f" "$qwen_dst/$name"
+    done
+    shopt -u nullglob
+else
+    printf '  WARN    %s missing\n' "$qwen_src"
+    n_warn=$((n_warn + 1))
+fi
+
+echo
 echo "Misc directories"
 for dir in "$HOME/Pictures/Screenshots" "$HOME/Videos/Screencasts"; do
     if [ -d "$dir" ]; then
@@ -203,6 +223,13 @@ if command -v llama-server >/dev/null 2>&1; then
     printf '  ok      llama-server\n'
 else
     printf '  MISSING llama-server (needed by run.sh)\n'
+    n_warn=$((n_warn + 1))
+fi
+# qwen-code is the matched harness for the Qwen3.6 server (~/.qwen/settings.json).
+if command -v qwen >/dev/null 2>&1; then
+    printf '  ok      qwen (qwen-code)\n'
+else
+    printf '  TODO    qwen-code not installed: npm install -g @qwen-code/qwen-code\n'
     n_warn=$((n_warn + 1))
 fi
 # one-search-mcp's browser finder probes fixed paths like /usr/bin/chromium

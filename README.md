@@ -95,6 +95,7 @@ On the T470 the bar also carries brightness, the dual-battery readout, and the W
 ```sh
 llm --list             # list configured models
 llm devstral-small-2   # coding
+llm glm-4.7-flash      # coding + thinking + tools
 llm qwen3.6-27b        # research / general
 ```
 
@@ -103,6 +104,7 @@ Each config is flat `flag: value` YAML, translated to `llama-server` long option
 | Model | Role | Notes |
 |-------|------|-------|
 | `devstral-small-2` | coding agent | Mistral SWE model, grammar-constrained JSON tool calls |
+| `glm-4.7-flash` | coding + reasoning agent | 30B-A3B MoE, thinking + reliable tool calls in one model |
 | `qwen3.6-27b` | research / Q&A | non-thinking instruct sampler, presence penalty against over-searching |
 
 Both serve an OpenAI-compatible API on port 8000, one at a time, and load a GGUF from `~/.cache/llama.cpp`. Pre-download the GGUF to disk first so llama.cpp memory-maps it instead of holding a live download in RAM. Skip that step and a 19 GB model pulled straight from `-hf` will OOM the box.
@@ -110,3 +112,11 @@ Both serve an OpenAI-compatible API on port 8000, one at a time, and load a GGUF
 ### opencode
 
 `.config/opencode/opencode.json` points opencode at `localhost:8000`, registers both models, and defines four agents: `build` (Devstral, coding), `research` (Qwen3.6, web search), plus `plan` and `db`. Web search runs through a local SearXNG instance. The `one-search-mcp` scrape tools launch a Chromium at `/usr/bin/chromium`, so symlink your browser there (`install.sh` reminds you if it's missing).
+
+### qwen-code
+
+`.config/qwen/settings.json` points [qwen-code](https://github.com/QwenLM/qwen-code), Qwen's own CLI, at the same `localhost:8000` server and selects `qwen3.6-27b`. qwen-code reads `~/.qwen` (XDG is unsupported) and writes its own credentials and logs there, so `install.sh` links just `settings.json` into `~/.qwen/`. The rest stays out of the repo, matching how `install.sh` links opencode.
+
+Install it with `npm install -g @qwen-code/qwen-code`, start the server with `llm qwen3.6-27b`, then run `qwen`. Two values have to line up: the provider `id` matches the server's `--alias`, and `contextWindowSize` matches the server's `ctx-size`. `LOCAL_LLAMA_KEY` is a throwaway; qwen-code won't start without some API key, and the local server ignores it.
+
+`qwen3.6-27b` serves grammar-constrained JSON tool calls (Qwen's native XML path leaks raw `<function=...>` text that qwen-code can't execute) while `reasoning-format deepseek` splits the model's thinking into a separate field, which qwen-code shows as a "Thought" block. Both `settings.json` and the YAML use temp 0.6 for steady tool use. The YAML's bottom comment covers switching to pure no-think mode.

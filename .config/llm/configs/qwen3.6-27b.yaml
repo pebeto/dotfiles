@@ -1,0 +1,57 @@
+# Qwen3.6-27B (NVIDIA official NVFP4) -- research / general reasoning + tool use, via
+# vLLM. REPLACES the old llama.cpp qwen3.6-27b config: on llama.cpp this model's
+# thinking + tool calling were broken (tool calls leaked into reasoning_content,
+# llama.cpp #22684) and its head_dim-256 KV OOM'd at high ctx. vLLM parses reasoning +
+# tools correctly, and NVFP4 fits the 32GB 5090 with room to spare.
+#
+# This is NVIDIA's OFFICIAL ModelOpt NVFP4 and runs on STABLE vLLM 0.24.0 -- no nightly,
+# no FlashInfer env vars. apache-2.0, base Qwen/Qwen3.6-27B.
+#
+# vLLM schema (see run.sh): image: = Docker image; env-NAME: = a -e NAME=val; every
+# other key: value = a `vllm serve --key value` flag. run.sh adds --gpus all/--ipc=host,
+# -p PORT:PORT, the HF cache mount, and HF_TOKEN passthrough.
+
+engine: vllm
+image: vllm/vllm-openai:v0.24.0      # stable release, NOT nightly (verify the exact tag)
+
+model: nvidia/Qwen3.6-27B-NVFP4
+served-model-name: qwen3.6-27b
+host: 0.0.0.0
+port: 8000
+
+# NVFP4 via NVIDIA ModelOpt (the card's `--quantization modelopt`).
+quantization: modelopt
+
+# KV cost (from the model's config.json, not a guess): head_dim 256 x 4 KV heads
+# (num_key_value_heads=4) x 64 layers ~= 0.125 MB/token at fp8. At 0.90 util (~28.8 GB)
+# minus ~12 GB NVFP4 weights, the ~16 GB KV pool holds ~130K tokens, so 131072 fits.
+# Trained to 262K; go higher only if the startup readout allows.
+#  - vLLM prints "GPU KV cache size: N tokens" / "maximum concurrency ..." at startup --
+#    trust that number; if it can't hold max-model-len, lower this line.
+#  - If vLLM rejects fp8 KV for this arch (NVFP4 KV-dtype fail-fast), delete the
+#    kv-cache-dtype line and roughly halve max-model-len.
+kv-cache-dtype: fp8
+max-model-len: 131072
+
+# TEXT-ONLY: this NVFP4 is actually multimodal (Qwen3_5ForConditionalGeneration +
+# vision_config), so by default vLLM reserves VRAM for the vision encoder + multimodal
+# profiling. We only do text, so reclaim that headroom for the KV pool. vLLM 0.24.0
+# wants a JSON object here (NOT the older image=0,video=0 form):
+limit-mm-per-prompt: '{"image": 0, "video": 0}'
+
+# 0.90 leaves ~3 GB for the sway compositor on this single-GPU box.
+gpu-memory-utilization: 0.90
+max-num-seqs: 4
+enable-chunked-prefill: true
+enable-prefix-caching: true
+
+# Reasoning + tool calling -- the whole reason to serve this on vLLM instead of
+# llama.cpp. The card shows --reasoning-parser qwen3; qwen3_xml is Qwen3.6's tool format
+# (fall back to qwen3_coder if your vLLM is too old to know qwen3_xml).
+reasoning-parser: qwen3
+enable-auto-tool-choice: true
+tool-call-parser: qwen3_xml
+
+# NOTE: sampling (temperature/top-p/top-k) is PER-REQUEST in vLLM -- set by the client
+# (opencode.json), NOT a serve flag. NVIDIA's recommended values: temp 1.0, top-p 0.95
+# (top-k 20 per Qwen). They live in opencode.json's model options.

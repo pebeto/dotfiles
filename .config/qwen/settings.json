@@ -1,0 +1,34 @@
+{
+  "security": {
+    "auth": {
+      "selectedType": "openai"
+    }
+  },
+  "model": {
+    "name": "qwen3.6-27b"
+  },
+  "env": {
+    "LOCAL_LLAMA_KEY": "not-needed"
+  },
+  "modelProviders": {
+    "openai": [
+      {
+        "id": "qwen3.6-27b",
+        "name": "Qwen3.6-27B (local llama.cpp)",
+        "description": "llama.cpp server from .config/llm/configs/qwen3.6-27b.yaml on :8000",
+        "envKey": "LOCAL_LLAMA_KEY",
+        "baseUrl": "http://localhost:8000/v1",
+        "generationConfig": {
+          "timeout": 1800000,
+          "maxRetries": 2,
+          "contextWindowSize": 131072,
+          "samplingParams": {
+            "temperature": 0.6,
+            "top_p": 0.95,
+            "max_tokens": 32768
+          }
+        }
+      }
+    ]
+  }
+}

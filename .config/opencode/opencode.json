@@ -4,6 +4,18 @@
     "julia": {
       "command": ["julia", "--startup-file=no", "--history-file=no", "-e", "using LanguageServer; runserver()"],
       "extensions": [".jl"]
+    },
+    "clangd": {
+      "command": ["clangd"],
+      "extensions": [".c", ".h", ".cpp", ".cxx", ".cc", ".hpp", ".hxx", ".hh"]
+    },
+    "pyright": {
+      "command": ["pyright-langserver", "--stdio"],
+      "extensions": [".py", ".pyi"]
+    },
+    "typescript": {
+      "command": ["typescript-language-server", "--stdio"],
+      "extensions": [".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs"]
     }
   },
   "agent": {
@@ -37,30 +49,22 @@
       "permission": {
         "edit": "deny",
         "bash": "deny"
+      },
+      "tools": {
+        "serena*": false
       }
     }
   },
   "provider": {
     "local": {
       "npm": "@ai-sdk/openai-compatible",
-      "name": "llama.cpp",
+      "name": "local (llama.cpp + vLLM)",
       "options": {
         "baseURL": "http://localhost:8000/v1",
         "timeout": 1800000,
         "chunkTimeout": 1800000
       },
       "models": {
-        "devstral-small-2": {
-          "name": "devstral-small-2",
-          "options": {
-            "temperature": 0.4,
-            "top_p": 0.95
-          },
-          "limit": {
-            "context": 131072,
-            "output": 16384
-          }
-        },
         "glm-4.7-flash": {
           "name": "glm-4.7-flash",
           "options": {
@@ -71,24 +75,43 @@
             "context": 131072,
             "output": 16384
           }
+        },
+        "qwen3.6-27b": {
+          "name": "qwen3.6-27b",
+          "options": {
+            "temperature": 1.0,
+            "top_p": 0.95,
+            "top_k": 20
+          },
+          "limit": {
+            "context": 131072,
+            "output": 16384
+          }
+        },
+        "agents-a1": {
+          "name": "agents-a1",
+          "options": {
+            "temperature": 0.6,
+            "top_p": 0.95,
+            "top_k": 20,
+            "min_p": 0.1,
+            "presence_penalty": 1.0
+          },
+          "limit": {
+            "context": 65536,
+            "output": 16384
+          }
         }
       }
     }
   },
   "plugin": [
-    "superpowers@git+https://github.com/obra/superpowers.git",
     "opencode-pty",
-    "opencode-snip@latest"
+    "opencode-snip@latest",
+    "opencode-mcp-triage",
+    "opencode-triage"
   ],
   "mcp": {
-    "agentmemory": {
-      "type": "local",
-      "command": ["bunx", "-y", "@agentmemory/agentmemory", "mcp"],
-      "env": {
-        "AGENTMEMORY_TOOLS": "core"
-      },
-      "enabled": true
-    },
     "web-search": {
       "type": "local",
       "command": ["bunx", "-y", "one-search-mcp"],
@@ -98,14 +121,14 @@
       },
       "enabled": true
     },
-    "markitdown": {
-      "type": "local",
-      "command": ["uvx", "markitdown-mcp"],
-      "enabled": true
-    },
     "context7": {
       "type": "local",
       "command": ["bunx", "-y", "@upstash/context7-mcp"],
+      "enabled": true
+    },
+    "serena": {
+      "type": "local",
+      "command": ["uvx", "--from", "serena-agent", "serena", "start-mcp-server", "--context", "ide", "--project-from-cwd"],
       "enabled": true
     }
   }

@@ -15,7 +15,7 @@
 # Qwen3.6). Verify the exact numbers/sizes against the live model card.
 #
 # PREREQUISITE -- pre-download the GGUF to disk so llama.cpp mmaps it (low host RAM,
-# no load-time OOM on this 30GB box), exactly like the Devstral config:
+# no load-time OOM on this 30GB box):
 #   curl -fL -C - -o /home/pebeto/.cache/llama.cpp/GLM-4.7-Flash-UD-Q4_K_XL.gguf \
 #     https://huggingface.co/unsloth/GLM-4.7-Flash-GGUF/resolve/main/GLM-4.7-Flash-UD-Q4_K_XL.gguf
 #   # ~13-18 GB. If unsloth ships it under a quant subfolder or as split shards,
@@ -44,7 +44,7 @@ n-gpu-layers: 99
 ctx-size: 131072
 
 # Single-user serving (one slot gets the whole KV budget) + no host-RAM prompt cache
-# (the default 8 GB cache is pure OOM pressure on this 30 GB box), same as devstral.
+# (the default 8 GB cache is pure OOM pressure on this 30 GB box).
 parallel: 1
 cache-ram: 0
 
