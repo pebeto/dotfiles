@@ -1,24 +1,38 @@
-# Ghostty config (macOS terminal) — translated from foot (.config/foot/foot.ini).
-# Format is `key = value`, no sections. Kept minimal to match the foot config;
-# everything else uses Ghostty's defaults.
+# Ghostty config — MacBook Pro 14" M5 (Liquid Retina XDR, P3, 120Hz ProMotion).
+# Translated from foot (.config/foot/foot.ini) and tuned for the display + a macOS
+# coding workflow. Format is `key = value`, no sections. Ghostty is Retina- and
+# ProMotion-aware automatically, so those need no configuration.
 
-# foot: font=JuliaMono:size=11
-# (install the font on the Mac: `brew install --cask font-juliamono`)
+# --- Font ---
+# foot used JuliaMono:11; 13pt reads better on a 14" Retina panel (adjust to taste).
+# Install the font: brew install --cask font-juliamono
 font-family = JuliaMono
-font-size = 11
+font-size = 13
+# macOS renders strokes thin. Uncomment if JuliaMono looks too light on the XDR panel:
+# font-thicken = true
+# font-thicken-strength = 40    # 0-255, only with font-thicken
+# Looser lines can help readability on HiDPI (try 2-4):
+# adjust-cell-height = 2
 
-# foot: pad=0x0  → no padding between the cells and the window edges.
-# (A single value sets both sides; e.g. window-padding-x = 2 = left AND right.)
+# --- Color (P3 display; theme auto-switches with the macOS light/dark appearance) ---
+# foot set no colors. Swap names via `ghostty +list-themes` (must match exactly).
+theme = light:Catppuccin Latte,dark:Catppuccin Mocha
+# Guarantee readable text on any theme (1.1 = just enough; 3+ = strong contrast):
+minimum-contrast = 1.1
+
+# --- Window (maximize real estate on a 14" screen) ---
+# foot: pad=0x0  (single value sets both sides)
 window-padding-x = 0
 window-padding-y = 0
-
-# foot: [csd] size=0  → no titlebar. On macOS this hides the titlebar while keeping
-# native window behavior + tabs. For zero decorations at all, use instead:
-#   window-decoration = none   # but on macOS that also DISABLES tabs
+# foot: [csd] size=0  -> hide the titlebar but keep tabs + native fullscreen.
 macos-titlebar-style = hidden
+# Optional macOS frosted-glass look (needs opacity < 1):
+# background-opacity = 0.95
+# background-blur-radius = 20    # macOS 26+: also `macos-glass-regular` / `macos-glass-clear`
 
-# foot: initial-window-mode=windowed  → this is Ghostty's default (fullscreen and
-# maximize both default to false), so no key is needed.
+# --- macOS keyboard: make Option a real Meta/Alt (needed for emacs + nvim) ---
+macos-option-as-alt = true       # use `right` to keep the right-Option for special chars
 
+# --- Keybinds ---
 # foot: [key-bindings] fullscreen=F11
 keybind = f11=toggle_fullscreen
