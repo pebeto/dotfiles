@@ -28,8 +28,11 @@ minimum-contrast = 1.1
 # foot: pad=0x0  (a single value sets both sides)
 window-padding-x = 0
 window-padding-y = 0
-# foot: [csd] size=0  -> hide the titlebar but keep tabs + native fullscreen.
-macos-titlebar-style = hidden
+# Native titlebar so the window is easy to grab/move (was hidden before).
+# Alternatives: `tabs` (tabs in a compact titlebar) or `transparent`.
+macos-titlebar-style = native
+# Quit Ghostty when the last window closes, instead of lingering in the Dock.
+quit-after-last-window-closed = true
 # Optional macOS frosted-glass look (needs opacity below 1):
 # background-opacity = 0.95
 # background-blur-radius = 20
