@@ -1,37 +1,44 @@
 # Ghostty config — MacBook Pro 14" M5 (Liquid Retina XDR, P3, 120Hz ProMotion).
-# Translated from foot (.config/foot/foot.ini) and tuned for the display + a macOS
-# coding workflow. Format is `key = value`, no sections. Ghostty is Retina- and
-# ProMotion-aware automatically, so those need no configuration.
+# Translated from foot (.config/foot/foot.ini), tuned for the display + a macOS
+# coding workflow. Format is `key = value`, no sections.
+# IMPORTANT: Ghostty has NO inline comments -- a trailing `# ...` becomes part of the
+# value. Every comment must be on its own line.
+# Retina scaling and ProMotion refresh are handled automatically (no keys needed).
 
 # --- Font ---
 # foot used JuliaMono:11; 13pt reads better on a 14" Retina panel (adjust to taste).
 # Install the font: brew install --cask font-juliamono
 font-family = JuliaMono
 font-size = 13
-# macOS renders strokes thin. Uncomment if JuliaMono looks too light on the XDR panel:
+# macOS renders strokes thin -- uncomment if JuliaMono looks too light on the XDR panel:
 # font-thicken = true
-# font-thicken-strength = 40    # 0-255, only with font-thicken
+# (font-thicken-strength is 0-255 and only applies when font-thicken is on)
+# font-thicken-strength = 40
 # Looser lines can help readability on HiDPI (try 2-4):
 # adjust-cell-height = 2
 
-# --- Color (P3 display; theme auto-switches with the macOS light/dark appearance) ---
-# foot set no colors. Swap names via `ghostty +list-themes` (must match exactly).
+# --- Color ---
+# foot set no colors. This theme auto-switches with the macOS light/dark appearance.
+# Swap names via `ghostty +list-themes` (they must match exactly).
 theme = light:Catppuccin Latte,dark:Catppuccin Mocha
 # Guarantee readable text on any theme (1.1 = just enough; 3+ = strong contrast):
 minimum-contrast = 1.1
 
 # --- Window (maximize real estate on a 14" screen) ---
-# foot: pad=0x0  (single value sets both sides)
+# foot: pad=0x0  (a single value sets both sides)
 window-padding-x = 0
 window-padding-y = 0
 # foot: [csd] size=0  -> hide the titlebar but keep tabs + native fullscreen.
 macos-titlebar-style = hidden
-# Optional macOS frosted-glass look (needs opacity < 1):
+# Optional macOS frosted-glass look (needs opacity below 1):
 # background-opacity = 0.95
-# background-blur-radius = 20    # macOS 26+: also `macos-glass-regular` / `macos-glass-clear`
+# background-blur-radius = 20
+# (on macOS 26+, background-blur-radius also accepts macos-glass-regular / macos-glass-clear)
 
-# --- macOS keyboard: make Option a real Meta/Alt (needed for emacs + nvim) ---
-macos-option-as-alt = true       # use `right` to keep the right-Option for special chars
+# --- macOS keyboard ---
+# Make Option a real Meta/Alt (needed for emacs + nvim).
+# Set to `right` instead of `true` to keep the right-Option key for special characters.
+macos-option-as-alt = true
 
 # --- Keybinds ---
 # foot: [key-bindings] fullscreen=F11
