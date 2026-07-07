@@ -1,0 +1,24 @@
+# Ghostty config (macOS terminal) — translated from foot (.config/foot/foot.ini).
+# Format is `key = value`, no sections. Kept minimal to match the foot config;
+# everything else uses Ghostty's defaults.
+
+# foot: font=JuliaMono:size=11
+# (install the font on the Mac: `brew install --cask font-juliamono`)
+font-family = JuliaMono
+font-size = 11
+
+# foot: pad=0x0  → no padding between the cells and the window edges.
+# (A single value sets both sides; e.g. window-padding-x = 2 = left AND right.)
+window-padding-x = 0
+window-padding-y = 0
+
+# foot: [csd] size=0  → no titlebar. On macOS this hides the titlebar while keeping
+# native window behavior + tabs. For zero decorations at all, use instead:
+#   window-decoration = none   # but on macOS that also DISABLES tabs
+macos-titlebar-style = hidden
+
+# foot: initial-window-mode=windowed  → this is Ghostty's default (fullscreen and
+# maximize both default to false), so no key is needed.
+
+# foot: [key-bindings] fullscreen=F11
+keybind = f11=toggle_fullscreen
