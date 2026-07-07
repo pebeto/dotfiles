@@ -43,26 +43,36 @@ PATH=$PATH:$HOME/.local/bin
 export PATH
 
 # Helium browser as the Chrome executable for tools that probe $CHROME_EXECUTABLE.
-export CHROME_EXECUTABLE=/usr/bin/helium-browser
+# Linux-only path; on other machines set CHROME_EXECUTABLE in ~/.miscrc if needed.
+[ -x /usr/bin/helium-browser ] && export CHROME_EXECUTABLE=/usr/bin/helium-browser
 
-# nvm: load system node by default
-source /usr/share/nvm/init-nvm.sh
-nvm use system >/dev/null
+# nvm: Arch's AUR package ships init-nvm.sh; Homebrew ships nvm.sh under its opt dir.
+if [ -s /usr/share/nvm/init-nvm.sh ]; then
+    source /usr/share/nvm/init-nvm.sh
+    nvm use system >/dev/null 2>&1
+elif [ -s /opt/homebrew/opt/nvm/nvm.sh ]; then       # Homebrew, Apple Silicon
+    export NVM_DIR="$HOME/.nvm"; source /opt/homebrew/opt/nvm/nvm.sh
+elif [ -s /usr/local/opt/nvm/nvm.sh ]; then          # Homebrew, Intel
+    export NVM_DIR="$HOME/.nvm"; source /usr/local/opt/nvm/nvm.sh
+fi
 
-alias sway='sway --unsupported-gpu'
-alias ls='ls --color=auto'
+command -v sway >/dev/null 2>&1 && alias sway='sway --unsupported-gpu'
+# color ls: GNU (Linux) uses --color=auto; BSD (macOS) uses -G
+if [[ "$OSTYPE" == darwin* ]]; then alias ls='ls -G'; else alias ls='ls --color=auto'; fi
 alias grep='grep --color=auto'
 alias fgrep='fgrep --color=auto'
 alias egrep='egrep --color=auto'
 
-# Local LLM server (llama.cpp). Configs live in ~/.config/llm/configs.
-llm() { ~/.config/llm/run.sh "$@"; }
-_llm() {
-    local -a models
-    models=(${(f)"$(~/.config/llm/run.sh --list 2>/dev/null)"})
-    _describe 'model' models
-}
-compdef _llm llm 2>/dev/null
+# Local LLM server (llama.cpp/vLLM). Only when run.sh is deployed (not on the Mac).
+if [ -x "$HOME/.config/llm/run.sh" ]; then
+    llm() { ~/.config/llm/run.sh "$@"; }
+    _llm() {
+        local -a models
+        models=(${(f)"$(~/.config/llm/run.sh --list 2>/dev/null)"})
+        _describe 'model' models
+    }
+    compdef _llm llm 2>/dev/null
+fi
 
 source ~/.miscrc
 
