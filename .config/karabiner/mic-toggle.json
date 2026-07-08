@@ -2,11 +2,14 @@
     "title": "Microphone key",
     "rules": [
         {
-            "description": "Mic / Dictation key -> toggle microphone mute (not Dictation)",
+            "description": "fn+F5 -> toggle microphone mute (not Dictation)",
             "manipulators": [
                 {
                     "type": "basic",
-                    "from": { "apple_vendor_keyboard_key_code": "dictation" },
+                    "from": {
+                        "key_code": "f5",
+                        "modifiers": { "mandatory": ["fn"] }
+                    },
                     "to": [
                         { "shell_command": "$HOME/.config/bin/mic-toggle.sh" }
                     ]
