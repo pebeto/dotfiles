@@ -41,7 +41,7 @@ DOTFILES="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CONFIG_DST="${XDG_CONFIG_HOME:-$HOME/.config}"
 
 # Repo-root entries that are NOT deployed.
-SKIP=(.git .gitignore README.md install.sh LICENSE VIM2EMACS.md)
+SKIP=(.git .gitignore README.md install.sh install-macos.sh LICENSE VIM2EMACS.md SIGNING.md)
 
 # .config/ entries that need per-file linking instead of a whole-dir
 # symlink, usually because ~/.config/<name>/ already exists as a real

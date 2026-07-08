@@ -1,0 +1,30 @@
+[user]
+	email = pebeto99@gmail.com
+	name = Jose Esparza
+	signingkey = BE40A39568C5462FA41C75AF36A7ECABCB0EB282
+[commit]
+	gpgsign = true
+[core]
+	editor = nvim
+[credential "https://github.com"]
+	helper =
+	helper = !gh auth git-credential
+[credential "https://gist.github.com"]
+	helper =
+	helper = !gh auth git-credential
+[lfs]
+	concurrenttransfers = 3
+[lfs "customtransfer.xet"]
+	path = git-xet
+	args = transfer
+	concurrent = true
+[filter "lfs"]
+	clean = git-lfs clean -- %f
+	smudge = git-lfs smudge -- %f
+	process = git-lfs filter-process
+	required = true
+# Per-machine overrides live outside the repo (safe.directory entries, a
+# different signingkey, work email, etc.). Same pattern as .zshrc + ~/.miscrc.
+# Loaded last so its values win. Absent on a machine? git just skips it.
+[include]
+	path = ~/.gitconfig.local
