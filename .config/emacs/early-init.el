@@ -14,7 +14,12 @@
                         (or (getenv "XDG_DATA_HOME")
                             (expand-file-name "~/.local/share"))))
 
-(when (fboundp 'startup-redirect-eln-cache)
+;; `startup-redirect-eln-cache' ships in startup.el on every Emacs 29+, but its body reads
+;; `native-comp-eln-load-path', which only exists in a native-compilation build. Guarding on
+;; `fboundp' alone lets a non-native-comp Emacs (some macOS builds) into the call, where the
+;; void variable errors. Gate on the feature too.
+(when (and (featurep 'native-compile)
+           (fboundp 'startup-redirect-eln-cache))
   (startup-redirect-eln-cache
    (expand-file-name "emacs/eln-cache"
                      (or (getenv "XDG_CACHE_HOME")
