@@ -1,50 +1,70 @@
-# Commit signing & key sync
+# GitHub keys (per-device: one key does auth + signing)
 
-Verified ("Validated") commits on GitHub, kept working across the T470 and the
-workstation without copying keys by hand.
+Each machine has its own ed25519 key that handles BOTH jobs: authentication
+(clone/push over `git@github.com`) and commit signing. Nothing about keys is shared or
+synced: lose a machine, revoke its one key on GitHub. This replaced a GPG-key-synced-
+over-Syncthing setup that fought Syncthing and per-OS config at every turn.
 
 ## What lives where
 
-- **Signing config** -> this repo, `.gitconfig` (symlinked to `~/.gitconfig` by
-  `install.sh`). Sets `user.signingkey`, `commit.gpgsign`, the gh credential
-  helper, and LFS. Not secret: the key fingerprint and email are already public
-  in every signed commit.
-- **Per-machine git bits** -> `~/.gitconfig.local` (untracked, created by hand).
-  An `[include]` at the end of `.gitconfig` pulls it in. Put `safe.directory`
-  entries, a work email, or a machine-specific `signingkey` here.
-- **Private keys** (GPG secret key, `~/.ssh/id_*`) -> NEVER in this repo, it is
-  public. Synced peer-to-peer with Syncthing, same channel as the org files.
+- **Signing behaviour** -> this repo, `.gitconfig` (symlinked to `~/.gitconfig`):
+  `gpg.format = ssh`, `commit.gpgsign = true`. No key here; the key is per-machine.
+- **Per-machine bits** -> `~/.gitconfig.local` (untracked), written by
+  `github-key-setup.sh`: `user.signingkey` and `gpg.ssh.allowedSignersFile`, plus the
+  home for `safe.directory`. Pulled in by an `[include]` at the end of `.gitconfig`.
+- **The key** -> `~/.ssh/id_ed25519`, generated on the machine, never copied anywhere.
+  `~/.ssh/config` points `github.com` at it with `IdentitiesOnly yes`. Not in the repo,
+  not in Syncthing.
 
-## Key sync via Syncthing
+## Set up a machine
 
-Add `~/.ssh` and `~/.gnupg` as their OWN Syncthing folders (Add Folder -> point at
-the directory), and share each only with the machines that sign commits:
+```
+cd ~/git/dotfiles && git pull
+./install.sh            # macOS: ./install-macos.sh   (symlinks .gitconfig)
+./github-key-setup.sh
+```
 
-- t470, workstation, MacBook Pro   (NOT the iPhone)
+The script makes `~/.ssh/id_ed25519`, wires ssh + git to use it, and prints the public
+key. Register that ONE key on GitHub TWICE (Settings -> SSH and GPG keys -> New SSH key):
 
-Each folder has a `.stignore` that skips agent sockets, lock files, `random_seed`,
-keybox backups, and `.DS_Store`; only key material, trust, and `config` sync. Safe
-because the machines are used one at a time (no simultaneous edits).
+- **Authentication Key** — clone/push over `git@github.com`.
+- **Signing Key** — the Verified badge on your commits.
 
-DO NOT nest keys inside a broadly-shared folder. `~/Sync` (org files, books, the
-KeePass db) replicates to the iPhone too, so dropping keys there sprays your private
-SSH/GPG keys onto every device that folder touches. Keep the key folders separate and
-scoped to the machines above.
+Verify:
+- `ssh -T git@github.com` -> "Hi pebeto!" confirms auth.
+- `git commit --allow-empty -m test && git log --show-signature -1` shows a good
+  signature; pushed commits show **Verified**.
 
-On a machine that already has its own `~/.ssh`/`~/.gnupg` (e.g. the work Mac), back it
-up first, then let Syncthing reconcile, so nothing gets clobbered by a same-named file.
+The key is passphrase-less, so push and sign are both prompt-free. It grants push, so
+add a passphrase if you want that protection (ssh-agent caches it after first unlock):
+`ssh-keygen -p -f ~/.ssh/id_ed25519`.
 
-## New-machine checklist
+Skipping `github-key-setup.sh` breaks commits: `.gitconfig` sets `commit.gpgsign = true`
+with no key until the script writes `~/.gitconfig.local`.
 
-1. `git clone git@github.com:pebeto/dotfiles.git ~/git/dotfiles && cd ~/git/dotfiles`
-2. `./install.sh` (Linux) or `./install-macos.sh` (Mac) — symlinks `.gitconfig`.
-3. Create `~/.gitconfig.local` for anything machine-specific, or leave it out.
-4. Join the machine to Syncthing and accept the `~/.ssh` and `~/.gnupg` folders;
-   wait for them to finish syncing.
-5. `gpg --list-secret-keys` — confirm the signing key is present.
-6. Test: `git commit --allow-empty -m 'signing test' && git log --show-signature -1`
-   shows a good signature; on GitHub the commit shows **Verified**.
+## Bootstrapping when auth is already broken
 
-If GitHub shows **Unverified**: the committer email must match `user.email`, the
-GPG key's UID email, and a verified email on your GitHub account, and the key's
-public half must be uploaded at github.com/settings/keys.
+If you've removed the old auth key from GitHub, SSH is dead until a new key is
+registered — but this repo is public, so pull the script over HTTPS to break the cycle:
+
+```
+cd ~/git/dotfiles
+git pull https://github.com/pebeto/dotfiles.git main
+./install.sh            # or ./install-macos.sh
+./github-key-setup.sh   # generates + wires the key, prints it
+# register the printed key on GitHub as Authentication + Signing, then:
+ssh -T git@github.com
+```
+
+## Notes
+
+- **Nothing syncs.** `~/.ssh` and `~/.gnupg` must NOT be Syncthing folders. Unshare them
+  if they still are from the old setup.
+- **Old keys.** The shared `id_rsa` and the GPG signing key are no longer used by GitHub.
+  `id_rsa` still serves other hosts (tilde.club), so it stays in `~/.ssh`; just remove it
+  from GitHub. Keep the GPG key for `pass`.
+- **Unverified on GitHub?** Committer email must match `user.email` and a verified email
+  on your account, and the machine's key must be registered as a Signing key.
+- **Local cross-machine verify (optional).** `~/.config/git/allowed_signers` lists only
+  the local machine's key. Add the others' public keys there if you want
+  `--show-signature` to resolve commits made on another machine.

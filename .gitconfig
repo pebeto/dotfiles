@@ -1,7 +1,8 @@
 [user]
 	email = pebeto99@gmail.com
 	name = Jose Esparza
-	signingkey = BE40A39568C5462FA41C75AF36A7ECABCB0EB282
+[gpg]
+	format = ssh
 [commit]
 	gpgsign = true
 [core]
@@ -23,8 +24,9 @@
 	smudge = git-lfs smudge -- %f
 	process = git-lfs filter-process
 	required = true
-# Per-machine overrides live outside the repo (safe.directory entries, a
-# different signingkey, work email, etc.). Same pattern as .zshrc + ~/.miscrc.
-# Loaded last so its values win. Absent on a machine? git just skips it.
+# Commit signing is SSH-based and PER-MACHINE: each box has its own key, so the
+# actual `user.signingkey` (and `gpg.ssh.allowedSignersFile`, safe.directory, etc.)
+# live in ~/.gitconfig.local, written by signing-setup.sh. Loaded last so it wins.
+# Run signing-setup.sh once per machine or commits fail with "need a signingkey".
 [include]
 	path = ~/.gitconfig.local
