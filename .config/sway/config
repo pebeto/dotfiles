@@ -8,6 +8,11 @@ exec dbus-update-activation-environment --systemd WAYLAND_DISPLAY SWAYSOCK XDG_C
 # For screen color temperature adjustment
 exec gammastep -l -8.11:-79.02
 
+# Location services: register a GeoClue agent (Sway doesn't run XDG autostart,
+# so nothing else launches it; without an agent, Manager.CreateClient hangs).
+# Guarded so it's a no-op on hosts where geoclue isn't installed.
+exec [ -x /usr/lib/geoclue-2.0/demos/agent ] && /usr/lib/geoclue-2.0/demos/agent
+
 ### Variables
 # Logo key
 set $mod Mod4
