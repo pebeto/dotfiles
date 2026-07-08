@@ -31,7 +31,7 @@ esac
 # Top-level dotfiles          ->  ~/.<name>
 TOP=( .zshrc .gitconfig )
 # .config dirs (whole-dir symlink) ->  ~/.config/<name>
-CONFIGS=( nvim emacs sioyek ghostty )
+CONFIGS=( nvim emacs sioyek ghostty swiftbar )
 # Per-file *.json configs (the tool writes its own state into the dir, so link
 # individual files, not the whole dir). Set to 0 to skip.
 LINK_OPENCODE=1   # -> ~/.config/opencode/*.json
