@@ -152,7 +152,7 @@ if [ -d "$systemd_src" ]; then
         systemctl --user daemon-reload 2>/dev/null || true
         # Enable+start the agenda timers. `|| true` because a fresh box may
         # not have a user session bus yet; re-running after login fixes it.
-        systemctl --user enable --now agenda-refresh.timer agenda-notify.timer battery-notify.timer 2>/dev/null || true
+        systemctl --user enable --now agenda-refresh.timer battery-notify.timer 2>/dev/null || true
     fi
 else
     printf '  WARN    %s missing\n' "$systemd_src"

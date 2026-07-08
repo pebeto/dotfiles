@@ -1,6 +1,5 @@
 #!/bin/bash
-# Today's org-mode agenda for the swaybar, dunst notifications, and a
-# click-to-toggle popup. `emacs --batch` is slow to cold-start, so the
+# Today's org-mode agenda for the swaybar and a click-to-toggle popup. `emacs --batch` is slow to cold-start, so the
 # bar never invokes it directly. A systemd timer calls `refresh` every few
 # minutes and writes two cache files; the bar `cat`s the count.
 #
@@ -8,7 +7,6 @@
 #   refresh  re-render today's agenda via emacs --batch; update cache
 #   count    print today's item count (refreshes if cache is missing)
 #   show     toggle a foot popup showing today's full agenda
-#   notify   refresh, then dunstify a summary (used by the morning timer)
 
 ORG_DIR="${ORG_DIR:-$HOME/Sync/orgfiles}"
 CACHE_DIR="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/agenda"
@@ -53,8 +51,7 @@ refresh() {
     local count
     count=$(printf '%s\n' "$out" | sed -n 's/^AGENDA_COUNT=//p' | head -1)
     # Drop the AGENDA_COUNT marker and emacs' "Day-agenda (Wxx):" banner,
-    # then squeeze blank-line runs. Cache stays plain text so notify()'s
-    # grep and dunst still work.
+    # then squeeze blank-line runs. Cache stays plain text so count() reads it.
     printf '%s\n' "$out" \
         | sed -e '/^AGENDA_COUNT=/d' -e '/^\(Day\|Week\)-agenda/d' \
         | cat -s \
@@ -70,7 +67,7 @@ count() {
 pretty() {
     [ -s "$CACHE_TEXT" ] || refresh
     # ANSI escapes are added only at display time so the cache used by
-    # count/notify stays plain text. Entries are grouped under one yellow
+    # count stays plain text. Entries are grouped under one yellow
     # header per category instead of repeating "category:" on every line,
     # and long entries wrap with a hanging indent at the real terminal
     # width (pretty runs inside the foot popup, so tput sees it).
@@ -144,27 +141,10 @@ show() {
     echo $! > "$POPUP_PID"
 }
 
-notify() {
-    refresh
-    local n body
-    n=$(cat "$CACHE_COUNT")
-    if [ "$n" -eq 0 ] 2>/dev/null; then
-        body="No items scheduled for today."
-    else
-        # Strip the header lines, keep only the actual entries. Cap at 10
-        # so the notification stays readable.
-        body=$(grep -E '^[[:space:]]+[A-Za-z0-9_-]+:' "$CACHE_TEXT" | head -10)
-    fi
-    dunstify -a "Agenda" -i "x-office-calendar" \
-        -h "string:x-dunst-stack-tag:agenda" \
-        "Agenda: $n today" "$body"
-}
-
 case "$1" in
     refresh) refresh ;;
     count)   count ;;
     pretty)  pretty ;;
     show)    show ;;
-    notify)  notify ;;
-    *) echo "usage: $0 {refresh|count|pretty|show|notify}" >&2; exit 1 ;;
+    *) echo "usage: $0 {refresh|count|pretty|show}" >&2; exit 1 ;;
 esac
