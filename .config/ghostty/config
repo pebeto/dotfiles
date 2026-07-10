@@ -20,7 +20,7 @@ font-size = 13
 # --- Color ---
 # foot set no colors. Single fixed theme (no light/dark auto-switch).
 # Swap the name via `ghostty +list-themes` (it must match exactly).
-theme = Catppuccin Mocha
+theme = Starlight
 # Guarantee readable text on any theme (1.1 = just enough; 3+ = strong contrast):
 minimum-contrast = 1.1
 
