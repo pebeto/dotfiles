@@ -23,6 +23,11 @@ font-size = 13
 theme = Starlight
 # Guarantee readable text on any theme (1.1 = just enough; 3+ = strong contrast):
 minimum-contrast = 1.1
+# Block cursor: invert the cell's fg/bg under the cursor, like foot does by default,
+# so the glyph stays readable instead of black-on-black. This ignores the theme's own
+# cursor color. If the inverted cursor ever looks off on a dark theme, pin it instead
+# with an explicit cursor-color plus cursor-text (a light color and the background).
+cursor-invert-fg-bg = true
 
 # --- Window (maximize real estate on a 14" screen) ---
 # foot: pad=0x0  (a single value sets both sides)

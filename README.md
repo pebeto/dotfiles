@@ -2,7 +2,7 @@
 
 ![wallpaper](.config/wallpaper.jpeg)
 
-Everything it takes to turn a fresh Arch box into a usable Sway desktop: window manager, terminal, notifications, a top bar that does real work, systemd timers that nag me about my calendar, and a local LLM stack that keeps a 5090 warm. One repo, two very different machines, and zero patience for configuring the same thing twice.
+Everything it takes to turn a fresh Arch box into a usable Sway desktop: window manager, terminal, notifications, a top bar that does real work, systemd timers that keep my agenda on it, and a local LLM stack that keeps a 5090 warm. One repo, two very different machines, and zero patience for configuring the same thing twice.
 
 ## Two machines, one config
 
@@ -94,29 +94,27 @@ On the T470 the bar also carries brightness, the dual-battery readout, and the W
 
 ```sh
 llm --list             # list configured models
-llm devstral-small-2   # coding
-llm glm-4.7-flash      # coding + thinking + tools
-llm qwen3.6-27b        # research / general
+llm glm-4.7-flash      # coding + thinking + tools (llama.cpp)
+llm qwen3.6-27b         # research / general reasoning (vLLM, NVFP4)
+llm agents-a1          # agentic tool use (vLLM, NVFP4)
 ```
 
-Each config is flat `flag: value` YAML, translated to `llama-server` long options (`key: value` becomes `--key value`).
+Each config is flat `flag: value` YAML, and an `engine:` key picks the backend. `llamacpp` (the default) turns `key: value` into `llama-server --key value`; `vllm` runs NVIDIA's official vLLM OpenAI server in Docker, with a few extra keys (`image:`, `model:`, `env-NAME:`). One model at a time, all on port 8000.
 
-| Model | Role | Notes |
-|-------|------|-------|
-| `devstral-small-2` | coding agent | Mistral SWE model, grammar-constrained JSON tool calls |
-| `glm-4.7-flash` | coding + reasoning agent | 30B-A3B MoE, thinking + reliable tool calls in one model |
-| `qwen3.6-27b` | research / Q&A | non-thinking instruct sampler, presence penalty against over-searching |
+| Model | Engine | Role |
+|-------|--------|------|
+| `glm-4.7-flash` | llama.cpp | coding + reasoning — 30B-A3B MoE, thinking and reliable tool calls in one model, cheap MLA KV so it holds 128K ctx |
+| `qwen3.6-27b` | vLLM (NVFP4) | research / general — NVIDIA's official ModelOpt NVFP4; reasoning + native XML tool calls, both of which broke on llama.cpp |
+| `agents-a1` | vLLM (NVFP4) | agentic tool use — 35B agent model on the consumer-Blackwell marlin path |
 
-Both serve an OpenAI-compatible API on port 8000, one at a time, and load a GGUF from `~/.cache/llama.cpp`. Pre-download the GGUF to disk first so llama.cpp memory-maps it instead of holding a live download in RAM. Skip that step and a 19 GB model pulled straight from `-hf` will OOM the box.
+The llama.cpp model memory-maps a GGUF from `~/.cache/llama.cpp`, so pre-download it first or a model pulled straight from `-hf` will OOM the box. The vLLM models are NVFP4 (Blackwell-native FP4) on stable vLLM 0.24.0 in Docker — no nightly.
 
 ### opencode
 
-`.config/opencode/opencode.json` points opencode at `localhost:8000`, registers both models, and defines four agents: `build` (Devstral, coding), `research` (Qwen3.6, web search), plus `plan` and `db`. Web search runs through a local SearXNG instance. The `one-search-mcp` scrape tools launch a Chromium at `/usr/bin/chromium`, so symlink your browser there (`install.sh` reminds you if it's missing).
+`.config/opencode/opencode.json` points opencode at `localhost:8000`, registers all three models, and defines three agents: `plan` (architect, writes the plan, can't touch code), `build` (executes it), and `research` (web search and cited Q&A, no code or shell). Web search runs through a local SearXNG instance via `one-search-mcp`; `context7` and `serena` fill out the MCP set, and LSPs are wired for Julia, C/C++, Python, and TypeScript. The scrape tools launch a Chromium at `/usr/bin/chromium`, so symlink your browser there (`install.sh` reminds you if it's missing).
 
 ### qwen-code
 
 `.config/qwen/settings.json` points [qwen-code](https://github.com/QwenLM/qwen-code), Qwen's own CLI, at the same `localhost:8000` server and selects `qwen3.6-27b`. qwen-code reads `~/.qwen` (XDG is unsupported) and writes its own credentials and logs there, so `install.sh` links just `settings.json` into `~/.qwen/`. The rest stays out of the repo, matching how `install.sh` links opencode.
 
-Install it with `npm install -g @qwen-code/qwen-code`, start the server with `llm qwen3.6-27b`, then run `qwen`. Two values have to line up: the provider `id` matches the server's `--alias`, and `contextWindowSize` matches the server's `ctx-size`. `LOCAL_LLAMA_KEY` is a throwaway; qwen-code won't start without some API key, and the local server ignores it.
-
-`qwen3.6-27b` serves grammar-constrained JSON tool calls (Qwen's native XML path leaks raw `<function=...>` text that qwen-code can't execute) while `reasoning-format deepseek` splits the model's thinking into a separate field, which qwen-code shows as a "Thought" block. Both `settings.json` and the YAML use temp 0.6 for steady tool use. The YAML's bottom comment covers switching to pure no-think mode.
+Install it with `npm install -g @qwen-code/qwen-code`, start the server with `llm qwen3.6-27b`, then run `qwen`. Two values have to line up: the model name matches what the server exposes, and `contextWindowSize` matches the server's `max-model-len`. `LOCAL_LLAMA_KEY` is a throwaway; qwen-code won't start without some API key, and the local server ignores it. On vLLM, Qwen3.6's reasoning and XML tool calls are parsed server-side, so none of the old llama.cpp grammar workarounds are needed.
