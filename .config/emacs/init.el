@@ -93,6 +93,7 @@
 (global-display-line-numbers-mode 1)              ; number
 (global-hl-line-mode 1)                           ; cursorline
 (global-display-fill-column-indicator-mode 1)     ; colorcolumn (always on)
+(global-visual-line-mode 1)                       ; wrap (nvim wraps by default)
 (electric-pair-mode 1)                            ; nvim-autopairs
 (electric-indent-mode 1)                          ; smartindent (on by default)
 (delete-selection-mode 1)
