@@ -94,24 +94,22 @@ On the T470 the bar also carries brightness, the dual-battery readout, and the W
 
 ```sh
 llm --list             # list configured models
+llm qwen3.6-27b        # main: research, general reasoning, tools (vLLM, NVFP4)
 llm glm-4.7-flash      # coding + thinking + tools (llama.cpp)
-llm qwen3.6-27b         # research / general reasoning (vLLM, NVFP4)
-llm agents-a1          # agentic tool use (vLLM, NVFP4)
 ```
 
 Each config is flat `flag: value` YAML, and an `engine:` key picks the backend. `llamacpp` (the default) turns `key: value` into `llama-server --key value`; `vllm` runs NVIDIA's official vLLM OpenAI server in Docker, with a few extra keys (`image:`, `model:`, `env-NAME:`). One model at a time, all on port 8000.
 
 | Model | Engine | Role |
 |-------|--------|------|
+| `qwen3.6-27b` | vLLM (NVFP4) | **main** — research, general reasoning, coding, tools. NVIDIA's official ModelOpt NVFP4; community FP4 quants degraded it and stalled mid-inference, NVIDIA's stays steady |
 | `glm-4.7-flash` | llama.cpp | coding + reasoning — 30B-A3B MoE, thinking and reliable tool calls in one model, cheap MLA KV so it holds 128K ctx |
-| `qwen3.6-27b` | vLLM (NVFP4) | research / general — NVIDIA's official ModelOpt NVFP4; reasoning + native XML tool calls, both of which broke on llama.cpp |
-| `agents-a1` | vLLM (NVFP4) | agentic tool use — 35B agent model on the consumer-Blackwell marlin path |
 
-The llama.cpp model memory-maps a GGUF from `~/.cache/llama.cpp`, so pre-download it first or a model pulled straight from `-hf` will OOM the box. The vLLM models are NVFP4 (Blackwell-native FP4) on stable vLLM 0.24.0 in Docker — no nightly.
+The llama.cpp model memory-maps a GGUF from `~/.cache/llama.cpp`, so pre-download it first or a model pulled straight from `-hf` will OOM the box. The vLLM model is NVFP4 (Blackwell-native FP4) on stable vLLM 0.24.0 in Docker — no nightly.
 
 ### opencode
 
-`.config/opencode/opencode.json` points opencode at `localhost:8000`, registers all three models, and defines three agents: `plan` (architect, writes the plan, can't touch code), `build` (executes it), and `research` (web search and cited Q&A, no code or shell). Web search runs through a local SearXNG instance via `one-search-mcp`; `context7` and `serena` fill out the MCP set, and LSPs are wired for Julia, C/C++, Python, and TypeScript. The scrape tools launch a Chromium at `/usr/bin/chromium`, so symlink your browser there (`install.sh` reminds you if it's missing).
+`.config/opencode/opencode.json` points opencode at `localhost:8000`, registers both models, and defines three agents: `plan` (architect, writes the plan, can't touch code), `build` (executes it), and `research` (web search and cited Q&A, no code or shell). Web search runs through a local SearXNG instance via `one-search-mcp`; `context7` and `serena` fill out the MCP set, and LSPs are wired for Julia, C/C++, Python, and TypeScript. The scrape tools launch a Chromium at `/usr/bin/chromium`, so symlink your browser there (`install.sh` reminds you if it's missing).
 
 ### qwen-code
 

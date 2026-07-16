@@ -22,22 +22,27 @@ port: 8000
 # NVFP4 via NVIDIA ModelOpt (the card's `--quantization modelopt`).
 quantization: modelopt
 
-# KV cost (from the model's config.json, not a guess): head_dim 256 x 4 KV heads
-# (num_key_value_heads=4) x 64 layers ~= 0.125 MB/token at fp8. At 0.90 util (~28.8 GB)
-# minus ~12 GB NVFP4 weights, the ~16 GB KV pool holds ~130K tokens, so 131072 fits.
-# Trained to 262K; go higher only if the startup readout allows.
-#  - vLLM prints "GPU KV cache size: N tokens" / "maximum concurrency ..." at startup --
-#    trust that number; if it can't hold max-model-len, lower this line.
-#  - If vLLM rejects fp8 KV for this arch (NVFP4 KV-dtype fail-fast), delete the
-#    kv-cache-dtype line and roughly halve max-model-len.
+# KV is cheap here because this is a Gated DeltaNet HYBRID: only 1 layer in 4 is full
+# attention (full_attention_interval=4, so ~16 of 64 layers grow a KV cache); the other
+# 48 are linear-attention with a fixed-size recurrent state that does NOT grow with
+# context -- about 33 KB/token at fp8, a quarter of a naive 64-layer estimate.
+# The ceiling here is the WEIGHTS, not the KV. NVIDIA's checkpoint is MIXED FP8+NVFP4
+# (~19 GiB loaded, ~20 GiB on disk -- not pure 4-bit), so at 0.90 util (~28.8 GiB) only
+# ~5.8 GiB is left for KV, which vLLM measured as a max of 180320 tokens. So 262144 needs
+# ~8.3 GiB KV and fails to start on this 32 GB card; 163840 fits with margin. (The vLLM
+# recipe's "262144 on 40 GB" assumed a bigger card.) Want more? Nudge gpu-memory-utilization
+# toward ~0.92 for ~176K, trading desktop/browser VRAM headroom on this single-GPU box.
+#  - vLLM prints "Available KV cache memory" and "estimated maximum model length" at
+#    startup. Trust it: it fails fast if max-model-len won't fit, and reports the real max.
 kv-cache-dtype: fp8
-max-model-len: 131072
+max-model-len: 163840
 
-# TEXT-ONLY: this NVFP4 is actually multimodal (Qwen3_5ForConditionalGeneration +
-# vision_config), so by default vLLM reserves VRAM for the vision encoder + multimodal
-# profiling. We only do text, so reclaim that headroom for the KV pool. vLLM 0.24.0
-# wants a JSON object here (NOT the older image=0,video=0 form):
-limit-mm-per-prompt: '{"image": 0, "video": 0}'
+# TEXT-ONLY. This NVFP4 is multimodal (Qwen3_5ForConditionalGeneration + vision_config),
+# so vLLM otherwise loads the vision encoder and reserves VRAM for it. --language-model-only
+# skips the vision tower entirely (the recipe's text-only flag) and hands that VRAM to the
+# KV pool -- strictly better than limit-mm-per-prompt, which capped image inputs but still
+# loaded the encoder.
+language-model-only: true
 
 # 0.90 leaves ~3 GB for the sway compositor on this single-GPU box.
 gpu-memory-utilization: 0.90
