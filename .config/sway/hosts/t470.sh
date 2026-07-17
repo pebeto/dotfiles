@@ -86,17 +86,7 @@ while true; do
     bat1=$(battery_segment 1)
     lay=$(layout_short)
     wifi=$(wifi_label)
-    agenda=$(~/.config/sway/agenda.sh count 2>/dev/null)
     dt=$(date "+%a %d %H:%M")
-
-    # Agenda label: dim when nothing scheduled, warn color when ≥5 items.
-    agenda_text="Agenda: ${agenda:-?}"
-    agenda_color=""
-    if [ "${agenda:-0}" = "0" ]; then
-        agenda_color="$COLOR_DIM"
-    elif [ "${agenda:-0}" -ge 5 ] 2>/dev/null; then
-        agenda_color="$COLOR_WARN"
-    fi
 
     # Focus mode label: green dot when active, dim "Focus" when off.
     if focus_on; then focus_text="● FOCUS"; focus_color="$COLOR_FOCUS"
@@ -142,7 +132,6 @@ while true; do
             printf '%s,%s,'  "$(block battery "$bat_text"   "$bat_color")"   "$(sep)"
         fi
         printf '%s,%s,'  "$(block wifi      "WiFi: $wifi"   "$wifi_color")"  "$(sep)"
-        printf '%s,%s,'  "$(block agenda    "$agenda_text" "$agenda_color")" "$(sep)"
         printf '%s'      "$(block time      "$dt")"
         printf '],\n'
     }

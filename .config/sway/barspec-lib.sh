@@ -106,17 +106,15 @@ toggle_cal_popup() {
         kill "$(cat "$pidfile")" 2>/dev/null
         rm -f "$pidfile"
     else
-        # Enable xterm mouse tracking after `cal` so clicks inside foot send an
+        # Enable xterm mouse tracking after rendering so clicks inside foot send an
         # escape sequence to stdin; `read -n1` then consumes the first byte
         # (any click or keypress) and exits, which closes the foot window.
         foot --app-id=cal-popup \
-             -- bash -c 'cal; printf "\033[?1000h"; read -rsn1; printf "\033[?1000l"' \
+             -- bash -c '~/.config/sway/clock-popup.sh; printf "\033[?1000h"; read -rsn1; printf "\033[?1000l"' \
              >/dev/null 2>&1 &
         echo $! > "$pidfile"
     fi
 }
-
-toggle_agenda_popup() { ~/.config/sway/agenda.sh show; }
 
 toggle_btop_popup() {
     local pidfile="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/btop-popup.pid"
@@ -162,7 +160,6 @@ dispatch_click() {
         *'"name": "wifi"'*|*'"name":"wifi"'*)     ~/.config/sway/wifi-picker.sh >/dev/null 2>&1 & ;;
         *'"name": "focus"'*|*'"name":"focus"'*)   ~/.config/sway/focus-toggle.sh ;;
         *'"name": "time"'*|*'"name":"time"'*)     toggle_cal_popup ;;
-        *'"name": "agenda"'*|*'"name":"agenda"'*) toggle_agenda_popup ;;
         *'"name": "temp"'*|*'"name":"temp"'*)     toggle_btop_popup ;;
         *'"name": "cpu"'*|*'"name":"cpu"'*)       toggle_btop_popup ;;
         *'"name": "layout"'*|*'"name":"layout"'*) swaymsg input type:keyboard xkb_switch_layout next > /dev/null ;;

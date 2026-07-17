@@ -32,17 +32,7 @@ while true; do
     mem=$(memory_pct)
     vol=$(volume_pct)
     lay=$(layout_short)
-    agenda=$(~/.config/sway/agenda.sh count 2>/dev/null)
     dt=$(date "+%a %d %H:%M")
-
-    # Agenda label: dim when nothing scheduled, warn color when ≥5 items.
-    agenda_text="Agenda: ${agenda:-?}"
-    agenda_color=""
-    if [ "${agenda:-0}" = "0" ]; then
-        agenda_color="$COLOR_DIM"
-    elif [ "${agenda:-0}" -ge 5 ] 2>/dev/null; then
-        agenda_color="$COLOR_WARN"
-    fi
 
     sys_text="CPU: ${cpu:-?}°C ~ GPU: ${gpu:-?}°C ~ RAM: ${mem}%"
     sys_color=$(worst_color "$(hottest_temp "$cpu" "$gpu") 70 85" "$mem 80 90")
@@ -67,7 +57,6 @@ while true; do
         printf '%s,%s,'  "$(block layout "Layout: $lay")"               "$(sep)"
         printf '%s,%s,'  "$(block temp   "$sys_text"   "$sys_color")"   "$(sep)"
         printf '%s,%s,'  "$(block volume "$vol_text"   "$vol_color")"   "$(sep)"
-        printf '%s,%s,'  "$(block agenda "$agenda_text" "$agenda_color")" "$(sep)"
         printf '%s'      "$(block time   "$dt")"
         printf '],\n'
     }

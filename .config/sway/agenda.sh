@@ -1,19 +1,18 @@
 #!/bin/bash
-# Today's org-mode agenda for the swaybar and a click-to-toggle popup. `emacs --batch` is slow to cold-start, so the
-# bar never invokes it directly. A systemd timer calls `refresh` every few
-# minutes and writes two cache files; the bar `cat`s the count.
+# Today's org-mode agenda, rendered into the clock popup (sway/clock-popup.sh calls
+# `pretty`). `emacs --batch` is slow to cold-start, so nothing invokes it live: the
+# agenda-refresh systemd timer runs `refresh` every few minutes into a cache the popup
+# reads.
 #
 # Subcommands:
 #   refresh  re-render today's agenda via emacs --batch; update cache
 #   count    print today's item count (refreshes if cache is missing)
-#   show     toggle a foot popup showing today's full agenda
+#   pretty   ANSI agenda for the popup (AGENDA_NO_HEADER=1 skips the bold day header)
 
 ORG_DIR="${ORG_DIR:-$HOME/Sync/orgfiles}"
 CACHE_DIR="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/agenda"
 CACHE_TEXT="$CACHE_DIR/today.txt"
 CACHE_COUNT="$CACHE_DIR/today.count"
-POPUP_PID="$CACHE_DIR/popup.pid"
-SCRIPT="$(readlink -f "$0")"
 
 mkdir -p "$CACHE_DIR"
 
@@ -73,7 +72,7 @@ pretty() {
     # width (pretty runs inside the foot popup, so tput sees it).
     local cols
     cols=$(tput cols 2>/dev/null) || cols=80
-    awk -v width="${cols:-80}" \
+    awk -v width="${cols:-80}" -v noheader="${AGENDA_NO_HEADER:-0}" \
         -v B=$'\e[1m' -v D=$'\e[2m' -v R=$'\e[0m' \
         -v r=$'\e[31m' -v g=$'\e[32m' -v y=$'\e[33m' -v c=$'\e[36m' -v m=$'\e[35m' '
     function colorize(s) {
@@ -105,7 +104,7 @@ pretty() {
     NR == 1 && /^[A-Za-z]/ {
         gsub(/  +/, " ")            # org pads the day name; tidy it
         sub(/^[A-Za-z]+/, "&,")     # "Wednesday 3 June" -> "Wednesday, 3 June"
-        print B $0 R
+        if (!noheader) print B $0 R
         next
     }
     /^[ \t]+[A-Za-z0-9_-]+:([ \t]|$)/ {
@@ -124,27 +123,9 @@ pretty() {
     ' "$CACHE_TEXT"
 }
 
-show() {
-    if [ -f "$POPUP_PID" ] && kill -0 "$(cat "$POPUP_PID")" 2>/dev/null; then
-        kill "$(cat "$POPUP_PID")" 2>/dev/null
-        rm -f "$POPUP_PID"
-        return
-    fi
-    # Always refresh on open so a popup never shows stale data. The 5-min
-    # systemd cadence is too coarse for "I just edited my agenda".
-    refresh
-    # Same xterm mouse-tracking trick as the cal popup: any click or keypress
-    # inside the foot window closes it.
-    foot --app-id=agenda-popup \
-         -- bash -c "'$SCRIPT' pretty; printf '\033[?1000h'; read -rsn1; printf '\033[?1000l'" \
-         >/dev/null 2>&1 &
-    echo $! > "$POPUP_PID"
-}
-
 case "$1" in
     refresh) refresh ;;
     count)   count ;;
     pretty)  pretty ;;
-    show)    show ;;
-    *) echo "usage: $0 {refresh|count|pretty|show}" >&2; exit 1 ;;
+    *) echo "usage: $0 {refresh|count|pretty}" >&2; exit 1 ;;
 esac
