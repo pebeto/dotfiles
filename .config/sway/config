@@ -5,8 +5,10 @@
 
 exec dbus-update-activation-environment --systemd WAYLAND_DISPLAY SWAYSOCK XDG_CURRENT_DESKTOP=sway
 
-# For screen color temperature adjustment
-exec gammastep -l -8.11:-79.02
+# Screen color temperature (night-light). Each host launches gammastep from
+# hosts/<name>.conf so it can add its own brightness/gamma trim without touching
+# the other host. $geoloc holds the shared location for the day/night schedule.
+set $geoloc -8.11:-79.02
 
 # Location services: register a GeoClue agent (Sway doesn't run XDG autostart,
 # so nothing else launches it; without an agent, Manager.CreateClient hangs).
