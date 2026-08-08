@@ -60,12 +60,14 @@ client.focused_tab_title #555555 #2a2a2a #ffffff #ffa500 #555555
 client.unfocused         #2a2a2a #1a1a1a #888888 #2a2a2a #2a2a2a
 client.urgent            #b85c57 #b85c57 #ffffea #b85c57 #b85c57
 
-### Clock popup: calendar + today's agenda + audio output + last 10 notifications
-### (toggled by clicking the time block; rendered by sway/clock-popup.sh)
-# Right edge flush with the output: anchor at 100 ppt then shift left by the
-# window width so the right edge sits at the output's right edge. Tall enough to
-# hold a full agenda day plus 10 notifications; bump the height if it clips.
-for_window [app_id="cal-popup"]  floating enable, sticky enable, border pixel 3, resize set 480 px 800 px, move position 100 ppt 0 ppt, move left 480 px
+### Clock popup (rendered by sway/clock-popup.sh), opened by clicking the time block.
+# No resize here on purpose. toggle_cal_popup passes foot --window-size-chars, so the
+# window opens at its final 52x42 character grid and the script measures the right width
+# as it prints. Resizing from sway would land after the text was already written.
+# Anchoring at 100 ppt and then shifting left by the window width puts the right edge
+# flush with the output's; 676 px is 52 columns at JuliaMono 16.5 (a 13 px cell), so
+# adjust it if the font changes, or the popup will sit a little off the edge.
+for_window [app_id="cal-popup"]  floating enable, sticky enable, border pixel 3, move position 100 ppt 0 ppt, move left $cal_popup_w px
 
 ### btop popup (toggled by clicking the temp/cpu block in the status bar)
 for_window [app_id="btop-popup"] floating enable, border pixel 3, resize set 80 ppt 80 ppt, move position center
@@ -222,6 +224,9 @@ bar {
 
 ### Misc configs
 title_align center
-font pango:JuliaMono Regular 10
+# Outputs run at scale 1 so the compositor never resamples (keeps 4K video 1:1
+# and text at native pixels). Sizes below are hand-scaled 1.5x to compensate.
+# `font` and `seat * xcursor_theme` are set per host, since they depend on whether that
+# machine's output runs scaled.
 
 include /usr/local/etc/sway/config.d/*

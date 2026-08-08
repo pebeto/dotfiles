@@ -1,0 +1,53 @@
+# Local vLLM models for omp (oh-my-pi). install.sh links this to ~/.omp/agent/models.yml.
+# This only adds a provider; omp's 60+ built-in providers are untouched.
+#
+# `auth: none` because the local server ignores API keys, and omp otherwise demands an
+# apiKey from any provider that defines models. Costs are zero so the session total does
+# not pretend this bills.
+#
+# Only ONE of these runs at a time: both are served on port 8000 by .config/llm/run.sh,
+# on a single GPU. Start the matching server before selecting a model, or requests 404.
+
+providers:
+  local:
+    baseUrl: http://localhost:8000/v1
+    api: openai-completions
+    auth: none
+    models:
+      - id: qwen3.6-27b
+        name: Qwen3.6 27B (local vLLM, NVFP4)
+        reasoning: true
+        # Served with the vision tower loaded and video disabled, so images are in.
+        input: [text, image]
+        contextWindow: 122880
+        maxTokens: 16384
+        cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 }
+        compat:
+          # Qwen takes its thinking toggle through the chat template, not through
+          # reasoning_effort, which is what omp would send by default. vLLM serves this
+          # with --reasoning-parser qwen3 and thinking already on.
+          thinkingFormat: qwen-chat-template
+          # Sampling is not a models.yml field, so it rides in extraBody, which is
+          # merged into every request body. These are Qwen's published numbers for
+          # precise coding; their general-reasoning profile raises temperature to 1.0.
+          extraBody:
+            temperature: 0.6
+            top_p: 0.95
+            top_k: 20
+
+      - id: gpt-oss-20b
+        name: gpt-oss 20B (local vLLM, MXFP4)
+        reasoning: true
+        input: [text]
+        contextWindow: 131072
+        maxTokens: 32768
+        cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 }
+        compat:
+          # gpt-oss takes reasoning_effort natively, which is omp's default shape, and
+          # vLLM parses the harmony channels with --reasoning-parser openai_gptoss.
+          thinkingFormat: openai
+          supportsReasoningEffort: true
+          # OpenAI's published sampling for this model: top_k off.
+          extraBody:
+            temperature: 1.0
+            top_p: 1.0

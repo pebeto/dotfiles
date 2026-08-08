@@ -45,11 +45,11 @@
       }
     },
     "research": {
-      "mode": "primary",
+      "mode": "all",
       "temperature": 0.7,
-      "top_p": 0.8,
+      "top_p": 0.95,
       "top_k": 20,
-      "presence_penalty": 1.5,
+      "presence_penalty": 1.0,
       "description": "Web research and Q&A. Searches the web and synthesizes a cited answer. Cannot write code or run shell.",
       "prompt": "You are a research assistant. Answer the user's question using web search, then synthesize a direct, cited answer. Rules: 1. Search deliberately: run one focused query first, add a second or third only if it misses, and never repeat a query you already ran. 2. Use the results you get; if the first search answers the question, answer it instead of hunting for a better hit. 3. Cite the URLs you drew from. 4. Stay factual: if the searches do not answer the question, say so and report what you found instead of looping. 5. Do not write or edit files, and do not run shell commands.",
       "permission": {
@@ -64,22 +64,23 @@
   "provider": {
     "local": {
       "npm": "@ai-sdk/openai-compatible",
-      "name": "local (llama.cpp + vLLM)",
+      "name": "local (vLLM)",
       "options": {
         "baseURL": "http://localhost:8000/v1",
         "timeout": 1800000,
         "chunkTimeout": 1800000
       },
       "models": {
-        "glm-4.7-flash": {
-          "name": "glm-4.7-flash",
+        "gpt-oss-20b": {
+          "name": "gpt-oss-20b",
           "options": {
             "temperature": 1.0,
-            "top_p": 0.95
+            "top_p": 1.0,
+            "reasoning_effort": "high"
           },
           "limit": {
             "context": 131072,
-            "output": 16384
+            "output": 32768
           }
         },
         "qwen3.6-27b": {
@@ -90,7 +91,7 @@
             "top_k": 20
           },
           "limit": {
-            "context": 163840,
+            "context": 122880,
             "output": 16384
           }
         }
@@ -120,7 +121,7 @@
     },
     "serena": {
       "type": "local",
-      "command": ["uvx", "--from", "serena-agent", "serena", "start-mcp-server", "--context", "ide", "--project-from-cwd"],
+      "command": ["uvx", "--from", "serena-agent", "serena", "start-mcp-server", "--context", "ide", "--project-from-cwd", "--open-web-dashboard", "False"],
       "enabled": true
     }
   }

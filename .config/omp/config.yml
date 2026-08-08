@@ -1,0 +1,15 @@
+modelRoles: 
+  default: local/qwen3.6-27b:high
+  smol: local/qwen3.6-27b
+  slow: local/qwen3.6-27b
+  plan: local/qwen3.6-27b
+  task: local/qwen3.6-27b
+  commit: local/qwen3.6-27b
+symbolPreset: unicode
+theme: 
+  dark: titanium
+setupVersion: 1
+skills: 
+  customDirectories: 
+    - /home/pebeto/.claude/skills/academic-research-skills
+    - /home/pebeto/.claude/skills/claude-epub-skill

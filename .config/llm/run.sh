@@ -1,27 +1,19 @@
 #!/usr/bin/env bash
-# Launch a local LLM server for one of the models defined under configs/.
+# Launch a local LLM server for one of the models defined under configs/, using the
+# official vLLM OpenAI server in Docker.
 #
-# Each config is a flat YAML of "flag: value" pairs. A config picks its backend with
-# an `engine:` key (default `llamacpp` if absent):
+# Each config is a flat YAML of "flag: value" pairs. Three keys are special:
+#   image:        the Docker image to run (required)
+#   model:        positional model_tag for `vllm serve` (required; vLLM deprecated --model)
+#   env-NAME: val a Docker `-e NAME=val` (e.g. env-VLLM_*)
+# Every other `key: value` becomes a `vllm serve --key value` flag, where `key: true`
+# passes the bare flag and `key: false` omits it; JSON-valued flags take a quoted JSON
+# object. run.sh adds the fixed docker scaffolding: --gpus all, --ipc=host, the port
+# publish, the HF cache mount, and HF_TOKEN passthrough.
 #
-#   engine: llamacpp  ->  llama-server --key value      (key: true -> --key,
-#                         key: false -> omitted). A relative chat-template-file
-#                         resolves against templates/.
-#
-#   engine: vllm      ->  the official vLLM OpenAI server, in Docker. Special keys:
-#                           image:        the Docker image to run (required)
-#                           model:        positional model_tag for `vllm serve`
-#                                         (required; vLLM deprecated --model)
-#                           env-NAME: val a Docker `-e NAME=val` (e.g. env-VLLM_*)
-#                         every other `key: value` becomes a `vllm serve --key value`
-#                         flag (same true/false rules; JSON-valued flags like
-#                         limit-mm-per-prompt take a quoted JSON object). run.sh adds the
-#                         fixed docker scaffolding: --gpus all, --ipc=host, port publish,
-#                         the HF cache mount, and HF_TOKEN passthrough.
-#
-# Both engines read `port:` (default 8000) for the "already in use" check; vllm also
-# uses it to publish the container port. `run.sh --print <model>` shows the assembled
-# command without running it. Extra args after <model> are appended to the engine cmd.
+# `port:` (default 8000) both publishes the container port and drives the "already in use"
+# check. `run.sh --print <model>` shows the assembled command without running it. Extra
+# args after <model> are appended to the vllm command.
 #
 # Resolves to the real script directory so it works through the ~/.config/llm symlink
 # set up by dotfiles install.sh.
@@ -29,7 +21,6 @@ set -euo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 CONFIGS_DIR="$HERE/configs"
-TEMPLATES_DIR="$HERE/templates"
 HF_CACHE="${HF_CACHE:-$HOME/.cache/huggingface}"
 PRINT=0
 
@@ -63,26 +54,23 @@ list_models() {
   done
 }
 
-# Human-facing "  - name    (engine)" listing -- used only by usage()/error output.
+# Human-facing "  - name" listing -- used only by usage()/error output.
 list_models_annotated() {
-  local f name engine
+  local f
   for f in "$CONFIGS_DIR"/*.yaml; do
     [[ -e "$f" ]] || continue
-    name="$(basename "${f%.yaml}")"
-    engine="$(config_get "$f" engine || true)"; engine="${engine:-llamacpp}"
-    printf '  - %-20s (%s)\n' "$name" "$engine"
+    printf '  - %s\n' "$(basename "${f%.yaml}")"
   done
 }
 
 usage() {
   cat >&2 <<EOF
-usage: $(basename "$0") <model> [extra engine args...]
+usage: $(basename "$0") <model> [extra vllm args...]
        $(basename "$0") --print <model>     # show the command, don't run it
        $(basename "$0") --list
 
-Each config under configs/ selects its backend with an \`engine:\` key
-(llamacpp [default] or vllm). \`port:\` (default 8000) drives the in-use check.
-vllm models run in Docker; set HF_TOKEN in the environment for gated repos.
+Models run in Docker via the vLLM OpenAI server; \`port:\` (default 8000) drives
+the in-use check. Set HF_TOKEN in the environment for gated repos.
 
 available models:
 $(list_models_annotated)
@@ -106,44 +94,14 @@ if [[ ! -f "$CONFIG" ]]; then
   exit 1
 fi
 
-ENGINE="$(config_get "$CONFIG" engine || true)"; ENGINE="${ENGINE:-llamacpp}"
 PORT="$(config_get "$CONFIG" port || true)"; PORT="${PORT:-8000}"
 
-# Port-in-use guard (both engines bind a host port).
+# Port-in-use guard.
 if [[ "$PRINT" -eq 0 ]] && command -v ss >/dev/null 2>&1 \
    && ss -ltn 2>/dev/null | awk '{print $4}' | grep -q ":$PORT\$"; then
   echo "error: port $PORT is already in use" >&2
   exit 1
 fi
-
-run_llamacpp() {
-  command -v llama-server >/dev/null 2>&1 || {
-    echo "error: llama-server not found on PATH" >&2; exit 1; }
-  local args=() line key val
-  while IFS= read -r line || [[ -n "$line" ]]; do
-    line="${line%%#*}"
-    [[ "$line" == *:* ]] || continue
-    key="$(trim "${line%%:*}")"
-    val="$(trim "${line#*:}")"
-    [[ -z "$key" ]] && continue
-    [[ "$key" == "engine" ]] && continue   # dispatch key, not a llama-server flag
-    val="${val%\"}"; val="${val#\"}"
-    val="${val%\'}"; val="${val#\'}"
-    case "$val" in
-      true)  args+=("--$key") ;;
-      false) ;;
-      "")    args+=("--$key") ;;
-      *)
-        [[ "$key" == "chat-template-file" && "$val" != /* ]] && val="$TEMPLATES_DIR/$val"
-        args+=("--$key" "$val")
-        ;;
-    esac
-  done < "$CONFIG"
-  if [[ "$PRINT" -eq 1 ]]; then
-    printf 'llama-server'; printf ' %q' "${args[@]}" "$@"; printf '\n'; exit 0
-  fi
-  exec llama-server "${args[@]}" "$@"
-}
 
 run_vllm() {
   command -v docker >/dev/null 2>&1 || {
@@ -158,7 +116,7 @@ run_vllm() {
     val="${val%\"}"; val="${val#\"}"
     val="${val%\'}"; val="${val#\'}"
     case "$key" in
-      engine) ;;                                   # dispatch key
+      engine) ;;                                   # ignored; vLLM is the only backend
       image)  image="$val" ;;                      # docker image
       model)  model="$val" ;;                      # positional model_tag (vLLM deprecated --model)
       env-*)  denv+=("-e" "${key#env-}=$val") ;;   # docker environment variable
@@ -194,8 +152,4 @@ run_vllm() {
   exec docker "${docker_args[@]}" "$@"
 }
 
-case "$ENGINE" in
-  llamacpp) run_llamacpp "$@" ;;
-  vllm)     run_vllm "$@" ;;
-  *) echo "error: unknown engine '$ENGINE' in $CONFIG (expected: llamacpp | vllm)" >&2; exit 1 ;;
-esac
+run_vllm "$@"

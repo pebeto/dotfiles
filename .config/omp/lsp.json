@@ -1,0 +1,13 @@
+{
+  "$comment": "Language servers for omp, linked to ~/.omp/agent/lsp.json by install.sh. Only Julia is here: clangd, pyright and typescript-language-server ship as built-in definitions that omp auto-detects from root markers and $PATH, and an override like this one merges onto those defaults rather than replacing them.",
+  "servers": {
+    "julia": {
+      "command": "julia",
+      "args": ["--startup-file=no", "--history-file=no", "-e", "using LanguageServer; runserver()"],
+      "fileTypes": [".jl"],
+      "languageId": "julia",
+      "rootMarkers": ["Project.toml", "JuliaProject.toml", "Manifest.toml"],
+      "warmupTimeoutMs": 120000
+    }
+  }
+}

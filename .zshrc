@@ -63,7 +63,7 @@ alias grep='grep --color=auto'
 alias fgrep='fgrep --color=auto'
 alias egrep='egrep --color=auto'
 
-# Local LLM server (llama.cpp/vLLM). Only when run.sh is deployed (not on the Mac).
+# Local LLM server (vLLM in Docker). Only when run.sh is deployed (not on the Mac).
 if [ -x "$HOME/.config/llm/run.sh" ]; then
     llm() { ~/.config/llm/run.sh "$@"; }
     _llm() {
@@ -75,6 +75,18 @@ if [ -x "$HOME/.config/llm/run.sh" ]; then
 fi
 
 source ~/.miscrc
+
+# omp generates its completions from live CLI metadata, so they never drift. Generating
+# them costs ~0.5s, so cache the script and regenerate only when the binary is newer.
+# This runs after ~/.miscrc because that is where a host may add omp to PATH.
+if (( $+commands[omp] )); then
+    _omp_comp="${XDG_CACHE_HOME:-$HOME/.cache}/zsh/omp-completions.zsh"
+    if [[ ! -s "$_omp_comp" || $commands[omp] -nt "$_omp_comp" ]]; then
+        mkdir -p "${_omp_comp:h}" && omp completions zsh >| "$_omp_comp" 2>/dev/null
+    fi
+    [[ -s "$_omp_comp" ]] && source "$_omp_comp"
+    unset _omp_comp
+fi
 
 # bun completions
 [ -s "$HOME/.bun/_bun" ] && source "$HOME/.bun/_bun"

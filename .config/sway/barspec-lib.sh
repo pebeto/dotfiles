@@ -100,6 +100,19 @@ sep() {
         "$SEP_COLOR"
 }
 
+# The popup's character grid. foot opens at exactly this size and clock-popup.sh reads
+# POPUP_COLS to lay out its rules and notification rows, so the two always agree. The
+# script cannot measure the terminal itself: its shell starts before foot has applied the
+# window size, so tput would report foot's 80x24 default and the text would come out
+# wrapped. Keep the width in sync with $cal_popup_w in sway/hosts/<name>.conf.
+#
+# Rows must exceed the longest render, because foot scrolls once it runs out and the
+# window exits on the first keypress, putting the date and calendar out of reach. Fixed
+# chrome is ~30 rows, so this leaves ~24 for the agenda. A host can override both before
+# sourcing this file; 54 rows fits the T470's 1080 px panel at its smaller font.
+CAL_POPUP_COLS=${CAL_POPUP_COLS:-52}
+CAL_POPUP_ROWS=${CAL_POPUP_ROWS:-54}
+
 toggle_cal_popup() {
     local pidfile="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/cal-popup.pid"
     if [ -f "$pidfile" ] && kill -0 "$(cat "$pidfile")" 2>/dev/null; then
@@ -109,7 +122,9 @@ toggle_cal_popup() {
         # Enable xterm mouse tracking after rendering so clicks inside foot send an
         # escape sequence to stdin; `read -n1` then consumes the first byte
         # (any click or keypress) and exits, which closes the foot window.
+        POPUP_COLS="$CAL_POPUP_COLS" \
         foot --app-id=cal-popup \
+             --window-size-chars="${CAL_POPUP_COLS}x${CAL_POPUP_ROWS}" \
              -- bash -c '~/.config/sway/clock-popup.sh; printf "\033[?1000h"; read -rsn1; printf "\033[?1000l"' \
              >/dev/null 2>&1 &
         echo $! > "$pidfile"

@@ -36,6 +36,7 @@ CONFIGS=( nvim emacs sioyek ghostty swiftbar bin )
 # individual files, not the whole dir). Set to 0 to skip.
 LINK_OPENCODE=1   # -> ~/.config/opencode/*.json
 LINK_QWEN=1       # -> ~/.qwen/*.json  (qwen-code reads ~/.qwen, not XDG)
+LINK_OMP=1        # -> ~/.omp/agent/*.{yml,json}  (omp keeps its auth store there)
 # ---------------------------------------------------------------------------
 # Intentionally NOT linked (Linux/Wayland-only, or 5090-only):
 #   dunst foot fuzzel swappy sway systemd xdg-desktop-portal-wlr llm wallpaper.jpeg
@@ -100,6 +101,18 @@ if [ "$LINK_QWEN" = 1 ]; then
     [ "$DRY" = 1 ] || mkdir -p "$dst"
     shopt -s nullglob
     for f in "$src"/*.json; do link "$f" "$dst/$(basename "$f")"; done
+    shopt -u nullglob
+fi
+
+if [ "$LINK_OMP" = 1 ]; then
+    echo
+    echo "omp config (per-file into ~/.omp/agent)"
+    # models.yml points at localhost:8000, which on the Mac means an SSH tunnel to the
+    # workstation. Without it omp falls back to a cloud provider and asks for an API key.
+    src="$DOTFILES/.config/omp"; dst="$HOME/.omp/agent"
+    [ "$DRY" = 1 ] || mkdir -p "$dst"
+    shopt -s nullglob
+    for f in "$src"/*.yml "$src"/*.json; do link "$f" "$dst/$(basename "$f")"; done
     shopt -u nullglob
 fi
 

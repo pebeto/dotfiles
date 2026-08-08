@@ -68,10 +68,13 @@ pretty() {
     # ANSI escapes are added only at display time so the cache used by
     # count stays plain text. Entries are grouped under one yellow
     # header per category instead of repeating "category:" on every line,
-    # and long entries wrap with a hanging indent at the real terminal
-    # width (pretty runs inside the foot popup, so tput sees it).
-    local cols
-    cols=$(tput cols 2>/dev/null) || cols=80
+    # and long entries wrap with a hanging indent. AGENDA_COLS sets that width; the
+    # clock popup passes its own grid because tput is unreliable there, reporting foot's
+    # default until the window size has been applied. Fall back to tput for other callers.
+    local cols=${AGENDA_COLS:-}
+    if ! [[ "$cols" =~ ^[0-9]+$ ]]; then
+        cols=$(tput cols 2>/dev/null) || cols=80
+    fi
     awk -v width="${cols:-80}" -v noheader="${AGENDA_NO_HEADER:-0}" \
         -v B=$'\e[1m' -v D=$'\e[2m' -v R=$'\e[0m' \
         -v r=$'\e[31m' -v g=$'\e[32m' -v y=$'\e[33m' -v c=$'\e[36m' -v m=$'\e[35m' '

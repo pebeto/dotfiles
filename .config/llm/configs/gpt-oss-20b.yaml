@@ -1,0 +1,43 @@
+# gpt-oss-20b (OpenAI, apache-2.0) served by vLLM: a 21B MoE with 3.6B active and MXFP4
+# weights.
+#
+# Schema (see run.sh): `image:` picks the Docker image, `env-NAME:` becomes -e NAME=val,
+# and every other `key: value` becomes a `vllm serve --key value` flag. run.sh adds
+# --gpus all, --ipc=host, -p PORT:PORT, the HF cache mount, and HF_TOKEN.
+
+image: vllm/vllm-openai:v0.26.0
+
+# OpenAI's own repo, not a mirror. Tool calling needs `</call>` (200012) in the checkpoint's
+# generation_config.json eos_token_id, or the model runs past the end of a tool call and
+# the harmony parser dies on "Unexpected token 12606 while expecting start token 200006"
+# (vLLM #22519). unsloth/gpt-oss-20b ships the pre-fix config with only [200002, 199999].
+model: openai/gpt-oss-20b
+served-model-name: gpt-oss-20b
+host: 0.0.0.0
+port: 8000
+
+# MXFP4 is declared in the checkpoint, so vLLM selects it without a --quantization flag. On
+# this card it runs the Marlin kernel: the recipe's FlashInfer MXFP4 env vars target
+# datacenter Blackwell, and the sm120 Triton backend benchmarked slower. If startup dies on
+# "Sinks must be of type float32", add `env-VLLM_ATTENTION_BACKEND: TRITON_ATTN`.
+
+# Weights are ~12 GB and the KV cache is small: 24 layers with 8 KV heads at head_dim 64,
+# and every other layer is sliding-window rather than full attention, so the native 131072
+# fits with room left over.
+max-model-len: 131072
+gpu-memory-utilization: 0.90
+max-num-seqs: 4
+enable-chunked-prefill: true
+enable-prefix-caching: true
+
+# gpt-oss only works in the harmony response format. These parsers turn it into the
+# OpenAI-style reasoning and tool_calls the harnesses expect.
+reasoning-parser: openai_gptoss
+enable-auto-tool-choice: true
+tool-call-parser: openai
+
+# Overlap CPU scheduling with GPU work.
+async-scheduling: true
+
+# Sampling is per-request, so it lives in the client. OpenAI recommends temp 1.0 and top_p
+# 1.0 with top_k off. Reasoning depth is a separate per-request `reasoning_effort`.

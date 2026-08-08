@@ -21,12 +21,12 @@
         "generationConfig": {
           "timeout": 1800000,
           "maxRetries": 2,
-          "contextWindowSize": 163840,
+          "contextWindowSize": 122880,
           "samplingParams": {
             "temperature": 0.6,
             "top_p": 0.95,
             "top_k": 20,
-            "max_tokens": 32768
+            "max_tokens": 16384
           }
         }
       }

@@ -46,9 +46,10 @@ SKIP=(.git .gitignore README.md install.sh install-macos.sh github-key-setup.sh 
 # .config/ entries that need per-file linking instead of a whole-dir
 # symlink, usually because ~/.config/<name>/ already exists as a real
 # dir managed by another tool (e.g. systemd creates ~/.config/systemd/).
-# `qwen` is special for a second reason: qwen-code reads ~/.qwen (not XDG),
-# so its block below links the file there, not into ~/.config/qwen.
-CONFIG_SPECIAL=(systemd opencode qwen)
+# `qwen` and `omp` are special for a second reason: they read ~/.qwen and
+# ~/.omp/agent (not XDG), so their blocks below link files there instead of
+# into ~/.config/<name>.
+CONFIG_SPECIAL=(systemd opencode qwen omp)
 
 skip_entry() {
     local name=$1 s
@@ -136,6 +137,18 @@ else
     link "$CONFIG_DST/sway/hosts/$HOST.sh"   "$CONFIG_DST/sway-host.sh"   $force
 fi
 
+# foot.ini pulls its font size from ~/.config/foot-host.ini. Kept outside the sway-host
+# branch above because foot's `include` is fatal: without this link foot refuses to
+# start at all, which costs you the terminal you would fix it from.
+force=""
+[ "$FORCE_HOST" = 1 ] && force="--force"
+if [ -f "$DOTFILES/.config/foot/hosts/$HOST.ini" ]; then
+    link "$CONFIG_DST/foot/hosts/$HOST.ini" "$CONFIG_DST/foot-host.ini" $force
+else
+    printf '  WARN    no foot/hosts/%s.ini; foot will refuse to start\n' "$HOST"
+    n_warn=$((n_warn + 1))
+fi
+
 echo
 echo "Systemd user units"
 systemd_src="$DOTFILES/.config/systemd/user"
@@ -173,6 +186,24 @@ if [ -d "$opencode_src" ]; then
     shopt -u nullglob
 else
     printf '  WARN    %s missing\n' "$opencode_src"
+    n_warn=$((n_warn + 1))
+fi
+
+echo
+echo "omp config (per-file into ~/.omp/agent: omp keeps its auth store and session"
+echo "state there too, so only the config files are linked)"
+omp_src="$DOTFILES/.config/omp"
+omp_dst="$HOME/.omp/agent"
+if [ -d "$omp_src" ]; then
+    [ "$DRY" = 1 ] || mkdir -p "$omp_dst"
+    shopt -s nullglob
+    for f in "$omp_src"/*.yml "$omp_src"/*.json; do
+        name=$(basename "$f")
+        link "$f" "$omp_dst/$name"
+    done
+    shopt -u nullglob
+else
+    printf '  WARN    %s missing\n' "$omp_src"
     n_warn=$((n_warn + 1))
 fi
 
@@ -219,11 +250,16 @@ done
 
 echo
 echo "Local LLM stack (.config/llm)"
-if command -v llama-server >/dev/null 2>&1; then
-    printf '  ok      llama-server\n'
+if command -v docker >/dev/null 2>&1; then
+    printf '  ok      docker\n'
 else
-    printf '  MISSING llama-server (needed by run.sh)\n'
+    printf '  MISSING docker (run.sh serves every model through vLLM in Docker)\n'
     n_warn=$((n_warn + 1))
+fi
+if command -v omp >/dev/null 2>&1; then
+    printf '  ok      omp (oh-my-pi)\n'
+else
+    printf '  TODO    omp not installed: curl -fsSL https://omp.sh/install | sh\n'
 fi
 # qwen-code is the matched harness for the Qwen3.6 server (~/.qwen/settings.json).
 if command -v qwen >/dev/null 2>&1; then
