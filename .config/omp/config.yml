@@ -1,10 +1,10 @@
 modelRoles: 
-  default: local/qwen3.6-27b:high
-  smol: local/qwen3.6-27b
-  slow: local/qwen3.6-27b
-  plan: local/qwen3.6-27b
-  task: local/qwen3.6-27b
-  commit: local/qwen3.6-27b
+  default: local/qwen3.8-27b:high
+  smol: local/qwen3.8-27b
+  slow: local/qwen3.8-27b
+  plan: local/qwen3.8-27b
+  task: local/qwen3.8-27b
+  commit: local/qwen3.8-27b
 symbolPreset: unicode
 theme: 
   dark: titanium

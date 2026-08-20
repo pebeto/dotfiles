@@ -5,7 +5,7 @@
     }
   },
   "model": {
-    "name": "qwen3.6-27b"
+    "name": "qwen3.8-27b"
   },
   "env": {
     "LOCAL_LLAMA_KEY": "not-needed"
@@ -13,9 +13,9 @@
   "modelProviders": {
     "openai": [
       {
-        "id": "qwen3.6-27b",
-        "name": "Qwen3.6-27B (local vLLM)",
-        "description": "vLLM server from .config/llm/configs/qwen3.6-27b.yaml on :8000",
+        "id": "qwen3.8-27b",
+        "name": "Qwen3.8-27B (local vLLM)",
+        "description": "vLLM server from .config/llm/configs/qwen3.8-27b.yaml on :8000",
         "envKey": "LOCAL_LLAMA_KEY",
         "baseUrl": "http://localhost:8000/v1",
         "generationConfig": {
@@ -23,7 +23,7 @@
           "maxRetries": 2,
           "contextWindowSize": 122880,
           "samplingParams": {
-            "temperature": 0.6,
+            "temperature": 1.0,
             "top_p": 0.95,
             "top_k": 20,
             "max_tokens": 16384

@@ -1,6 +1,6 @@
 {
   "$schema": "https://opencode.ai/config.json",
-  "model": "local/qwen3.6-27b",
+  "model": "local/qwen3.8-27b",
   "lsp": {
     "julia": {
       "command": ["julia", "--startup-file=no", "--history-file=no", "-e", "using LanguageServer; runserver()"],
@@ -34,7 +34,7 @@
     },
     "build": {
       "mode": "primary",
-      "temperature": 0.6,
+      "temperature": 1.0,
       "top_p": 0.95,
       "top_k": 20,
       "description": "Executes the plan provided by the user or plan agent.",
@@ -46,10 +46,9 @@
     },
     "research": {
       "mode": "all",
-      "temperature": 0.7,
+      "temperature": 1.0,
       "top_p": 0.95,
       "top_k": 20,
-      "presence_penalty": 1.0,
       "description": "Web research and Q&A. Searches the web and synthesizes a cited answer. Cannot write code or run shell.",
       "prompt": "You are a research assistant. Answer the user's question using web search, then synthesize a direct, cited answer. Rules: 1. Search deliberately: run one focused query first, add a second or third only if it misses, and never repeat a query you already ran. 2. Use the results you get; if the first search answers the question, answer it instead of hunting for a better hit. 3. Cite the URLs you drew from. 4. Stay factual: if the searches do not answer the question, say so and report what you found instead of looping. 5. Do not write or edit files, and do not run shell commands.",
       "permission": {
@@ -83,8 +82,8 @@
             "output": 32768
           }
         },
-        "qwen3.6-27b": {
-          "name": "qwen3.6-27b",
+        "qwen3.8-27b": {
+          "name": "qwen3.8-27b",
           "options": {
             "temperature": 1.0,
             "top_p": 0.95,

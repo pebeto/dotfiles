@@ -94,7 +94,7 @@ On the T470 the bar also carries brightness, the dual-battery readout, and the W
 
 ```sh
 llm --list             # list configured models
-llm qwen3.6-27b        # main: research, general reasoning, tools (NVFP4)
+llm qwen3.8-27b        # main: research, general reasoning, tools (NVFP4)
 llm gpt-oss-20b        # lighter reasoning + tools (MXFP4)
 ```
 
@@ -102,12 +102,14 @@ Every model is served by the official vLLM OpenAI server in Docker. Each config 
 
 | Model | Quant | Role |
 |-------|-------|------|
-| `qwen3.6-27b` | NVFP4 | **main**: research, general reasoning, coding, tools. Takes text and images at 120K context, with video disabled. Served from unsloth's compressed-tensors W4A4 build rather than NVIDIA's ModelOpt one, to stay off the Marlin kernel |
+| `qwen3.8-27b` | NVFP4 | **main**: research, general reasoning, coding, tools. Takes text and images at 120K context, with video disabled. Served from unsloth's compressed-tensors W4A4 build rather than a ModelOpt one, to stay off the Marlin kernel |
 | `gpt-oss-20b` | MXFP4 | 21B MoE with 3.6B active, so it is much faster than the 27B and leaves VRAM headroom. Text only, and holds its full 131K context; reasoning depth is a per-request `reasoning_effort`. Served from OpenAI's repo, since mirrors ship a `generation_config.json` that is missing the `</call>` stop token and breaks tool calling |
 
 Both quants are 4-bit and Blackwell-native, and both declare their format in the checkpoint, so neither config sets `--quantization`. Weights download to `~/.cache/huggingface`, which `run.sh` mounts into the container.
 
-The Qwen model comes from unsloth rather than NVIDIA because of which kernel each one lands on. unsloth's is compressed-tensors W4A4 and runs on the native CUTLASS FP4 path. NVIDIA's is ModelOpt `MIXED_PRECISION`, whose weight-only groups have no activation scales and so fall back to Marlin, where the `EngineDeadError` crashes cluster on Blackwell (vLLM #49926, #50934, #35566). Measured here on a cold 22k-token prompt, unsloth prefills at 5,826 tok/s against 2,821 and decodes at 65.3 tok/s against 71.4. It also leaves the vision blocks and the GDN `linear_attn` layers unquantized, so its weights take 21.34 GiB instead of 20.0 and the KV pool falls to 4.31 GiB. That buys double the cold-prefill rate and no Marlin, in exchange for slower decode and 40k less context.
+The Qwen model comes from unsloth rather than NVIDIA because of which kernel each one lands on. unsloth's is compressed-tensors W4A4 and runs on the native CUTLASS FP4 path. NVIDIA's ModelOpt `MIXED_PRECISION` builds have weight-only groups with no activation scales, so they fall back to Marlin, where the `EngineDeadError` crashes cluster on Blackwell (vLLM #49926, #50934, #35566). Measured on the 3.6 pair, which is the same size and shape as this one, unsloth prefilled a cold 22k-token prompt at 5,826 tok/s against 2,821 and decoded at 65.3 tok/s against 71.4. unsloth also leaves the vision blocks and the GDN `linear_attn` layers unquantized, so its weights take 21.34 GiB and the KV pool falls to 4.31 GiB. That buys double the cold-prefill rate and no Marlin, in exchange for slower decode and less context.
+
+Qwen3.8 keeps 3.6's architecture exactly (`Qwen3_5ForConditionalGeneration`, 64 layers, same vision config), so it is a drop-in swap: same parsers, same flags, same 21.81 GiB. What changed is the training and one config knob. The template now takes `reasoning_effort`, which **defaults to `xhigh`**, so it thinks harder than 3.6 did unless you ask otherwise, and it accepts only `xhigh`, `medium` and `low` (`high` aliases to `xhigh`; anything else makes the template raise). Qwen also dropped the separate `temperature 0.6` coding profile, publishing one thinking profile at 1.0, which is what every client here now sends.
 
 Video stays off (`limit-mm-per-prompt` sets `video: 0`) because profiling one video item reserves a six-figure token budget and several GiB this card does not have. Images cost at most 16,384 tokens each, which is also what caps a conversation at 7 of them.
 
@@ -122,7 +124,7 @@ Three harnesses share that one server: [omp](https://github.com/can1357/oh-my-pi
 | File | Contents |
 |------|----------|
 | `models.yml` | The `local` provider: `localhost:8000/v1`, `auth: none`, both models with their real context windows, and per-model sampling in `compat.extraBody` (sampling has no first-class field) |
-| `config.yml` | `modelRoles` (all on `qwen3.6-27b`) and `skills.customDirectories`. omp owns this file, so keep no comments in it |
+| `config.yml` | `modelRoles` (all on `qwen3.8-27b`) and `skills.customDirectories`. omp owns this file, so keep no comments in it |
 | `lsp.json` | Julia only |
 
 Each file is deliberately small, because omp discovers most of this on its own:
@@ -140,6 +142,6 @@ Kept as the fallback for when omp misbehaves. `.config/opencode/opencode.json` p
 
 ### qwen-code
 
-`.config/qwen/settings.json` points [qwen-code](https://github.com/QwenLM/qwen-code), Qwen's own CLI, at the same `localhost:8000` server and selects `qwen3.6-27b`. qwen-code reads `~/.qwen` (XDG is unsupported) and writes its own credentials and logs there, so `install.sh` links just `settings.json` into `~/.qwen/`. The rest stays out of the repo, matching how `install.sh` links opencode.
+`.config/qwen/settings.json` points [qwen-code](https://github.com/QwenLM/qwen-code), Qwen's own CLI, at the same `localhost:8000` server and selects `qwen3.8-27b`. qwen-code reads `~/.qwen` (XDG is unsupported) and writes its own credentials and logs there, so `install.sh` links just `settings.json` into `~/.qwen/`. The rest stays out of the repo, matching how `install.sh` links opencode.
 
-Install it with `npm install -g @qwen-code/qwen-code`, start the server with `llm qwen3.6-27b`, then run `qwen`. Two values have to line up: the model name matches what the server exposes, and `contextWindowSize` matches the server's `max-model-len`. `LOCAL_LLAMA_KEY` is a throwaway; qwen-code won't start without some API key, and the local server ignores it. Qwen3.6's reasoning and XML tool calls are parsed server-side by vLLM, so the harness needs no grammar workarounds.
+Install it with `npm install -g @qwen-code/qwen-code`, start the server with `llm qwen3.8-27b`, then run `qwen`. Two values have to line up: the model name matches what the server exposes, and `contextWindowSize` matches the server's `max-model-len`. `LOCAL_LLAMA_KEY` is a throwaway; qwen-code won't start without some API key, and the local server ignores it. Qwen3.8's reasoning and XML tool calls are parsed server-side by vLLM, so the harness needs no grammar workarounds.

@@ -14,8 +14,8 @@ providers:
     api: openai-completions
     auth: none
     models:
-      - id: qwen3.6-27b
-        name: Qwen3.6 27B (local vLLM, NVFP4)
+      - id: qwen3.8-27b
+        name: Qwen3.8 27B (local vLLM, NVFP4)
         reasoning: true
         # Served with the vision tower loaded and video disabled, so images are in.
         input: [text, image]
@@ -27,11 +27,11 @@ providers:
           # reasoning_effort, which is what omp would send by default. vLLM serves this
           # with --reasoning-parser qwen3 and thinking already on.
           thinkingFormat: qwen-chat-template
-          # Sampling is not a models.yml field, so it rides in extraBody, which is
-          # merged into every request body. These are Qwen's published numbers for
-          # precise coding; their general-reasoning profile raises temperature to 1.0.
+          # Sampling is not a models.yml field, so it rides in extraBody, which is merged
+          # into every request body. Qwen3.8 publishes one thinking profile and no
+          # separate coding one, unlike 3.6.
           extraBody:
-            temperature: 0.6
+            temperature: 1.0
             top_p: 0.95
             top_k: 20
 

@@ -1,0 +1,61 @@
+# Qwen3.8-27B (apache-2.0) served by vLLM: reasoning, tools, images.
+#
+# Schema (see run.sh): `image:` is the Docker image, `env-NAME:` becomes -e NAME=val, and
+# every other `key: value` becomes a `vllm serve --key value` flag.
+
+image: vllm/vllm-openai:v0.26.0      # pin a stable release, not nightly
+
+# unsloth's build is compressed-tensors W4A4 and runs on the native CUTLASS FP4 kernels.
+# NVIDIA-style ModelOpt builds fall back to Marlin: half the cold-prefill speed here, and
+# where the EngineDeadError crashes cluster on Blackwell (vLLM #49926). The format is
+# auto-detected, so there is no `quantization:` key.
+#
+# Architecture is unchanged from Qwen3.6 (Qwen3_5ForConditionalGeneration, model_type
+# qwen3_5, 64 layers, same vision config), so this vLLM release serves it as-is.
+model: unsloth/Qwen3.8-27B-NVFP4
+served-model-name: qwen3.8-27b
+host: 0.0.0.0
+port: 8000
+
+# Carried over from the identically sized 3.6 build (both 21.81 GiB of safetensors), which
+# measured 4.31 GiB of KV for 130,108 tokens. Confirm on first boot: vLLM prints the real
+# ceiling and refuses to start above it, so trust "Available KV cache memory" and "GPU KV
+# cache size" over this comment. fp8 KV is what buys a window this size, at the cost of an
+# uncalibrated q_scale warning each boot.
+kv-cache-dtype: fp8
+max-model-len: 122880
+
+# Images yes, video no: one video item reserves a six-figure token budget and several GiB
+# this card does not have. 3.8 adds native video understanding, so that stays deliberate
+# rather than incidental.
+#
+# The image count is per conversation rather than per message, and overrunning it 400s
+# every later request instead of degrading. vLLM caps it at max-model-len over 16384 tokens
+# per image, so 122880 allows 7.
+limit-mm-per-prompt: '{"image": 7, "video": 0}'
+
+# Host RAM for processed images, multiplied by (api_server_count + data_parallel_size), so
+# the 4 GiB default can claim 8 GiB of the box's ~30 GB.
+mm-processor-cache-gb: 1
+
+# 0.90 leaves ~3 GB for the sway compositor on this single-GPU box.
+gpu-memory-utilization: 0.90
+max-num-seqs: 4
+enable-chunked-prefill: true
+enable-prefix-caching: true
+
+# The chat template still emits <think> and <tool_call>/<function=/<parameter=, so the 3.6
+# parsers carry over. Sampling is per-request, so it lives in the client.
+reasoning-parser: qwen3
+enable-auto-tool-choice: true
+tool-call-parser: qwen3_xml
+
+# The template takes a `reasoning_effort` kwarg defaulting to `xhigh`, so this thinks hard
+# out of the box. It accepts xhigh, medium and low, and aliases `high` onto xhigh; anything
+# else makes the template raise and the request 400s (vLLM #52738). That alias only exists
+# in unsloth's template, which ships with the tokenizer here. Pointing `tokenizer:` at
+# Qwen's own repo swaps in their stricter template, which rejects `high` outright and reads
+# only the first system message instead of merging system and developer messages.
+
+# No speculative decoding. The MTP layer ships here and vLLM supports qwen3_5_mtp, but
+# #35800 (open) has it corrupting tool calls and then crashing on NVFP4 on Blackwell.
