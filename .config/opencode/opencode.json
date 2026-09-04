@@ -90,7 +90,7 @@
             "top_k": 20
           },
           "limit": {
-            "context": 122880,
+            "context": 81920,
             "output": 16384
           }
         }

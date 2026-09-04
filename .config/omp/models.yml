@@ -19,7 +19,7 @@ providers:
         reasoning: true
         # Served with the vision tower loaded and video disabled, so images are in.
         input: [text, image]
-        contextWindow: 122880
+        contextWindow: 81920
         maxTokens: 16384
         cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 }
         compat:

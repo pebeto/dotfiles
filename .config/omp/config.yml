@@ -8,8 +8,10 @@ modelRoles:
 symbolPreset: unicode
 theme: 
   dark: titanium
-setupVersion: 1
+setupVersion: 2
 skills: 
   customDirectories: 
     - /home/pebeto/.claude/skills/academic-research-skills
     - /home/pebeto/.claude/skills/claude-epub-skill
+composer: 
+  shape: box
