@@ -86,18 +86,18 @@ require("lazy").setup({
     },
 
     -- AI
-    {
-        "zbirenbaum/copilot.lua",
-        cmd = "Copilot",
-        event = "InsertEnter",
-        opts = {
-            panel = { auto_refresh = true },
-            -- Inline ghost text + cycling (<M-]> / <M-[>) handled by copilot
-            -- natively; blink owns LSP/buffer/snippets/path.
-            suggestion = { auto_trigger = true },
-            filetypes = { markdown = true },
-        },
-    },
+    -- {
+    --     "zbirenbaum/copilot.lua",
+    --     cmd = "Copilot",
+    --     event = "InsertEnter",
+    --     opts = {
+    --         panel = { auto_refresh = true },
+    --         -- Inline ghost text + cycling (<M-]> / <M-[>) handled by copilot
+    --         -- natively; blink owns LSP/buffer/snippets/path.
+    --         suggestion = { auto_trigger = true },
+    --         filetypes = { markdown = true },
+    --     },
+    -- },
 
     -- Custom
     { "pebeto/dookie.nvim" },

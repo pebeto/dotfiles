@@ -48,6 +48,15 @@ exec_always dunst
 ### also starts it; the pgrep guard keeps it to a single watcher instance.
 exec_always pgrep -x wl-paste >/dev/null || wl-paste --watch cliphist store
 
+### Window decorations
+# No titlebars. The 1px border exists so the split indicator has somewhere to
+# draw: client.focused's orange marks the edge where the next window will land.
+# At 1px a screen edge is a hairline and the seam between two windows reads as
+# 2px, since both sides contribute. hide_edge_borders would hide the indicator
+# exactly where it matters, so it stays unset.
+default_border pixel 1
+default_floating_border none
+
 ### Window border colors
 # Sway has no per-app border color, so these apply to every window.
 # Focused: quiet mid-gray chrome that recedes; the split-direction

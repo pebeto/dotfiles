@@ -137,8 +137,20 @@ run_vllm() {
   local hf=()
   [[ -n "${HF_TOKEN:-}" ]] && hf=(-e "HF_TOKEN=$HF_TOKEN")
 
+  # nvidia-uvm's major is allocated dynamically, so it can move between boots
+  # (509 here, with nvswitch on 510). libnvidia-container sometimes creates the
+  # container's /dev/nvidia-uvm on the wrong major, and CUDA then dies with
+  # "CUDA unknown error" while nvidia-smi still works, since NVML never touches
+  # UVM. Passing the host nodes pins the right ones.
+  local uvm=()
+  local d
+  for d in /dev/nvidia-uvm /dev/nvidia-uvm-tools; do
+    [[ -e "$d" ]] && uvm+=(--device "$d")
+  done
+
   local docker_args=(
     run --rm --gpus all --ipc=host
+    "${uvm[@]}"
     -p "${PORT}:${PORT}"
     -v "${HF_CACHE}:/root/.cache/huggingface"
     "${hf[@]}" "${denv[@]}"
