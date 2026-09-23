@@ -3,7 +3,7 @@
 # Schema (see run.sh): `image:` is the Docker image, `env-NAME:` becomes -e NAME=val, and
 # every other `key: value` becomes a `vllm serve --key value` flag.
 
-image: vllm/vllm-openai:v0.28.0      # pin a stable release, not nightly
+image: vllm/vllm-openai:v0.30.0      # pin a stable release, not nightly
 
 # unsloth's build is compressed-tensors W4A4 and runs on the native CUTLASS FP4 kernels.
 # NVIDIA-style ModelOpt builds fall back to Marlin: half the cold-prefill speed here, and
@@ -17,8 +17,8 @@ served-model-name: qwen3.8-27b
 host: 0.0.0.0
 port: 8000
 
-# Measured on a settled GPU: weights 22.13 GiB with MTP, 3.59 GiB of KV holding 88,320
-# tokens, so 81920 leaves ~8% slack. Restarting immediately after a kill inflates vLLM's
+# Measured on a settled GPU: 3.5-3.8 GiB of KV holding 84,000-90,000 tokens, so 81920 keeps
+# 1.03-1.10x concurrency. Restarting immediately after a kill inflates vLLM's
 # CUDA-graph estimate (0.44 -> 0.78 GiB) and the pool can drop to ~69k, which makes startup
 # fail loudly; wait ~30s and retry rather than lowering this. fp8 KV is what buys a window
 # this size, at the cost of an uncalibrated q_scale warning each boot.
@@ -27,10 +27,16 @@ max-model-len: 81920
 
 # Multi-token prediction, using the MTP layer already in this checkpoint, so there is no
 # draft model to download. `mtp` resolves to the Qwen3_5MTP architecture and shares the
-# target's embedding and lm_head, costing 0.79 GiB of weights. Measured here: decode goes
-# from 66 tok/s to ~100, and tool calls stayed well-formed across every run, which is what
-# vLLM #35800 used to break. k=2 beats k=1 despite the "lower acceptance" warning at boot.
-speculative-config: '{"method":"mtp","num_speculative_tokens":2}'
+# target's embedding and lm_head. Measured acceptance is 96.6% at k=3, mean accepted length
+# 3.9 of 4, which is why k=3 beats the k=2 this ran before: decode 137 tok/s against 124.
+# k=4 needs more KV than the window leaves and refuses to boot. Add
+# `--per-request-spec-decode-metrics summary` to read those acceptance numbers again.
+speculative-config: '{"method":"mtp","num_speculative_tokens":3}'
+
+# Left to itself 0.30.0 picks FLASHINFER, which leaves only 3.02 GiB of KV here: too little
+# for the window above, so the engine refuses to start. TRITON_ATTN restores the full pool
+# and is the backend that runs the fused multi-step draft decode MTP wants.
+attention-backend: TRITON_ATTN
 
 # Images yes, video no: one video item reserves a six-figure token budget and several GiB
 # this card does not have. 3.8 adds native video understanding, so that stays deliberate
