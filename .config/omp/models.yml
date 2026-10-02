@@ -7,9 +7,13 @@
 #
 # Only ONE of these runs at a time: both are served on port 8000 by .config/llm/run.sh,
 # on a single GPU. Start the matching server before selecting a model, or requests 404.
+#
+# The provider is `vllm`, not `local`: since v18 omp ships its own `local` provider for
+# on-device tiny models (titles, memory, TTS/STT), and a `qwen*` id under that name is
+# classed as a tiny model and silently dropped from the chat list.
 
 providers:
-  local:
+  vllm:
     baseUrl: http://localhost:8000/v1
     api: openai-completions
     auth: none

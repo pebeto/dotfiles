@@ -106,7 +106,7 @@ fi
 run_vllm() {
   command -v docker >/dev/null 2>&1 || {
     echo "error: docker not found on PATH (vllm engine runs in Docker)" >&2; exit 1; }
-  local image="" model="" serve=() denv=() line key val
+  local image="" model="" util="" serve=() denv=() line key val
   while IFS= read -r line || [[ -n "$line" ]]; do
     line="${line%%#*}"
     [[ "$line" == *:* ]] || continue
@@ -120,6 +120,7 @@ run_vllm() {
       image)  image="$val" ;;                      # docker image
       model)  model="$val" ;;                      # positional model_tag (vLLM deprecated --model)
       env-*)  denv+=("-e" "${key#env-}=$val") ;;   # docker environment variable
+      gpu-memory-utilization) util="$val"; serve+=("--$key" "$val") ;;
       *)
         case "$val" in
           true)  serve+=("--$key") ;;
@@ -161,6 +162,26 @@ run_vllm() {
   if [[ "$PRINT" -eq 1 ]]; then
     printf 'docker'; printf ' %q' "${docker_args[@]}" "$@"; printf '\n'; exit 0
   fi
+  # vLLM samples free VRAM once at startup and aborts if it is below
+  # gpu-memory-utilization x total. The desktop swings by ~0.7 GiB here, so a launch can
+  # lose that race and then succeed on the next try. Wait for the headroom rather than
+  # failing with a traceback 30s in.
+  if [[ -n "$util" ]] && command -v nvidia-smi >/dev/null 2>&1; then
+    local total need free waited=0
+    total=$(nvidia-smi --query-gpu=memory.total --format=csv,noheader,nounits 2>/dev/null | head -1)
+    need=$(awk -v t="${total:-0}" -v u="$util" 'BEGIN{printf "%d", t*u}')
+    while [[ "$need" -gt 0 ]]; do
+      free=$(nvidia-smi --query-gpu=memory.free --format=csv,noheader,nounits 2>/dev/null | head -1)
+      [[ "${free:-0}" -ge "$need" ]] && break
+      if [[ "$waited" -ge 60 ]]; then
+        echo "error: ${free}MiB VRAM free, need ${need}MiB for gpu-memory-utilization $util" >&2
+        exit 1
+      fi
+      [[ "$waited" -eq 0 ]] && echo "waiting for VRAM: ${free}MiB free, need ${need}MiB"
+      sleep 3; waited=$((waited + 3))
+    done
+  fi
+
   exec docker "${docker_args[@]}" "$@"
 }
 

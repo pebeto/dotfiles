@@ -1,17 +1,18 @@
-modelRoles: 
-  default: local/qwen3.8-27b:high
-  smol: local/qwen3.8-27b
-  slow: local/qwen3.8-27b
-  plan: local/qwen3.8-27b
-  task: local/qwen3.8-27b
-  commit: local/qwen3.8-27b
+modelRoles:
+  default: vllm/qwen3.8-27b:high
+  smol: vllm/qwen3.8-27b
+  slow: vllm/qwen3.8-27b
+  plan: vllm/qwen3.8-27b
+  task: vllm/qwen3.8-27b
+  commit: vllm/qwen3.8-27b
+  tiny: vllm/qwen3.8-27b:high
 symbolPreset: unicode
-theme: 
+theme:
   dark: titanium
 setupVersion: 2
-skills: 
-  customDirectories: 
+skills:
+  customDirectories:
     - /home/pebeto/.claude/skills/academic-research-skills
     - /home/pebeto/.claude/skills/claude-epub-skill
-composer: 
+composer:
   shape: box

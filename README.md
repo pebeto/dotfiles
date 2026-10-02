@@ -129,7 +129,7 @@ Three harnesses share that one server: [omp](https://github.com/can1357/oh-my-pi
 
 | File | Contents |
 |------|----------|
-| `models.yml` | The `local` provider: `localhost:8000/v1`, `auth: none`, both models with their real context windows, and per-model sampling in `compat.extraBody` (sampling has no first-class field) |
+| `models.yml` | The `vllm` provider (not `local`, which omp v18 reserves for its own on-device models): `localhost:8000/v1`, `auth: none`, both models with their real context windows, and per-model sampling in `compat.extraBody` (sampling has no first-class field) |
 | `config.yml` | `modelRoles` (all on `qwen3.8-27b`) and `skills.customDirectories`. omp owns this file, so keep no comments in it |
 | `lsp.json` | Julia only |
 
@@ -138,7 +138,7 @@ Each file is deliberately small, because omp discovers most of this on its own:
 - **MCP servers** are read straight out of `~/.config/opencode/opencode.json`, so SearXNG, `context7` and `serena` need no second definition. Editing the opencode file changes both harnesses.
 - **Skills** come from `~/.claude/skills`, the same library Claude Code uses. That discovery is one level deep, so the two nested collections (`academic-research-skills`, `claude-epub-skill`) are listed in `skills.customDirectories` to bring their 5 skills in.
 - **LSP** ships built-in definitions for clangd, pyright and typescript-language-server, auto-detected from root markers and `$PATH`. Julia is the one server omp does not know, and adding it merges onto the built-ins instead of replacing them.
-- **Roles** all point at the same model on purpose. One GPU serves one model, so aiming a role at the other one only works while that server happens to be running. To switch: restart `run.sh`, then `omp --model local/gpt-oss-20b`.
+- **Roles** all point at the same model on purpose. One GPU serves one model, so aiming a role at the other one only works while that server happens to be running. To switch: restart `run.sh`, then `omp --model vllm/gpt-oss-20b`.
 
 Two things worth knowing. omp rewrites `config.yml` itself (`omp config set`, `/settings`, role changes in `/models`), which lands in the repo through the symlink but drops any comments in the file, so document that one in this README instead; `omp config path` prints the active directory. And the thinking toggle differs per model, which is why `models.yml` sets `thinkingFormat`: Qwen wants it in the chat template, while gpt-oss takes `reasoning_effort` directly.
 
