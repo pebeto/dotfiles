@@ -15,7 +15,7 @@ vim.opt.rtp:prepend(lazypath)
 -- Plugin specifications
 require("lazy").setup({
     -- Core
-    { "nvim-treesitter/nvim-treesitter" },
+    { "nvim-treesitter/nvim-treesitter", lazy = false, build = ":TSUpdate" },
 
     -- LSP
     -- mason installs the servers/formatters/linters; lspconfig ships their
@@ -47,7 +47,6 @@ require("lazy").setup({
     },
 
     -- Productivity
-    { "akinsho/toggleterm.nvim" },
     { "lewis6991/gitsigns.nvim" },
     { "folke/flash.nvim" },
     { "MagicDuck/grug-far.nvim" },
@@ -125,13 +124,14 @@ require("lazy").setup({
 
 -- Load user configuration
 require("config.options")
+require("config.terminal")
+require("plugins.treesitter")
 require("plugins.lsp")
 require("plugins.conform")
 require("plugins.lint")
 require("plugins.oil")
 require("plugins.gitsigns")
 require("plugins.telescope")
-require("plugins.toggleterm")
 require("plugins.flash")
 require("plugins.grugfar")
 require("plugins.extras")

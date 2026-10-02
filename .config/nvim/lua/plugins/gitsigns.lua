@@ -26,27 +26,33 @@ require("gitsigns").setup({
             vim.keymap.set(mode, lhs, rhs, { buffer = bufnr, desc = desc })
         end
 
-        -- Navigation
+        -- Navigation. In a diff window ]c and [c keep their built-in meaning.
         map("n", "]c", function()
             if vim.wo.diff then
-                return "]c"
+                vim.cmd.normal({ "]c", bang = true })
+            else
+                gs.nav_hunk("next")
             end
-            vim.schedule(gs.next_hunk)
-            return "<Ignore>"
         end, "Git: Next hunk")
         map("n", "[c", function()
             if vim.wo.diff then
-                return "[c"
+                vim.cmd.normal({ "[c", bang = true })
+            else
+                gs.nav_hunk("prev")
             end
-            vim.schedule(gs.prev_hunk)
-            return "<Ignore>"
         end, "Git: Prev hunk")
 
-        -- Actions
-        map({ "n", "v" }, "<leader>gs", gs.stage_hunk, "Git: Stage hunk")
-        map({ "n", "v" }, "<leader>gr", gs.reset_hunk, "Git: Reset hunk")
+        -- Actions. stage_hunk toggles: on an already-staged hunk it unstages.
+        map("n", "<leader>gs", gs.stage_hunk, "Git: Stage/unstage hunk")
+        map("n", "<leader>gr", gs.reset_hunk, "Git: Reset hunk")
+        -- In visual mode, act on the selected lines rather than the whole hunk.
+        map("v", "<leader>gs", function()
+            gs.stage_hunk({ vim.fn.line("."), vim.fn.line("v") })
+        end, "Git: Stage/unstage lines")
+        map("v", "<leader>gr", function()
+            gs.reset_hunk({ vim.fn.line("."), vim.fn.line("v") })
+        end, "Git: Reset lines")
         map("n", "<leader>gS", gs.stage_buffer, "Git: Stage buffer")
-        map("n", "<leader>gu", gs.undo_stage_hunk, "Git: Undo stage hunk")
         map("n", "<leader>gR", gs.reset_buffer, "Git: Reset buffer")
         map("n", "<leader>gp", gs.preview_hunk, "Git: Preview hunk")
         map("n", "<leader>gb", function()
