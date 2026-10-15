@@ -30,3 +30,5 @@
 # Run signing-setup.sh once per machine or commits fail with "need a signingkey".
 [include]
 	path = ~/.gitconfig.local
+[push]
+	autoSetupRemote = true

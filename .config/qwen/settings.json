@@ -21,12 +21,13 @@
         "generationConfig": {
           "timeout": 1800000,
           "maxRetries": 2,
-          "contextWindowSize": 81920,
+          "contextWindowSize": 131072,
           "samplingParams": {
             "temperature": 1.0,
             "top_p": 0.95,
             "top_k": 20,
-            "max_tokens": 16384
+            "max_tokens": 16384,
+            "chat_template_kwargs": { "reasoning_effort": "medium" }
           }
         }
       }

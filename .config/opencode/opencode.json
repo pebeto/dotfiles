@@ -92,10 +92,11 @@
           "options": {
             "temperature": 1.0,
             "top_p": 0.95,
-            "top_k": 20
+            "top_k": 20,
+            "chat_template_kwargs": { "reasoning_effort": "medium" }
           },
           "limit": {
-            "context": 81920,
+            "context": 131072,
             "output": 16384
           }
         }

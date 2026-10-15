@@ -19,23 +19,23 @@ port: 8000
 
 # KV is pinned, not sized from gpu-memory-utilization: vLLM measures device-wide free VRAM
 # while it starts, so desktop allocations during those two minutes come out of the pool and
-# boots fail at random. 3.6 GiB holds 84,365 tokens every time. Four 4096px images at once
-# peak vLLM at 29.3 GiB, 0.75 GiB over the 0.91 budget; the unpinned pool did the same.
-# fp8 KV is what buys a window this size, at the cost of an uncalibrated q_scale warning.
+# boots fail at random. 4.6 GiB holds 139,810 tokens every time. Measured peaks: 27.3 GiB
+# on a 120k-token prefill and 29.25 GiB with four 4096px images, against the 28.6 GiB that
+# 0.91 allows. fp8 KV is what buys a window this size, at the cost of an uncalibrated
+# q_scale warning.
 kv-cache-dtype: fp8
-max-model-len: 81920
-kv-cache-memory-bytes: 3865470566   # 3.6 GiB
+max-model-len: 131072
+kv-cache-memory-bytes: 4939212390   # 4.6 GiB
 
-# Multi-token prediction, using the MTP layer already in this checkpoint, so there is no
-# draft model to download. `mtp` resolves to the Qwen3_5MTP architecture and shares the
-# target's embedding and lm_head. Against ~66 tok/s without it, decode runs 1.5x on prose and
-# 1.7-2.3x on code, reasoning and tool calls; acceptance follows the same order, 37% on prose
-# up to 95% on tool calls. k=3 beat k=2, and k=4 did not fit the KV pool when tried. Add
-# `--per-request-spec-decode-metrics summary` to read acceptance per request.
-speculative-config: '{"method":"mtp","num_speculative_tokens":3}'
+# No speculative decoding. The checkpoint's MTP layer roughly doubles decode (69 -> 110-160
+# tok/s) but costs KV twice, its own weights plus draft slots per token, so it caps the
+# window at 81920. There omp compacted every 7 turns, against every 14 at 122880, while the
+# faster decode saved about 42 minutes over five weeks of real sessions. To trade back, set
+# speculative-config: '{"method":"mtp","num_speculative_tokens":3}' with max-model-len 81920,
+# image 5 and kv-cache-memory-bytes 3865470566, and lower the three clients to match.
 
-# Left to itself 0.30.0 picks FLASHINFER, which needs about 0.6 GiB more than TRITON_ATTN here
-# and can't run the fused multi-step draft decode MTP wants.
+# Left to itself 0.30.0 picks FLASHINFER, which needed about 0.6 GiB more than TRITON_ATTN
+# here. The memory peaks above were measured on TRITON_ATTN.
 attention-backend: TRITON_ATTN
 
 # Images yes, video no: one video item reserves a six-figure token budget and several GiB
@@ -44,8 +44,8 @@ attention-backend: TRITON_ATTN
 #
 # The image count is per conversation rather than per message, and overrunning it 400s
 # every later request instead of degrading. vLLM caps it at max-model-len over 16384 tokens
-# per image, so 81920 allows 5. Change both together or not at all.
-limit-mm-per-prompt: '{"image": 5, "video": 0}'
+# per image, so 131072 allows 8. Change both together or not at all.
+limit-mm-per-prompt: '{"image": 8, "video": 0}'
 
 # Host RAM for processed images, multiplied by (api_server_count + data_parallel_size), so
 # the 4 GiB default can claim 8 GiB of the box's ~30 GB.
@@ -66,8 +66,9 @@ reasoning-parser: qwen3
 enable-auto-tool-choice: true
 tool-call-parser: qwen3_xml
 
-# The template takes a `reasoning_effort` kwarg defaulting to `xhigh`, so this thinks hard
-# out of the box. It accepts xhigh, medium and low, and aliases `high` onto xhigh; anything
+# The template takes a `reasoning_effort` kwarg defaulting to `xhigh`, but every client
+# sends medium: xhigh cost ~5x the tokens for no better results and can think past
+# max_tokens. It accepts xhigh, medium and low, and aliases `high` onto xhigh; anything
 # else makes the template raise and the request 400s (vLLM #52738). That alias only exists
 # in unsloth's template, which ships with the tokenizer here. Pointing `tokenizer:` at
 # Qwen's own repo swaps in their stricter template, which rejects `high` outright and reads
