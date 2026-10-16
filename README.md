@@ -39,9 +39,12 @@ A tiling Wayland session. One `config` is shared across machines; the per-host o
 | `Super+Shift+q` | close the focused window |
 | `Super+f` | fullscreen |
 | `Super+Shift+space` | toggle floating |
+| `Alt+space` (workstation), three-finger swipe up (T470) | window overview; the same again closes it |
 | `Super+Escape` | lock the screen |
 | `Super+Shift+c` | reload the config |
 | `Super+Shift+e` | exit Sway (asks first, because we've all rage-quit by accident) |
+
+The overview is [woverview](https://github.com/pebeto/woverview), a separate project of mine: live thumbnails of every window, other workspaces and the scratchpad included. It isn't packaged, so `install.sh` prints the command that fetches the release into `~/.local/bin`.
 
 ### Focus and move
 
@@ -137,7 +140,7 @@ Three harnesses share that one server: [omp](https://github.com/can1357/oh-my-pi
 
 Each file is deliberately small, because omp discovers most of this on its own:
 
-- **MCP servers** are read straight out of `~/.config/opencode/opencode.json`, so SearXNG, `context7` and `serena` need no second definition. Editing the opencode file changes both harnesses.
+- **MCP servers** are read straight out of `~/.config/opencode/opencode.json`, so `context7` and `serena` need no second definition. Editing the opencode file changes both harnesses.
 - **Skills** come from `~/.claude/skills`, the same library Claude Code uses. That discovery is one level deep, so the two nested collections (`academic-research-skills`, `claude-epub-skill`) are listed in `skills.customDirectories` to bring their 5 skills in.
 - **LSP** ships built-in definitions for clangd, pyright and typescript-language-server, auto-detected from root markers and `$PATH`. Julia is the one server omp does not know, and adding it merges onto the built-ins instead of replacing them.
 - **Roles** all point at the same model on purpose. One GPU serves one model, so aiming a role at the other one only works while that server happens to be running. To switch: restart `run.sh`, then `omp --model vllm/gpt-oss-20b`.
@@ -146,7 +149,7 @@ Two things worth knowing. omp rewrites `config.yml` itself (`omp config set`, `/
 
 ### opencode
 
-Kept as the fallback for when omp misbehaves. `.config/opencode/opencode.json` points opencode at `localhost:8000`, registers both models, and defines three agents: `plan` (architect, writes the plan, can't touch code), `build` (executes it), and `research` (web search and cited Q&A, no code or shell). Web search runs through a local SearXNG instance via `one-search-mcp`; `context7` and `serena` fill out the MCP set, and LSPs are wired for Julia, C/C++, Python, and TypeScript. The scrape tools launch a Chromium at `/usr/bin/chromium`, so symlink your browser there (`install.sh` reminds you if it's missing).
+Kept as the fallback for when omp misbehaves. `.config/opencode/opencode.json` points opencode at `localhost:8000`, registers both models, and defines three agents: `plan` (architect, writes the plan, can't touch code), `build` (executes it), and `research` (web search and cited Q&A, no code or shell). `context7` and `serena` make up the MCP set, and LSPs are wired for Julia, C/C++, Python, and TypeScript.
 
 ### qwen-code
 

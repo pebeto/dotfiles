@@ -247,6 +247,14 @@ for cmd in sway swaymsg swayidle swaylock playerctl amixer grim slurp swappy wl-
         missing+=("$cmd")
     fi
 done
+# woverview isn't packaged, and the sway host configs call it by this path.
+if [ -x "$HOME/.local/bin/woverview" ]; then
+    printf '  ok      ~/.local/bin/woverview\n'
+else
+    printf '  TODO    woverview not installed, so the window overview binding does nothing:\n'
+    printf "            gh release download -R pebeto/woverview -p 'woverview-*-x86_64-linux' -O ~/.local/bin/woverview && chmod +x ~/.local/bin/woverview\n"
+    n_warn=$((n_warn + 1))
+fi
 
 echo
 echo "Local LLM stack (.config/llm)"
@@ -266,17 +274,6 @@ if command -v qwen >/dev/null 2>&1; then
     printf '  ok      qwen (qwen-code)\n'
 else
     printf '  TODO    qwen-code not installed: npm install -g @qwen-code/qwen-code\n'
-    n_warn=$((n_warn + 1))
-fi
-# one-search-mcp's browser finder probes fixed paths like /usr/bin/chromium
-if [ -e /usr/bin/chromium ]; then
-    printf '  ok      /usr/bin/chromium (one-search-mcp scrape/map)\n'
-elif [ -x /usr/bin/helium-browser ]; then
-    printf '  TODO    one-search-mcp scrape/map needs /usr/bin/chromium. Point it at helium:\n'
-    printf '            sudo ln -s /usr/bin/helium-browser /usr/bin/chromium\n'
-    n_warn=$((n_warn + 1))
-else
-    printf '  WARN    no /usr/bin/chromium and no /usr/bin/helium-browser; scrape/map will fail\n'
     n_warn=$((n_warn + 1))
 fi
 
