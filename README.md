@@ -6,14 +6,14 @@ Everything it takes to turn a fresh Arch box into a usable Sway desktop: window 
 
 ## Two machines, one config
 
-The same `~/.config` drives both of my boxes. The only thing that changes per host is a small profile under `.config/sway/hosts/`, and `install.sh` picks the right one by hostname so I never have to think about it.
+The same `~/.config` drives both of my boxes. The only things that change per host are a small profile under `.config/sway/hosts/` and an entry in the bar's theme, and both get picked by hostname so I never have to think about it.
 
 | Host | What it is | Personality |
 |------|-----------|-------------|
 | `workstation` | The desktop with the RTX 5090 | Two screens (2560x1440@165Hz with a 1080p sidekick), black bar, brags about its GPU temperature, and runs the LLM server. Has no battery because it has never once left the desk. |
 | `t470` | A ThinkPad T470 that refuses to die | TrackPoint and touchpad both wired up, brightness keys, WiFi SSID in the bar, and two batteries (the internal one plus the hot-swap pack) because ThinkPads cheat at staying alive. Gray bar, so I can tell at a glance which machine I'm yelling at. |
 
-Each host is three files: `.config/sway/hosts/<name>.conf` for Sway outputs, inputs, hardware keys and font size, `.config/sway/hosts/<name>.sh` for the bar blocks that machine actually has, and `.config/foot/hosts/<name>.ini` for the terminal font. Font size is per host because the workstation drives a 4K panel unscaled while the T470 does not. The workstation bar shows CPU, GPU, and RAM. The T470 bar swaps in brightness, dual battery (`iBAT` for the internal pack, `eBAT` for the hot-swap one), and the WiFi network it's on. Want a third machine? Drop in two files named after its hostname and you're done.
+Each host is two files and one entry: `.config/sway/hosts/<name>.conf` for Sway outputs, inputs, hardware keys and font size, `.config/foot/hosts/<name>.ini` for the terminal font, and a profile in `.config/quickshell/Theme.qml` for the bar's size, colors, and the blocks that machine actually has. Font size is per host because the workstation drives a 4K panel unscaled while the T470 does not. The workstation bar shows CPU, GPU, and RAM. The T470 bar swaps in brightness, dual battery (`i` for the internal pack, `e` for the hot-swap one), WiFi, and Bluetooth. Want a third machine? Drop in the two files named after its hostname, add its profile, and you're done.
 
 ## Install
 
@@ -23,7 +23,9 @@ Each host is three files: `.config/sway/hosts/<name>.conf` for Sway outputs, inp
 ./install.sh --host=t470  # force a host profile (default: this box's hostname)
 ```
 
-`install.sh` links each top-level dotfile into `$HOME` and each `.config/` entry into `~/.config/`, points the Sway host shims at `hosts/<hostname>`, enables the systemd user timers, and tells you which dependencies you forgot to install. It will not clobber a real file: it reports the conflict, shrugs, and moves on. Moving to a different machine later? `--force-host` re-points the host shims and leaves everything else alone.
+`install.sh` links each top-level dotfile into `$HOME` and each `.config/` entry into `~/.config/`, points the Sway host shims at `hosts/<hostname>`, enables the systemd user timers, clears out links left dangling by things deleted from the repo, and tells you which dependencies you forgot to install, ending with the `pacman` line that fetches them (JuliaMono lives in the AUR, so it gets a `yay` hint instead). It also flags a dunst still hanging around to fight Quickshell for notifications, and skips the LLM checks on a machine without an NVIDIA GPU. It will not clobber a real file: it reports the conflict, shrugs, and moves on. Moving to a different machine later? `--force-host` re-points the host shims and leaves everything else alone.
+
+Bringing a machine that already runs sway onto the Quickshell setup takes one logout after `install.sh`. A reload drops the old swaybar, but sway only runs `exec quickshell` at login, and the old session's dunst keeps the notifications until then.
 
 ## Sway
 
@@ -87,9 +89,20 @@ Press the current workspace's number again to bounce back to the previous one.
 | `Super+Shift+p` | cycle keyboard layout (us / latam) |
 | volume / media keys | wired to `amixer` and `playerctl` |
 
-The top bar (`barspec.sh`) stacks clickable blocks and loads the host profile for whichever machine it's running on. The clock opens a calendar, the agenda block opens your schedule, and the temp/CPU block opens `btop` when you want to know exactly what's on fire. Sway locks after five minutes of idle and again before suspend, so it never sits unlocked for long.
+Sway locks after five minutes of idle and again before suspend, so it never sits unlocked for long.
 
-On the T470 the bar also carries brightness, the dual-battery readout, and the WiFi SSID; its hardware keys (`XF86WLAN`, `XF86Bluetooth`, and the `Fn+Esc` FnLock toggle) fire `indicators.sh` to pop a dunst notification, since the laptop's embedded controller flips those states behind Wayland's back.
+On the T470 the hardware keys (`XF86WLAN`, `XF86Bluetooth`, and the `Fn+Esc` FnLock toggle) fire `indicators.sh` to post a notification, since the laptop's embedded controller flips those states behind Wayland's back.
+
+## Bar and notifications (`.config/quickshell`)
+
+The top bar, the notification popups, and every panel that hangs off the bar are one Quickshell config. Sway starts it, and it reloads itself whenever one of its files changes.
+
+- **Workspaces.** Click one to switch, or scroll over the buttons to step through them. A workspace with an urgent window turns red, and a binding mode like `resize` shows up next to them.
+- **Clock.** Opens a panel with a calendar, today's org agenda (read from the `agenda-refresh` timer's cache), the audio outputs and a volume slider, Syncthing's state, and the notification history.
+- **Readings.** CPU, GPU and RAM turn amber and then red as they climb; a click opens `btop` when you want to know exactly what's on fire. Scroll over volume (or brightness, on the T470) to change it, click volume to mute, right-click it to switch outputs.
+- **WiFi and Bluetooth** (T470) open panels to join networks through iwd and connect devices; `Super+F10` opens the Bluetooth one from the keyboard.
+- **Notifications.** Quickshell is the notification server. Left click closes a popup, middle click runs its default action, right click closes them all. The bell turns on focus mode: popups are held back and swayidle is paused, and you get one "you missed N" when you turn it off.
+- **Scripting.** `qs ipc call panel toggle clock` (or `wifi`, `bluetooth`) and `qs ipc call notifications toggleFocus`; `qs ipc show` lists the rest.
 
 ## Local LLM stack (`.config/llm`)
 

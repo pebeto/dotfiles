@@ -10,8 +10,9 @@
 # <swiftbar.hideSwiftBar>true</swiftbar.hideSwiftBar>
 #
 # SwiftBar plugin. The "5m" in the filename = refresh every 5 minutes. It renders
-# today's org agenda with the SAME `emacs --batch` invocation as the Linux swaybar
-# utility (.config/sway/agenda.sh); org files sync to ~/Sync/orgfiles.
+# today's org agenda with the same `emacs --batch` agenda settings as the Linux
+# side (.config/sway/agenda.sh), plus an entry count for the menu bar title; org
+# files sync to ~/Sync/orgfiles.
 # Prereqs:  brew install swiftbar emacs
 # Point SwiftBar's plugin folder at ~/.config/swiftbar (install-macos.sh symlinks it).
 
@@ -34,7 +35,7 @@ if [ ! -d "$ORG_DIR" ]; then
 	exit 0
 fi
 
-# --- render today's agenda (same eval as .config/sway/agenda.sh) -------------
+# --- render today's agenda (same settings as .config/sway/agenda.sh) ---------
 out=$(emacs --batch -q --no-site-file \
 	--eval "(require 'org)" \
 	--eval "(require 'org-agenda)" \

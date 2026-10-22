@@ -1,22 +1,17 @@
 #!/bin/bash
 # Notification-only handler for kernel/EC-driven hardware keys. The
 # kernel performs the state change in parallel; we wait for it to
-# settle, then dunstify the resulting state and nudge the bar to
-# refresh. Userspace actions (volume/mic/layout) are inlined in the
-# sway config; they don't notify because the bar already shows
-# them.
+# settle, then post the resulting state as a notification. Userspace
+# actions (volume/mic/layout) are inlined in the sway config; they
+# don't notify because the bar already shows them.
 
-BAR_REFRESH_FIFO="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/sway-bar-refresh"
 ACPI_SETTLE=0.15
 
 notify() {
     # notify <app> <icon> <stack_tag> <body>
     local app=$1 icon=$2 tag=$3 body=$4
-    dunstify -a "$app" -i "$icon" -h "string:x-dunst-stack-tag:$tag" "$body"
-}
-
-bar_refresh() {
-    [ -p "$BAR_REFRESH_FIFO" ] && echo > "$BAR_REFRESH_FIFO" 2>/dev/null
+    # The stack tag makes a repeat replace the previous notification.
+    notify-send -a "$app" -i "$icon" -h "string:x-canonical-private-synchronous:$tag" "$body"
 }
 
 radio_state() {
@@ -66,5 +61,3 @@ case "$1" in
     fnlock)         acpi_fnlock ;;
     *)              exit 1 ;;
 esac
-
-bar_refresh

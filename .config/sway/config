@@ -1,5 +1,5 @@
 ### Single sway config shared across machines. Per-host bits (outputs,
-### touchpad rules, hardware keys, $bar_bg) live in hosts/<name>.conf and
+### touchpad rules, hardware keys) live in hosts/<name>.conf and
 ### are selected via the ~/.config/sway-host.conf symlink each machine
 ### creates once during setup.
 
@@ -27,21 +27,15 @@ set $right l
 set $term foot
 # Application launcher
 set $menu fuzzel | xargs swaymsg exec --
-# Bar-refresh fifo: writing to it makes barspec.sh re-render immediately
-# instead of waiting for its 1s tick.
-set $bar_refresh $XDG_RUNTIME_DIR/sway-bar-refresh
 
-### Per-host bits (sets $bar_bg, optional $indicators, outputs, inputs,
-### hardware-key bindings). $mod and $bar_refresh are already defined.
+### Per-host bits (optional $indicators, outputs, inputs, hardware-key
+### bindings). $mod is already defined.
 include ~/.config/sway-host.conf
 
 ### Wallpaper (host configs may add output-specific position/mode rules
 ### above this line). Path resolves relative to this file's real location
 ### in the dotfiles repo: .config/sway/config → .config/wallpaper.jpeg.
 output "*" bg ../wallpaper.jpeg stretch
-
-### Notifications
-exec_always dunst
 
 ### Clipboard history: cliphist records every clipboard selection; recall it
 ### with the XF86Favorites key (see below). exec_always so a config reload
@@ -69,15 +63,6 @@ client.focused_tab_title #555555 #2a2a2a #ffffff #ffa500 #555555
 client.unfocused         #2a2a2a #1a1a1a #888888 #2a2a2a #2a2a2a
 client.urgent            #b85c57 #b85c57 #ffffea #b85c57 #b85c57
 
-### Clock popup (rendered by sway/clock-popup.sh), opened by clicking the time block.
-# No resize here on purpose. toggle_cal_popup passes foot --window-size-chars, so the
-# window opens at its final 52x42 character grid and the script measures the right width
-# as it prints. Resizing from sway would land after the text was already written.
-# Anchoring at 100 ppt and then shifting left by the window width puts the right edge
-# flush with the output's; 676 px is 52 columns at JuliaMono 16.5 (a 13 px cell), so
-# adjust it if the font changes, or the popup will sit a little off the edge.
-for_window [app_id="cal-popup"]  floating enable, sticky enable, border pixel 3, move position 100 ppt 0 ppt, move left $cal_popup_w px
-
 ### btop popup (toggled by clicking the temp/cpu block in the status bar)
 for_window [app_id="btop-popup"] floating enable, border pixel 3, resize set 80 ppt 80 ppt, move position center
 
@@ -98,8 +83,8 @@ input type:keyboard {
     xkb_layout us,latam
 }
 # Switch between layouts with the keyboard shortcut
-bindsym XF86Keyboard exec swaymsg input type:keyboard xkb_switch_layout next && echo > $bar_refresh
-bindsym $mod+Shift+p exec swaymsg input type:keyboard xkb_switch_layout next && echo > $bar_refresh
+bindsym XF86Keyboard exec swaymsg input type:keyboard xkb_switch_layout next
+bindsym $mod+Shift+p exec swaymsg input type:keyboard xkb_switch_layout next
 
 ### Key bindings
 bindsym $mod+Return       exec $term
@@ -172,10 +157,10 @@ bindsym $mod+minus       scratchpad show
 
 ### Function keys
 # Volume up/down/mute
-bindsym XF86AudioRaiseVolume exec amixer set Master 5%+    > /dev/null && echo > $bar_refresh
-bindsym XF86AudioLowerVolume exec amixer set Master 5%-    > /dev/null && echo > $bar_refresh
-bindsym XF86AudioMute        exec amixer set Master toggle > /dev/null && echo > $bar_refresh
-# Mic mute toggle (no bar entry, no refresh)
+bindsym XF86AudioRaiseVolume exec amixer set Master 5%+    > /dev/null
+bindsym XF86AudioLowerVolume exec amixer set Master 5%-    > /dev/null
+bindsym XF86AudioMute        exec amixer set Master toggle > /dev/null
+# Mic mute toggle (no bar entry)
 bindsym XF86AudioMicMute     exec amixer set Capture toggle > /dev/null
 
 # Media keys (MPRIS-aware via playerctl)
@@ -214,22 +199,11 @@ mode "resize" {
 }
 bindsym $mod+r mode "resize"
 
-### Status Bar
-# $bar_bg is defined by the per-host include above.
-bar {
-    position top
-
-    # When the status_command prints a new line to stdout, swaybar updates.
-    status_command ~/.config/sway/barspec.sh
-    # Use the i3bar JSON protocol (barspec.sh emits JSON; bar handles colors/clicks)
-
-    colors {
-        background         $bar_bg
-        statusline         #ffffff
-        inactive_workspace $bar_bg $bar_bg #ffffff
-        focused_workspace  $bar_bg #ffa500 #000000
-    }
-}
+### Status bar, notifications and their popups: Quickshell, configured in
+### ~/.config/quickshell. It reloads itself when those files change, so it
+### only needs starting once. The bar follows changes made from key bindings
+### (volume, layout) on its own.
+exec quickshell
 
 ### Misc configs
 title_align center

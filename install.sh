@@ -3,13 +3,13 @@
 #
 #   ~/.<name>                  for each top-level entry (e.g. .zshrc)
 #   ~/.config/<name>           for each entry in .config/
-#   ~/.config/sway-host.conf   selects which hosts/<HOST>.conf is active
-#   ~/.config/sway-host.sh     selects which hosts/<HOST>.sh is active
+#   ~/.config/sway-host.conf   selects which sway/hosts/<HOST>.conf is active
+#   ~/.config/foot-host.ini    selects which foot/hosts/<HOST>.ini is active
 #
 # Existing symlinks pointing at the right target are left alone. Existing
 # files or symlinks pointing elsewhere are reported and skipped; nothing
-# is overwritten unless you pass --force-host (only re-points the two
-# sway host shims, since switching profiles is the expected workflow).
+# is overwritten unless you pass --force-host (only re-points the host
+# shims, since switching profiles is the expected workflow).
 
 set -euo pipefail
 
@@ -18,8 +18,8 @@ usage() {
 Usage: $(basename "$0") [--host=<name>] [--force-host] [-n|--dry-run]
 
   --host=<name>   Force the sway host profile (default: \$(uname -n))
-  --force-host    Replace ~/.config/sway-host.{conf,sh} if they already
-                  point at a different host
+  --force-host    Replace ~/.config/sway-host.conf and foot-host.ini if
+                  they already point at a different host
   -n, --dry-run   Print what would happen, change nothing
 EOF
 }
@@ -55,6 +55,12 @@ skip_entry() {
     local name=$1 s
     for s in "${SKIP[@]}"; do [ "$name" = "$s" ] && return 0; done
     return 1
+}
+
+# Tool state that lands in the checkout (.opencode, .serena) is git-ignored,
+# and linking it would shadow the tool's real ~/.<name>.
+ignored() {
+    git -C "$DOTFILES" check-ignore -q -- "$1" 2>/dev/null
 }
 
 config_special() {
@@ -108,6 +114,7 @@ shopt -s dotglob nullglob
 for entry in "$DOTFILES"/*; do
     name=$(basename "$entry")
     skip_entry "$name" && continue
+    ignored "$entry" && continue
     [ "$name" = ".config" ] && continue
     link "$entry" "$HOME/$name"
 done
@@ -117,15 +124,29 @@ echo "Configs -> $CONFIG_DST"
 for entry in "$DOTFILES"/.config/*; do
     name=$(basename "$entry")
     config_special "$name" && continue
+    ignored "$entry" && continue
     link "$entry" "$CONFIG_DST/$name"
+done
+
+# Links into this repo whose target is gone, left behind when something was
+# deleted from it (~/.config/dunst, the swaybar-era ~/.config/sway-host.sh).
+echo
+echo "Stale links"
+for dst in "$HOME"/* "$CONFIG_DST"/*; do
+    [ -L "$dst" ] && [ ! -e "$dst" ] || continue
+    case "$(readlink "$dst")" in
+        "$DOTFILES"/* | "$CONFIG_DST"/sway/hosts/* | "$CONFIG_DST"/foot/hosts/*) ;;
+        *) continue ;;
+    esac
+    [ "$DRY" = 1 ] || rm "$dst"
+    printf '  remove  %s (target is gone)\n' "$dst"
 done
 shopt -u dotglob nullglob
 
 echo
 echo "Sway host profile: $HOST"
 host_conf="$DOTFILES/.config/sway/hosts/$HOST.conf"
-host_sh="$DOTFILES/.config/sway/hosts/$HOST.sh"
-if [ ! -f "$host_conf" ] || [ ! -f "$host_sh" ]; then
+if [ ! -f "$host_conf" ]; then
     available=$(find "$DOTFILES/.config/sway/hosts" -maxdepth 1 -name '*.conf' -printf '%f\n' 2>/dev/null | sed 's/\.conf$//' | paste -sd ', ')
     printf '  WARN    no host files for "%s" (available: %s)\n' "$HOST" "${available:-none}"
     printf '          re-run with --host=<name>\n'
@@ -134,7 +155,6 @@ else
     force=""
     [ "$FORCE_HOST" = 1 ] && force="--force"
     link "$CONFIG_DST/sway/hosts/$HOST.conf" "$CONFIG_DST/sway-host.conf" $force
-    link "$CONFIG_DST/sway/hosts/$HOST.sh"   "$CONFIG_DST/sway-host.sh"   $force
 fi
 
 # foot.ini pulls its font size from ~/.config/foot-host.ini. Kept outside the sway-host
@@ -166,6 +186,12 @@ if [ -d "$systemd_src" ]; then
         # Enable+start the agenda timers. `|| true` because a fresh box may
         # not have a user session bus yet; re-running after login fixes it.
         systemctl --user enable --now agenda-refresh.timer battery-notify.timer 2>/dev/null || true
+        # Quickshell is the notification server. A dunst still installed would
+        # grab the D-Bus name whenever a notification fires before Quickshell
+        # is up (a timer at login, say), so it stays masked until it's removed.
+        if command -v dunst >/dev/null 2>&1; then
+            systemctl --user mask dunst.service >/dev/null 2>&1 || true
+        fi
     fi
 else
     printf '  WARN    %s missing\n' "$systemd_src"
@@ -237,16 +263,47 @@ for dir in "$HOME/Pictures/Screenshots" "$HOME/Videos/Screencasts"; do
 done
 
 echo
-echo "Dependencies (referenced by the sway config / barspec)"
-missing=()
-for cmd in sway swaymsg swayidle swaylock playerctl amixer grim slurp swappy wl-copy wl-paste dunst foot fuzzel gammastep swaynag sensors rfkill iw dunstify btop brightnessctl iwctl bluetoothctl cliphist wf-recorder jq emacs; do
+echo "Dependencies (referenced by the sway config / quickshell)"
+# Arch package for each command that isn't named after it.
+declare -A pkg_of=(
+    [swaymsg]=sway [swaynag]=sway [amixer]=alsa-utils [wl-copy]=wl-clipboard
+    [wl-paste]=wl-clipboard [notify-send]=libnotify [wpctl]=wireplumber
+    [rfkill]=util-linux [iwctl]=iwd [bluetoothctl]=bluez-utils [emacs]=emacs-wayland
+)
+missing=() missing_pkgs=()
+for cmd in sway swaymsg swayidle swaylock playerctl amixer grim slurp swappy wl-copy wl-paste quickshell notify-send wpctl foot fuzzel gammastep swaynag rfkill iw btop brightnessctl iwctl bluetoothctl cliphist wf-recorder jq emacs; do
     if command -v "$cmd" >/dev/null 2>&1; then
         printf '  ok      %s\n' "$cmd"
     else
         printf '  MISSING %s\n' "$cmd"
         missing+=("$cmd")
+        missing_pkgs+=("${pkg_of[$cmd]:-$cmd}")
     fi
 done
+# The bar draws its icons from the Nerd Font symbols; sway, foot and the bar
+# all set their text in JuliaMono, which only the AUR packages.
+if fc-list -q 'Symbols Nerd Font Mono'; then
+    printf '  ok      Symbols Nerd Font Mono\n'
+else
+    printf '  MISSING Symbols Nerd Font Mono (the bar icons)\n'
+    missing_pkgs+=(ttf-nerd-fonts-symbols-mono)
+fi
+if fc-list -q JuliaMono; then
+    printf '  ok      JuliaMono\n'
+else
+    printf '  TODO    JuliaMono not installed: yay -S ttf-juliamono\n'
+    n_warn=$((n_warn + 1))
+fi
+if command -v dunst >/dev/null 2>&1; then
+    printf '  TODO    dunst is still installed; Quickshell replaced it: sudo pacman -Rns dunst\n'
+    n_warn=$((n_warn + 1))
+fi
+# sway runs `exec` lines only at login, so a session started before the switch
+# keeps its dunst, and a reload drops the old bar without starting Quickshell.
+if pgrep -x sway >/dev/null && { pgrep -x dunst >/dev/null || ! pgrep -x 'quickshell|qs' >/dev/null; }; then
+    printf '  TODO    this sway session predates Quickshell: log out and back in to start it\n'
+    n_warn=$((n_warn + 1))
+fi
 # woverview isn't packaged, and the sway host configs call it by this path.
 if [ -x "$HOME/.local/bin/woverview" ]; then
     printf '  ok      ~/.local/bin/woverview\n'
@@ -258,27 +315,36 @@ fi
 
 echo
 echo "Local LLM stack (.config/llm)"
-if command -v docker >/dev/null 2>&1; then
-    printf '  ok      docker\n'
+# run.sh needs the workstation's GPU, and the harness configs all point at
+# that server on localhost, so a machine without one skips the lot.
+if ! command -v nvidia-smi >/dev/null 2>&1; then
+    printf '  skip    no NVIDIA GPU on this machine\n'
 else
-    printf '  MISSING docker (run.sh serves every model through vLLM in Docker)\n'
-    n_warn=$((n_warn + 1))
-fi
-if command -v omp >/dev/null 2>&1; then
-    printf '  ok      omp (oh-my-pi)\n'
-else
-    printf '  TODO    omp not installed: curl -fsSL https://omp.sh/install | sh\n'
-fi
-# qwen-code is the matched harness for the Qwen3.6 server (~/.qwen/settings.json).
-if command -v qwen >/dev/null 2>&1; then
-    printf '  ok      qwen (qwen-code)\n'
-else
-    printf '  TODO    qwen-code not installed: npm install -g @qwen-code/qwen-code\n'
-    n_warn=$((n_warn + 1))
+    if command -v docker >/dev/null 2>&1; then
+        printf '  ok      docker\n'
+    else
+        printf '  MISSING docker (run.sh serves every model through vLLM in Docker)\n'
+        n_warn=$((n_warn + 1))
+    fi
+    if command -v omp >/dev/null 2>&1; then
+        printf '  ok      omp (oh-my-pi)\n'
+    else
+        printf '  TODO    omp not installed: curl -fsSL https://omp.sh/install | sh\n'
+    fi
+    # qwen-code is the matched harness for the Qwen server (~/.qwen/settings.json).
+    if command -v qwen >/dev/null 2>&1; then
+        printf '  ok      qwen (qwen-code)\n'
+    else
+        printf '  TODO    qwen-code not installed: npm install -g @qwen-code/qwen-code\n'
+        n_warn=$((n_warn + 1))
+    fi
 fi
 
 echo
 echo "Summary: $n_link new/relinked, $n_ok already correct, $n_warn warning(s)"
 if [ ${#missing[@]} -gt 0 ]; then
     echo "Missing commands: ${missing[*]}"
+fi
+if [ ${#missing_pkgs[@]} -gt 0 ]; then
+    echo "Install them with: sudo pacman -S --needed $(printf '%s\n' "${missing_pkgs[@]}" | sort -u | paste -sd ' ')"
 fi

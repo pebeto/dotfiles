@@ -3,7 +3,7 @@
 #
 # Companion to install.sh (which is Linux/sway-specific). Like install.sh, this ONLY
 # creates symlinks -- it installs no packages. It deliberately links just the configs
-# that are actually used on macOS; the Wayland desktop (sway/dunst/foot/fuzzel/swappy/
+# that are actually used on macOS; the Wayland desktop (sway/quickshell/foot/fuzzel/swappy/
 # xdg-desktop-portal-wlr), the systemd user units, the sway host-profile machinery, and
 # the local-LLM stack (llm/) are all skipped -- none of them apply on a Mac.
 #
@@ -39,7 +39,7 @@ LINK_QWEN=1       # -> ~/.qwen/*.json  (qwen-code reads ~/.qwen, not XDG)
 LINK_OMP=1        # -> ~/.omp/agent/*.{yml,json}  (omp keeps its auth store there)
 # ---------------------------------------------------------------------------
 # Intentionally NOT linked (Linux/Wayland-only, or 5090-only):
-#   dunst foot fuzzel swappy sway systemd xdg-desktop-portal-wlr llm wallpaper.jpeg
+#   quickshell foot fuzzel swappy sway systemd xdg-desktop-portal-wlr llm wallpaper.jpeg
 # ~/.miscrc is per-machine and lives OUTSIDE the repo -- create a Mac-specific one by
 # hand (.zshrc sources it). The llm()/_llm completion in .zshrc is inert on the Mac.
 

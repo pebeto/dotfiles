@@ -1,7 +1,7 @@
 #!/bin/bash
-# Low-battery notifier, run by battery-notify.timer (mirrors the agenda-notify
+# Low-battery notifier, run by battery-notify.timer (mirrors the agenda-refresh
 # systemd pair). The status bar only recolors a block when low; this adds a
-# dunst alert so you get warned when you're not watching the bar.
+# notification so you get warned when you're not watching the bar.
 #
 # Sums energy/charge across all BAT* packs, so the T470's dual internal and
 # external batteries report one correct total. Exits without notifying on AC
@@ -33,6 +33,6 @@ pct=$((now * 100 / full))
 
 # Critical urgency so it doesn't auto-expire; stack tag so repeated ticks
 # replace the previous alert instead of piling up.
-dunstify -a "Battery" -u critical -i battery-caution \
-    -h "string:x-dunst-stack-tag:battery-low" \
+notify-send -a "Battery" -u critical -i battery-caution \
+    -h "string:x-canonical-private-synchronous:battery-low" \
     "Battery low: ${pct}%" "Plug in soon."

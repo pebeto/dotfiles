@@ -1,5 +1,5 @@
 [Unit]
-Description=Refresh cached org-mode agenda for swaybar
+Description=Refresh cached org-mode agenda for the Quickshell clock panel
 
 [Service]
 Type=oneshot

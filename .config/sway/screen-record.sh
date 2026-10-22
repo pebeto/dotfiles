@@ -7,9 +7,9 @@ set -u
 
 notify() {
     # notify <icon> <body>
-    command -v dunstify >/dev/null 2>&1 &&
-        dunstify -a "Recording" -i "$1" \
-            -h "string:x-dunst-stack-tag:screen-record" "$2"
+    command -v notify-send >/dev/null 2>&1 &&
+        notify-send -a "Recording" -i "$1" \
+            -h "string:x-canonical-private-synchronous:screen-record" "$2"
 }
 
 # Already recording? A SIGINT lets wf-recorder flush and close the file.
