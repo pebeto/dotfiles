@@ -2,18 +2,26 @@
 
 ![wallpaper](.config/wallpaper.jpeg)
 
-Everything it takes to turn a fresh Arch box into a usable Sway desktop: window manager, terminal, notifications, a top bar that does real work, systemd timers that keep my agenda on it, and a local LLM stack that keeps a 5090 warm. One repo, two very different machines, and zero patience for configuring the same thing twice.
+My Arch Linux desktop: Sway, the foot terminal, a Quickshell bar that also handles notifications, systemd timers that keep my org agenda on that bar, and a local LLM server for the RTX 5090. The same repo sets up both of my machines, so I only configure things once.
 
-## Two machines, one config
+## Two machines
 
-The same `~/.config` drives both of my boxes. The only things that change per host are a small profile under `.config/sway/hosts/` and an entry in the bar's theme, and both get picked by hostname so I never have to think about it.
+Both machines run the same `~/.config`. The few things that differ are picked by hostname.
 
-| Host | What it is | Personality |
-|------|-----------|-------------|
-| `workstation` | The desktop with the RTX 5090 | Two screens (2560x1440@165Hz with a 1080p sidekick), black bar, brags about its GPU temperature, and runs the LLM server. Has no battery because it has never once left the desk. |
-| `t470` | A ThinkPad T470 that refuses to die | TrackPoint and touchpad both wired up, brightness keys, WiFi SSID in the bar, and two batteries (the internal one plus the hot-swap pack) because ThinkPads cheat at staying alive. Gray bar, so I can tell at a glance which machine I'm yelling at. |
+| Host | Machine | What's different |
+|------|---------|------------------|
+| `workstation` | Desktop with the RTX 5090 | A 4K Samsung at 144 Hz, run unscaled. Black bar with CPU, GPU and RAM. Runs the LLM server. |
+| `t470` | ThinkPad T470 | 1080p panel, TrackPoint and touchpad, brightness keys. Gray bar with brightness, WiFi, Bluetooth and both batteries (`i` is the internal pack, `e` the hot-swap one). |
 
-Each host is two files and one entry: `.config/sway/hosts/<name>.conf` for Sway outputs, inputs, hardware keys and font size, `.config/foot/hosts/<name>.ini` for the terminal font, and a profile in `.config/quickshell/Theme.qml` for the bar's size, colors, and the blocks that machine actually has. Font size is per host because the workstation drives a 4K panel unscaled while the T470 does not. The workstation bar shows CPU, GPU, and RAM. The T470 bar swaps in brightness, dual battery (`i` for the internal pack, `e` for the hot-swap one), WiFi, and Bluetooth. Want a third machine? Drop in the two files named after its hostname, add its profile, and you're done.
+The bar colors differ so I can tell at a glance which machine I'm on.
+
+Each host has three pieces:
+
+- `.config/sway/hosts/<name>.conf`: outputs, inputs, hardware keys and font size
+- `.config/foot/hosts/<name>.ini`: the terminal font
+- a profile in `.config/quickshell/Theme.qml`: the bar's size, colors and which blocks it shows
+
+Font sizes differ because the workstation runs its 4K panel unscaled and the T470 doesn't. To add a machine, create the two files named after its hostname and add its profile to `Theme.qml`.
 
 ## Install
 
@@ -23,13 +31,22 @@ Each host is two files and one entry: `.config/sway/hosts/<name>.conf` for Sway 
 ./install.sh --host=t470  # force a host profile (default: this box's hostname)
 ```
 
-`install.sh` links each top-level dotfile into `$HOME` and each `.config/` entry into `~/.config/`, points the Sway host shims at `hosts/<hostname>`, enables the systemd user timers, clears out links left dangling by things deleted from the repo, and tells you which dependencies you forgot to install, ending with the `pacman` line that fetches them (JuliaMono lives in the AUR, so it gets a `yay` hint instead). It also flags a dunst still hanging around to fight Quickshell for notifications, and skips the LLM checks on a machine without an NVIDIA GPU. It will not clobber a real file: it reports the conflict, shrugs, and moves on. Moving to a different machine later? `--force-host` re-points the host shims and leaves everything else alone.
+`install.sh` doesn't install packages. It:
 
-Bringing a machine that already runs sway onto the Quickshell setup takes one logout after `install.sh`. A reload drops the old swaybar, but sway only runs `exec quickshell` at login, and the old session's dunst keeps the notifications until then.
+- links each top-level dotfile into `$HOME` and each `.config/` entry into `~/.config/`
+- points the sway and foot host links at this machine's files
+- enables the systemd user timers
+- removes links that point at files deleted from the repo
+- lists missing dependencies and prints the `pacman` command for them, or `yay` for JuliaMono, which is only in the AUR
+- warns if dunst is still installed, because it competes with Quickshell for notifications
+
+It skips the LLM checks on machines without an NVIDIA GPU. It never overwrites a real file; it reports the conflict and moves on. `--force-host` re-points the host links when a machine changes profile.
+
+On a machine that was running the older swaybar version of this setup, log out and back in once after installing. Reloading sway removes the old bar but doesn't start Quickshell, because sway only runs `exec` lines at login, and the old dunst keeps handling notifications until then.
 
 ## Sway
 
-A tiling Wayland session. One `config` is shared across machines; the per-host outputs, inputs, and hardware keys live in `hosts/<hostname>.conf`, which `install.sh` wires up. The mod key is `Super` (the one with the logo), the terminal is `foot`, and the launcher is `fuzzel`.
+One `config` covers both machines, and `hosts/<hostname>.conf` adds each one's outputs, inputs and hardware keys. The mod key is `Super`, the terminal is `foot` and the launcher is `fuzzel`.
 
 ### Windows and session
 
@@ -44,13 +61,13 @@ A tiling Wayland session. One `config` is shared across machines; the per-host o
 | `Alt+space` (workstation), three-finger swipe up (T470) | window overview; the same again closes it |
 | `Super+Escape` | lock the screen |
 | `Super+Shift+c` | reload the config |
-| `Super+Shift+e` | exit Sway (asks first, because we've all rage-quit by accident) |
+| `Super+Shift+e` | exit Sway (asks first) |
 
-The overview is [woverview](https://github.com/pebeto/woverview), a separate project of mine: live thumbnails of every window, other workspaces and the scratchpad included. It isn't packaged, so `install.sh` prints the command that fetches the release into `~/.local/bin`.
+The window overview is [woverview](https://github.com/pebeto/woverview), another project of mine. It shows live thumbnails of every window, including the ones on other workspaces and in the scratchpad. It isn't packaged anywhere, so `install.sh` prints the command that downloads the release into `~/.local/bin`.
 
 ### Focus and move
 
-Home-row keys `h j k l` (or the arrows) move focus; add `Shift` to drag the window along.
+`h j k l` or the arrow keys move focus. Add `Shift` to move the window instead.
 
 | Keys | Action |
 |------|--------|
@@ -66,7 +83,7 @@ Home-row keys `h j k l` (or the arrows) move focus; add `Shift` to drag the wind
 | `Super+1` … `Super+0` | switch to workspace 1-10 (`0` is 10) |
 | `Super+Shift+1` … `Super+Shift+0` | send the window to a workspace |
 
-Press the current workspace's number again to bounce back to the previous one.
+Pressing the current workspace's number again goes back to the previous one.
 
 ### Layout
 
@@ -89,25 +106,27 @@ Press the current workspace's number again to bounce back to the previous one.
 | `Super+Shift+p` | cycle keyboard layout (us / latam) |
 | volume / media keys | wired to `amixer` and `playerctl` |
 
-Sway locks after five minutes of idle and again before suspend, so it never sits unlocked for long.
+Sway locks the screen after five minutes idle and before suspend.
 
-On the T470 the hardware keys (`XF86WLAN`, `XF86Bluetooth`, and the `Fn+Esc` FnLock toggle) fire `indicators.sh` to post a notification, since the laptop's embedded controller flips those states behind Wayland's back.
+On the T470, the WiFi, Bluetooth and FnLock (`Fn+Esc`) keys run `indicators.sh`, which posts a notification with the new state. The laptop's embedded controller changes those states on its own, so the script only reports what happened.
 
 ## Bar and notifications (`.config/quickshell`)
 
-The top bar, the notification popups, and every panel that hangs off the bar are one Quickshell config. Sway starts it, and it reloads itself whenever one of its files changes.
+The top bar, its panels and the notification popups are one Quickshell config. Sway starts it, and it reloads by itself when you edit one of its files.
 
-- **Workspaces.** Click one to switch, or scroll over the buttons to step through them. A workspace with an urgent window turns red, and a binding mode like `resize` shows up next to them.
-- **Clock.** Opens a panel with a calendar, today's org agenda (read from the `agenda-refresh` timer's cache), the audio outputs and a volume slider, Syncthing's state, and the notification history.
-- **Readings.** CPU, GPU and RAM turn amber and then red as they climb; a click opens `btop` when you want to know exactly what's on fire. Scroll over volume (or brightness, on the T470) to change it, click volume to mute, right-click it to switch outputs.
-- **WiFi and Bluetooth** (T470) open panels to join networks through iwd and connect devices; `Super+F10` opens the Bluetooth one from the keyboard.
-- **Tray.** Apps that keep running with their windows closed (Steam, say) get an icon left of the bell. A double click opens the app's window, a right click opens its menu, and a middle click runs its secondary action. Steam's icon can't open a window by itself, so for icons like it the bar runs the app's launcher, which brings the running copy to the front.
-- **Notifications.** Quickshell is the notification server. Left click closes a popup, middle click runs its default action, right click closes them all. The bell turns on focus mode: popups are held back and swayidle is paused, and you get one "you missed N" when you turn it off.
-- **Scripting.** `qs ipc call panel toggle clock` (or `wifi`, `bluetooth`) and `qs ipc call notifications toggleFocus`; `qs ipc show` lists the rest.
+- Click a workspace to switch to it, or scroll over them to step through. A workspace with an urgent window turns red, and the current binding mode (like `resize`) shows next to them.
+- The clock opens a panel with a calendar, today's org agenda, the audio outputs with a volume slider, Syncthing's status and recent notifications. The agenda comes from a cache that the `agenda-refresh` timer keeps up to date.
+- The CPU, GPU and RAM readings turn amber and then red as they climb. Clicking them opens `btop`.
+- Scroll over the volume to change it, click it to mute, and right-click it to switch outputs. On the T470, scrolling over brightness works the same way.
+- On the T470, the WiFi and Bluetooth blocks open panels for joining networks (through iwd) and connecting devices. `Super+F10` opens the Bluetooth panel.
+- Apps that keep running after you close their window, like Steam, get a tray icon to the left of the bell. Double-click it to open the app, right-click for its menu, middle-click for its secondary action. Steam's icon can't open its window by itself, so the bar runs Steam's launcher instead, which brings the running copy to the front.
+- Quickshell is also the notification server. Click a popup to close it, middle-click to run its default action, and right-click to close all of them.
+- The bell turns on focus mode. Popups wait and swayidle pauses, and when you turn it off you get one "you missed N" notification.
+- You can script all of it: `qs ipc call panel toggle clock` (or `wifi`, `bluetooth`) and `qs ipc call notifications toggleFocus`. `qs ipc show` lists the rest.
 
 ## Local LLM stack (`.config/llm`)
 
-`run.sh` serves a local model from a per-model config in `configs/`. This is the workstation's day job. Drive it through the `llm` shell function from `.zshrc`:
+The workstation also runs a local LLM server. `run.sh` starts a model from its config in `configs/`, and the `llm` function in `.zshrc` wraps it:
 
 ```sh
 llm --list             # list configured models
@@ -115,58 +134,55 @@ llm qwen3.8-27b        # main: research, general reasoning, tools (NVFP4)
 llm gpt-oss-20b        # lighter reasoning + tools (MXFP4)
 ```
 
-Every model is served by the official vLLM OpenAI server in Docker. Each config is flat `flag: value` YAML that becomes `vllm serve --key value`, plus three special keys (`image:`, `model:`, `env-NAME:`). One model at a time, all on port 8000.
+Models run in the official vLLM OpenAI server in Docker, one at a time, on port 8000. Each config is flat YAML where `flag: value` becomes `vllm serve --flag value`, plus three special keys: `image:`, `model:` and `env-NAME:`. Weights download to `~/.cache/huggingface`, which `run.sh` mounts into the container.
 
-| Model | Quant | Role |
-|-------|-------|------|
-| `qwen3.8-27b` | NVFP4 | **main**: research, general reasoning, coding, tools. Takes text and images at 128K context, with video disabled. Served from unsloth's compressed-tensors W4A4 build rather than a ModelOpt one, to stay off the Marlin kernel |
-| `gpt-oss-20b` | MXFP4 | 21B MoE with 3.6B active, so it is much faster than the 27B and leaves VRAM headroom. Text only, and holds its full 131K context; reasoning depth is a per-request `reasoning_effort`. Served from OpenAI's repo, since mirrors ship a `generation_config.json` that is missing the `</call>` stop token and breaks tool calling |
+| Model | Quant | Use |
+|-------|-------|-----|
+| `qwen3.8-27b` | NVFP4 | The main model: research, reasoning, coding and tools. Text and images, 128K context, no video. |
+| `gpt-oss-20b` | MXFP4 | Faster and lighter (a 21B MoE with 3.6B active). Text only, 131K context, and `reasoning_effort` sets how hard it thinks per request. |
 
-Both quants are 4-bit and Blackwell-native, and both declare their format in the checkpoint, so neither config sets `--quantization`. Weights download to `~/.cache/huggingface`, which `run.sh` mounts into the container.
+Both are 4-bit formats that Blackwell runs natively, and the checkpoints declare them, so neither config sets `--quantization`. gpt-oss comes from OpenAI's own repo because the mirrors ship a `generation_config.json` without the `</call>` stop token, which breaks tool calling.
 
-The Qwen model comes from unsloth rather than NVIDIA because of which kernel each one lands on. unsloth's is compressed-tensors W4A4 and runs on the native CUTLASS FP4 path. NVIDIA's ModelOpt `MIXED_PRECISION` builds have weight-only groups with no activation scales, so they fall back to Marlin, where the `EngineDeadError` crashes cluster on Blackwell (vLLM #49926, #50934, #35566). Measured on the 3.6 pair, which is the same size and shape as this one, unsloth prefilled a cold 22k-token prompt at 5,826 tok/s against 2,821 and decoded at 65.3 tok/s against 71.4. unsloth also leaves the vision blocks and the GDN `linear_attn` layers unquantized, so its weights take 21.34 GiB and the KV pool falls to 4.31 GiB. That buys double the cold-prefill rate and no Marlin, in exchange for slower decode and less context.
+### The Qwen config
 
-Qwen3.8 keeps 3.6's architecture exactly (`Qwen3_5ForConditionalGeneration`, 64 layers, same vision config), so it is a drop-in swap: same parsers, same flags, same 21.81 GiB of weights. What changed is the training and one config knob. The template now takes `reasoning_effort`, which **defaults to `xhigh`**, so it thinks harder than 3.6 did unless you ask otherwise, and it accepts only `xhigh`, `medium` and `low` (`high` aliases to `xhigh`; anything else makes the template raise). Qwen also dropped the separate `temperature 0.6` coding profile, publishing one thinking profile at 1.0, which is what every client here now sends.
+Each setting in `configs/qwen3.8-27b.yaml` has a comment with the measurements behind it. In short:
 
-All three clients ask for `medium` rather than the default `xhigh`. omp does it on its own: its `high` level maps to medium for this template, and so does a role with no level, so only `:xhigh` asks for more. opencode and qwen-code send `chat_template_kwargs: {reasoning_effort: medium}` from their model settings. On six coding tasks with hidden tests, medium passed 6/6 and xhigh 5/6 at about 5x the tokens; xhigh's miss spent the whole 16384-token output budget thinking and never answered.
+- It uses unsloth's NVFP4 build instead of NVIDIA's ModelOpt one. NVIDIA's falls back to the Marlin kernel, which prefills at half the speed and crashes on Blackwell.
+- Every client asks for `reasoning_effort: medium`. The template defaults to `xhigh`, which used about five times the tokens on six coding tasks without passing more of them, and once thought until it ran out of output budget. omp maps its `high` level to medium for this model, so only `:xhigh` asks for more; opencode and qwen-code send it in `chat_template_kwargs`.
+- Speculative decoding (the checkpoint's MTP layer) is off. It roughly doubles decode speed, but it caps the context at 81920 tokens, and omp then had to compact about twice as often. The config comment lists what to change to turn it back on.
+- The KV cache is pinned at 4.6 GiB (139,810 tokens). Left to size itself, vLLM counts whatever the desktop allocates during startup against the cache, so the size changed from boot to boot and some boots failed.
+- `TRITON_ATTN` is pinned because FlashInfer, the default, needed about 0.6 GiB more memory.
+- Video is off because it needs several GiB this card doesn't have. A conversation can hold up to 8 images, since each one can cost 16,384 tokens.
 
-The checkpoint carries its own MTP layer, and it stays off. With `speculative-config` set to three MTP tokens, decode roughly doubles: about 69 tok/s without it, 110 on prose and 160 on code and reasoning with it. But it costs context twice, through its own weights and through a KV reservation for draft tokens that makes every token dearer, so with it the window tops out at 81920. omp's session logs settled the trade. On the same model, omp compacted once every 7 turns at 81920 and once every 14 at 122880, while the faster decode would have saved about 42 minutes across five weeks of real sessions. The comment in the Qwen config lists the four values to change to go back. If you do, judge MTP by tok/s on real prompts rather than draft acceptance: acceptance reaches 97% on a counting prompt and says nothing about real work.
+Each client's context setting has to match the server, so all three use 131072. After changing anything here, check `Available KV cache memory` and `GPU KV cache size` in the startup log; vLLM refuses to start if the settings don't fit.
 
-`attention-backend: TRITON_ATTN` stays pinned. Left alone, 0.30.0 picks FLASHINFER, which needed about 0.6 GiB more memory than Triton here, and every memory figure below was measured on Triton.
-
-The pool is pinned with `kv-cache-memory-bytes` (4.6 GiB, 139,810 tokens) rather than sized by `gpu-memory-utilization`, because vLLM sizes it from how far device-wide free VRAM drops during startup: anything the desktop allocates in those two minutes is billed to vLLM. Unpinned, the pool wandered 3.08-3.84 GiB across 13 boots and failed windows from 81920 all the way down to 71680. Measured peaks with the pin: 27.3 GiB on a 120k-token prefill and 29.25 GiB with four 4096px images, against the 28.6 GiB the 0.91 budget implies. The image peak runs 0.66 GiB over it, as every earlier configuration did on that load.
-
-Video stays off (`limit-mm-per-prompt` sets `video: 0`) because profiling one video item reserves a six-figure token budget and several GiB this card does not have. Images cost at most 16,384 tokens each, which is also what caps a conversation at 8 of them.
-
-Every client's context setting has to match its server, so `opencode.json`, `.config/omp/models.yml` and `.config/qwen/settings.json` carry 131072 for both models. After changing any of this, read `Available KV cache memory` and `GPU KV cache size` from the startup log; vLLM refuses to boot rather than quietly degrading.
-
-Three harnesses share that one server: [omp](https://github.com/can1357/oh-my-pi) is the daily driver, opencode is the fallback, and qwen-code is Qwen's own CLI. Only one model is loaded at a time, so start the server for the model you intend to use.
+Three tools use this server: [omp](https://github.com/can1357/oh-my-pi) day to day, opencode as a fallback, and qwen-code, Qwen's own CLI. Only one model is loaded at a time, so start the one you want first.
 
 ### omp (oh-my-pi)
 
-`.config/omp/` holds three files, linked into `~/.omp/agent/` by `install.sh` because omp keeps its auth store and session state in that directory rather than under XDG.
+`.config/omp/` has three files. `install.sh` links them into `~/.omp/agent/`, since omp keeps its auth and session state there instead of under XDG.
 
 | File | Contents |
 |------|----------|
-| `models.yml` | The `vllm` provider (not `local`, which omp v18 reserves for its own on-device models): `localhost:8000/v1`, `auth: none`, both models with their real context windows, and per-model sampling in `compat.extraBody` (sampling has no first-class field) |
-| `config.yml` | `modelRoles` (all on `qwen3.8-27b`) and `skills.customDirectories`. omp owns this file, so keep no comments in it |
-| `lsp.json` | Julia only |
+| `models.yml` | The `vllm` provider at `localhost:8000/v1` with `auth: none`, both models with their real context windows, and each model's sampling settings in `compat.extraBody`, since there's no dedicated field for them. It's called `vllm` because omp v18 reserves `local` for its own on-device models. |
+| `config.yml` | `modelRoles` (all on `qwen3.8-27b`) and `skills.customDirectories`. omp rewrites this file, so it has no comments. |
+| `lsp.json` | Only Julia. |
 
-Each file is deliberately small, because omp discovers most of this on its own:
+The files are small because omp finds most things on its own:
 
-- **MCP servers** are read straight out of `~/.config/opencode/opencode.json`, so `context7` and `serena` need no second definition. Editing the opencode file changes both harnesses.
-- **Skills** come from `~/.claude/skills`, the same library Claude Code uses. That discovery is one level deep, so the two nested collections (`academic-research-skills`, `claude-epub-skill`) are listed in `skills.customDirectories` to bring their 5 skills in.
-- **LSP** ships built-in definitions for clangd, pyright and typescript-language-server, auto-detected from root markers and `$PATH`. Julia is the one server omp does not know, and adding it merges onto the built-ins instead of replacing them.
-- **Roles** all point at the same model on purpose. One GPU serves one model, so aiming a role at the other one only works while that server happens to be running. To switch: restart `run.sh`, then `omp --model vllm/gpt-oss-20b`.
+- It reads MCP servers from `~/.config/opencode/opencode.json`, so `context7` and `serena` are defined once, and editing that file changes both tools.
+- It loads skills from `~/.claude/skills`, the same library Claude Code uses. It only looks one level deep, so the two nested collections (`academic-research-skills` and `claude-epub-skill`, 5 skills between them) are listed in `skills.customDirectories`.
+- It has built-in LSP setups for clangd, pyright and typescript-language-server, found through root markers and `$PATH`. Julia is the only one it doesn't know, and adding it extends the built-ins instead of replacing them.
+- Every role points at the same model on purpose. The GPU serves one model at a time, so a role aimed at the other model would only work while that server is running. To switch, restart `run.sh` with the other model and run `omp --model vllm/gpt-oss-20b`.
 
-Two things worth knowing. omp rewrites `config.yml` itself (`omp config set`, `/settings`, role changes in `/models`), which lands in the repo through the symlink but drops any comments in the file, so document that one in this README instead; `omp config path` prints the active directory. And the thinking toggle differs per model, which is why `models.yml` sets `thinkingFormat`: Qwen wants it in the chat template, while gpt-oss takes `reasoning_effort` directly.
+omp rewrites `config.yml` itself, from `omp config set`, `/settings` or role changes in `/models`. The change lands in the repo through the symlink and drops any comments, which is why this README documents that file instead. `omp config path` prints the active directory. `models.yml` also sets `thinkingFormat` per model, because Qwen turns thinking on through its chat template while gpt-oss takes `reasoning_effort` directly.
 
 ### opencode
 
-Kept as the fallback for when omp misbehaves. `.config/opencode/opencode.json` points opencode at `localhost:8000`, registers both models, and defines three agents: `plan` (architect, writes the plan, can't touch code), `build` (executes it), and `research` (web search and cited Q&A, no code or shell). `context7` and `serena` make up the MCP set, and LSPs are wired for Julia, C/C++, Python, and TypeScript.
+The fallback for when omp misbehaves. `.config/opencode/opencode.json` points opencode at `localhost:8000`, registers both models and defines three agents: `plan` writes a plan and can't edit code, `build` carries it out, and `research` does web search and cited answers with no code or shell access. The MCP servers are `context7` and `serena`, and LSPs are set up for Julia, C/C++, Python and TypeScript.
 
 ### qwen-code
 
-`.config/qwen/settings.json` points [qwen-code](https://github.com/QwenLM/qwen-code), Qwen's own CLI, at the same `localhost:8000` server and selects `qwen3.8-27b`. qwen-code reads `~/.qwen` (XDG is unsupported) and writes its own credentials and logs there, so `install.sh` links just `settings.json` into `~/.qwen/`. The rest stays out of the repo, matching how `install.sh` links opencode.
+`.config/qwen/settings.json` points [qwen-code](https://github.com/QwenLM/qwen-code) at the same server and selects `qwen3.8-27b`. qwen-code only reads `~/.qwen` and keeps its credentials and logs there, so `install.sh` links just `settings.json` into it.
 
-Install it with `npm install -g @qwen-code/qwen-code`, start the server with `llm qwen3.8-27b`, then run `qwen`. Two values have to line up: the model name matches what the server exposes, and `contextWindowSize` matches the server's `max-model-len`. `LOCAL_LLAMA_KEY` is a throwaway; qwen-code won't start without some API key, and the local server ignores it. Qwen3.8's reasoning and XML tool calls are parsed server-side by vLLM, so the harness needs no grammar workarounds.
+Install it with `npm install -g @qwen-code/qwen-code`, start the server with `llm qwen3.8-27b`, and run `qwen`. The model name has to match what the server exposes, and `contextWindowSize` has to match the server's `max-model-len`. `LOCAL_LLAMA_KEY` is a placeholder: qwen-code won't start without an API key, and the local server ignores it. vLLM parses Qwen3.8's reasoning and XML tool calls on the server, so qwen-code needs no workarounds.
