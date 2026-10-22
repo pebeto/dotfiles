@@ -46,10 +46,9 @@ SKIP=(.git .gitignore README.md install.sh install-macos.sh github-key-setup.sh 
 # .config/ entries that need per-file linking instead of a whole-dir
 # symlink, usually because ~/.config/<name>/ already exists as a real
 # dir managed by another tool (e.g. systemd creates ~/.config/systemd/).
-# `qwen` and `omp` are special for a second reason: they read ~/.qwen and
-# ~/.omp/agent (not XDG), so their blocks below link files there instead of
-# into ~/.config/<name>.
-CONFIG_SPECIAL=(systemd opencode qwen omp)
+# `omp` is special for a second reason: it reads ~/.omp/agent (not XDG), so
+# its block below links files there instead of into ~/.config/omp.
+CONFIG_SPECIAL=(systemd opencode omp)
 
 skip_entry() {
     local name=$1 s
@@ -234,24 +233,6 @@ else
 fi
 
 echo
-echo "Qwen Code config (per-file into ~/.qwen: qwen-code reads ~/.qwen, not XDG,"
-echo "and writes its own creds/logs there, so only settings.json is linked)"
-qwen_src="$DOTFILES/.config/qwen"
-qwen_dst="$HOME/.qwen"
-if [ -d "$qwen_src" ]; then
-    [ "$DRY" = 1 ] || mkdir -p "$qwen_dst"
-    shopt -s nullglob
-    for f in "$qwen_src"/*.json; do
-        name=$(basename "$f")
-        link "$f" "$qwen_dst/$name"
-    done
-    shopt -u nullglob
-else
-    printf '  WARN    %s missing\n' "$qwen_src"
-    n_warn=$((n_warn + 1))
-fi
-
-echo
 echo "Misc directories"
 for dir in "$HOME/Pictures/Screenshots" "$HOME/Videos/Screencasts"; do
     if [ -d "$dir" ]; then
@@ -330,13 +311,6 @@ else
         printf '  ok      omp (oh-my-pi)\n'
     else
         printf '  TODO    omp not installed: curl -fsSL https://omp.sh/install | sh\n'
-    fi
-    # qwen-code is the matched harness for the Qwen server (~/.qwen/settings.json).
-    if command -v qwen >/dev/null 2>&1; then
-        printf '  ok      qwen (qwen-code)\n'
-    else
-        printf '  TODO    qwen-code not installed: npm install -g @qwen-code/qwen-code\n'
-        n_warn=$((n_warn + 1))
     fi
 fi
 

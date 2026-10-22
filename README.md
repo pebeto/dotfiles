@@ -148,15 +148,15 @@ Both are 4-bit formats that Blackwell runs natively, and the checkpoints declare
 Each setting in `configs/qwen3.8-27b.yaml` has a comment with the measurements behind it. In short:
 
 - It uses unsloth's NVFP4 build instead of NVIDIA's ModelOpt one. NVIDIA's falls back to the Marlin kernel, which prefills at half the speed and crashes on Blackwell.
-- Every client asks for `reasoning_effort: medium`. The template defaults to `xhigh`, which used about five times the tokens on six coding tasks without passing more of them, and once thought until it ran out of output budget. omp maps its `high` level to medium for this model, so only `:xhigh` asks for more; opencode and qwen-code send it in `chat_template_kwargs`.
+- Every client asks for `reasoning_effort: medium`. The template defaults to `xhigh`, which used about five times the tokens on six coding tasks without passing more of them, and once thought until it ran out of output budget. omp maps its `high` level to medium for this model, so only `:xhigh` asks for more; opencode sends it in `chat_template_kwargs`.
 - Speculative decoding (the checkpoint's MTP layer) is off. It roughly doubles decode speed, but it caps the context at 81920 tokens, and omp then had to compact about twice as often. The config comment lists what to change to turn it back on.
 - The KV cache is pinned at 4.6 GiB (139,810 tokens). Left to size itself, vLLM counts whatever the desktop allocates during startup against the cache, so the size changed from boot to boot and some boots failed.
 - `TRITON_ATTN` is pinned because FlashInfer, the default, needed about 0.6 GiB more memory.
 - Video is off because it needs several GiB this card doesn't have. A conversation can hold up to 8 images, since each one can cost 16,384 tokens.
 
-Each client's context setting has to match the server, so all three use 131072. After changing anything here, check `Available KV cache memory` and `GPU KV cache size` in the startup log; vLLM refuses to start if the settings don't fit.
+Each client's context setting has to match the server, so both use 131072. After changing anything here, check `Available KV cache memory` and `GPU KV cache size` in the startup log; vLLM refuses to start if the settings don't fit.
 
-Three tools use this server: [omp](https://github.com/can1357/oh-my-pi) day to day, opencode as a fallback, and qwen-code, Qwen's own CLI. Only one model is loaded at a time, so start the one you want first.
+Two tools use this server: [omp](https://github.com/can1357/oh-my-pi) day to day and opencode as a fallback. Only one model is loaded at a time, so start the one you want first.
 
 ### omp (oh-my-pi)
 
@@ -180,9 +180,3 @@ omp rewrites `config.yml` itself, from `omp config set`, `/settings` or role cha
 ### opencode
 
 The fallback for when omp misbehaves. `.config/opencode/opencode.json` points opencode at `localhost:8000`, registers both models and defines three agents: `plan` writes a plan and can't edit code, `build` carries it out, and `research` does web search and cited answers with no code or shell access. The MCP servers are `context7` and `serena`, and LSPs are set up for Julia, C/C++, Python and TypeScript.
-
-### qwen-code
-
-`.config/qwen/settings.json` points [qwen-code](https://github.com/QwenLM/qwen-code) at the same server and selects `qwen3.8-27b`. qwen-code only reads `~/.qwen` and keeps its credentials and logs there, so `install.sh` links just `settings.json` into it.
-
-Install it with `npm install -g @qwen-code/qwen-code`, start the server with `llm qwen3.8-27b`, and run `qwen`. The model name has to match what the server exposes, and `contextWindowSize` has to match the server's `max-model-len`. `LOCAL_LLAMA_KEY` is a placeholder: qwen-code won't start without an API key, and the local server ignores it. vLLM parses Qwen3.8's reasoning and XML tool calls on the server, so qwen-code needs no workarounds.

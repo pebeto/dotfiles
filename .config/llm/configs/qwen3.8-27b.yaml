@@ -32,7 +32,7 @@ kv-cache-memory-bytes: 4939212390   # 4.6 GiB
 # window at 81920. There omp compacted every 7 turns, against every 14 at 122880, while the
 # faster decode saved about 42 minutes over five weeks of real sessions. To trade back, set
 # speculative-config: '{"method":"mtp","num_speculative_tokens":3}' with max-model-len 81920,
-# image 5 and kv-cache-memory-bytes 3865470566, and lower the three clients to match.
+# image 5 and kv-cache-memory-bytes 3865470566, and lower both clients to match.
 
 # Left to itself 0.30.0 picks FLASHINFER, which needed about 0.6 GiB more than TRITON_ATTN
 # here. The memory peaks above were measured on TRITON_ATTN.
