@@ -12,8 +12,9 @@ Row {
 
     required property var screen
     // Matched by output name: I3.monitorFor() is a plain call, so a binding
-    // on it would stay null if it ran before the first IPC reply.
-    readonly property var workspaces: I3.workspaces.values.filter(w => w.monitor?.name === screen.name).sort((a, b) => a.number - b.number)
+    // on it would stay null if it ran before the first IPC reply. The screen
+    // itself goes null for a moment while outputs come and go (a VT switch).
+    readonly property var workspaces: I3.workspaces.values.filter(w => w.monitor?.name === screen?.name).sort((a, b) => a.number - b.number)
     // Touchpads send many small deltas, so steps are counted per 120 units
     // (one mouse-wheel notch).
     property real wheelAcc: 0

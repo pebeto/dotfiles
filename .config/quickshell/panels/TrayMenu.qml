@@ -122,7 +122,8 @@ PanelPopup {
             x: root.textX
             anchors.verticalCenter: parent.verticalCenter
             visible: entryRow.icon !== ""
-            source: entryRow.icon
+            // Steam hands over plain file paths (a game's .bmp), not URLs.
+            source: entryRow.icon.startsWith("/") ? "file://" + entryRow.icon : entryRow.icon
             implicitSize: Theme.em
         }
         Ink {
