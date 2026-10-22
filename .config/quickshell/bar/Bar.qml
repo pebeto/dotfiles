@@ -2,7 +2,9 @@ import QtQuick
 import Quickshell
 import Quickshell.Bluetooth
 import Quickshell.Io
+import Quickshell.Services.SystemTray
 import Quickshell.Wayland
+import Quickshell.Widgets
 import qs
 import qs.components
 import qs.panels
@@ -40,6 +42,56 @@ PanelWindow {
         anchors.right: parent.right
         anchors.rightMargin: Math.round(Theme.gap * 0.3)
         height: parent.height
+
+        // Tray icons of apps that keep running with their windows closed
+        // (Steam, Slack). Double click opens the app's window (see Tray.qml),
+        // right click opens its menu, middle click is its secondary action.
+        Repeater {
+            model: Tray.items
+
+            BarBlock {
+                id: trayBlock
+
+                required property SystemTrayItem modelData
+
+                visible: modelData.status !== Status.Passive
+                function showMenu() {
+                    if (modelData.hasMenu) {
+                        const p = trayBlock.mapToItem(null, 0, trayBlock.height);
+                        modelData.display(bar, p.x, p.y);
+                    }
+                }
+
+                onClicked: button => {
+                    if (button === Qt.MiddleButton)
+                        modelData.secondaryActivate();
+                    else if (button === Qt.RightButton)
+                        showMenu();
+                }
+                onDoubleClicked: button => {
+                    if (button !== Qt.LeftButton)
+                        return;
+                    if (modelData.onlyMenu)
+                        showMenu();
+                    else
+                        Tray.open(modelData, showMenu);
+                }
+                onWheel: steps => modelData.scroll(steps * 120, false)
+
+                IconImage {
+                    // Quickshell ignores the ?path= an app adds for an icon kept
+                    // in its own folder (Steam does), so load that file directly.
+                    source: {
+                        const icon = trayBlock.modelData.icon;
+                        const at = icon.indexOf("?path=");
+                        if (at < 0)
+                            return icon;
+                        return "file://" + icon.slice(at + 6) + "/" + icon.slice(0, at).replace("image://icon/", "") + ".png";
+                    }
+                    implicitSize: Math.round(Theme.em * 1.1)
+                }
+            }
+        }
 
         // Focus mode: notifications held back and swayidle paused.
         BarBlock {

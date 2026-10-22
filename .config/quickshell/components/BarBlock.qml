@@ -11,6 +11,7 @@ Item {
     readonly property bool hovered: mouse.containsMouse
 
     signal clicked(int button)
+    signal doubleClicked(int button)
     signal wheel(int steps)
 
     implicitWidth: row.implicitWidth + Theme.gap * 2
@@ -42,6 +43,7 @@ Item {
         acceptedButtons: Qt.LeftButton | Qt.MiddleButton | Qt.RightButton
         cursorShape: Qt.PointingHandCursor
         onClicked: e => root.clicked(e.button)
+        onDoubleClicked: e => root.doubleClicked(e.button)
         onWheel: e => {
             wheelAcc += e.angleDelta.y;
             const steps = Math.trunc(wheelAcc / 120);

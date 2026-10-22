@@ -101,6 +101,7 @@ The top bar, the notification popups, and every panel that hangs off the bar are
 - **Clock.** Opens a panel with a calendar, today's org agenda (read from the `agenda-refresh` timer's cache), the audio outputs and a volume slider, Syncthing's state, and the notification history.
 - **Readings.** CPU, GPU and RAM turn amber and then red as they climb; a click opens `btop` when you want to know exactly what's on fire. Scroll over volume (or brightness, on the T470) to change it, click volume to mute, right-click it to switch outputs.
 - **WiFi and Bluetooth** (T470) open panels to join networks through iwd and connect devices; `Super+F10` opens the Bluetooth one from the keyboard.
+- **Tray.** Apps that keep running with their windows closed (Steam, say) get an icon left of the bell. A double click opens the app's window, a right click opens its menu, and a middle click runs its secondary action. Steam's icon can't open a window by itself, so for icons like it the bar runs the app's launcher, which brings the running copy to the front.
 - **Notifications.** Quickshell is the notification server. Left click closes a popup, middle click runs its default action, right click closes them all. The bell turns on focus mode: popups are held back and swayidle is paused, and you get one "you missed N" when you turn it off.
 - **Scripting.** `qs ipc call panel toggle clock` (or `wifi`, `bluetooth`) and `qs ipc call notifications toggleFocus`; `qs ipc show` lists the rest.
 
