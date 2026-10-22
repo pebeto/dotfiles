@@ -18,6 +18,8 @@ PanelWindow {
     required property var modelData
     readonly property string outputName: modelData.name
     readonly property int panelMax: modelData.height - Theme.barHeight - Theme.gap * 2
+    // The tray icon whose menu is open, for TrayMenu to hang from.
+    property Item trayAnchor: null
 
     // [normal, warning, critical] for System.level().
     function levelColor(level) {
@@ -56,10 +58,11 @@ PanelWindow {
 
                 visible: modelData.status !== Status.Passive
                 function showMenu() {
-                    if (modelData.hasMenu) {
-                        const p = trayBlock.mapToItem(null, 0, trayBlock.height);
-                        modelData.display(bar, p.x, p.y);
-                    }
+                    if (!modelData.hasMenu)
+                        return;
+                    Tray.menuItem = modelData;
+                    bar.trayAnchor = trayBlock;
+                    Panels.toggle("tray", bar.outputName);
                 }
 
                 onClicked: button => {
@@ -226,6 +229,12 @@ PanelWindow {
     Process {
         id: btop
         command: ["foot", "--app-id=btop-popup", "--", "btop"]
+    }
+
+    TrayMenu {
+        anchorItem: bar.trayAnchor ?? clockBlock
+        screen: bar.modelData
+        maxHeight: bar.panelMax
     }
 
     ClockPanel {

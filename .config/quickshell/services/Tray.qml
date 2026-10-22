@@ -8,7 +8,8 @@ import Quickshell.Services.SystemTray
 // Opening a tray app's window. Most icons do that themselves when activated,
 // but libappindicator ones (Steam) have no Activate method, only a menu. For
 // those the app's desktop entry runs instead, which brings a running
-// single-instance app to the front. scripts/tray.sh tells the two apart.
+// single-instance app to the front. scripts/tray.sh does the activating and
+// reports whether it worked.
 Singleton {
     id: root
 
@@ -17,6 +18,9 @@ Singleton {
     // before the first click needs one.
     readonly property var items: SystemTray.items
     readonly property var entries: DesktopEntries.applications
+
+    // The item whose menu panels/TrayMenu.qml shows.
+    property var menuItem: null
 
     property var pending: null
     property var pendingFallback: null
@@ -36,13 +40,9 @@ Singleton {
             const item = root.pending;
             const fallback = root.pendingFallback;
             root.pending = root.pendingFallback = null;
-            // The app may have quit since the click.
-            if (!item)
+            // Activated, or the app quit since the click.
+            if (exitCode === 0 || !item)
                 return;
-            if (exitCode === 0) {
-                item.activate();
-                return;
-            }
             const entry = DesktopEntries.byId(item.id) ?? DesktopEntries.heuristicLookup(item.id);
             if (entry)
                 entry.execute();

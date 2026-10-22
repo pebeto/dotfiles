@@ -5,7 +5,7 @@ import Quickshell
 import Quickshell.Services.Pipewire
 
 // The default output and the list of outputs to switch between. Volume is
-// Pipewire's 0..1 scale, which reads the same as `amixer get Master`.
+// Pipewire's 0..1 scale, the same one `wpctl get-volume` prints.
 Singleton {
     id: root
 
@@ -13,6 +13,9 @@ Singleton {
     readonly property real volume: sink?.audio?.volume ?? NaN
     readonly property bool muted: sink?.audio?.muted ?? false
     readonly property var sinks: Pipewire.nodes.values.filter(n => n.isSink && !n.isStream && n.audio)
+    // The default microphone, for the mic-mute key's on-screen readout.
+    readonly property PwNode source: Pipewire.defaultAudioSource
+    readonly property bool micMuted: source?.audio?.muted ?? false
 
     // Names for the outputs whose own descriptions are unhelpful.
     readonly property var names: ({
@@ -50,6 +53,6 @@ Singleton {
     // Pipewire only fills in a node's audio properties while something
     // tracks it.
     PwObjectTracker {
-        objects: root.sinks
+        objects: [...root.sinks, root.source].filter(n => n)
     }
 }

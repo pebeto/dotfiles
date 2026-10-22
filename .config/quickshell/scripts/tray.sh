@@ -1,7 +1,10 @@
 #!/bin/bash
-# Exits 0 if the tray item with Id $1 can be activated, and 1 if it has no
-# Activate method or isn't registered. libappindicator apps such as Steam
-# have none, only a menu; services/Tray.qml asks on each left click.
+# Activates the tray item with Id $1, which normally brings its window up.
+# Exits 1 when that fails: the item isn't registered, or it has no Activate
+# method at all (libappindicator apps such as Steam offer only a menu), so
+# services/Tray.qml can open the app another way. Trying is the only
+# reliable test, since some apps (Electron ones) don't describe their
+# methods over introspection.
 
 set -u
 
@@ -16,7 +19,7 @@ busctl --user --json=short get-property "${watcher[@]}" RegisteredStatusNotifier
         path=/StatusNotifierItem
         [[ $item == */* ]] && path=/${item#*/}
         [ "$(busctl --user --json=short get-property "$service" "$path" org.kde.StatusNotifierItem Id 2>/dev/null | jq -r '.data')" = "$id" ] || continue
-        busctl --user introspect "$service" "$path" org.kde.StatusNotifierItem 2>/dev/null | grep -q '^\.Activate '
+        busctl --user --timeout=2 call "$service" "$path" org.kde.StatusNotifierItem Activate ii 0 0 >/dev/null 2>&1
         exit
     done
     exit 1

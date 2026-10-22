@@ -35,7 +35,9 @@ include ~/.config/sway-host.conf
 ### Wallpaper (host configs may add output-specific position/mode rules
 ### above this line). Path resolves relative to this file's real location
 ### in the dotfiles repo: .config/sway/config → .config/wallpaper.jpeg.
-output "*" bg ../wallpaper.jpeg stretch
+### `fill` keeps the photo's proportions, cropping what doesn't fit, which is
+### also how the lock screen draws it, so unlocking doesn't jump.
+output "*" bg ../wallpaper.jpeg fill
 
 ### Clipboard history: cliphist records every clipboard selection; recall it
 ### with the XF86Favorites key (see below). exec_always so a config reload
@@ -72,11 +74,12 @@ for_window [app_id=".*"]  inhibit_idle fullscreen
 
 ### Idle configuration
 # Lock after 300s, power off outputs after another 300s (resumes on wake),
-# and lock before suspend.
+# and lock before suspend. lock.sh uses the Quickshell lock screen, or
+# swaylock when Quickshell isn't running.
 exec swayidle -w \
-         timeout 300 'swaylock --font JuliaMono -l -k -f -c 000000' \
+         timeout 300 '~/.config/sway/lock.sh' \
          timeout 600 'swaymsg "output * power off"' resume 'swaymsg "output * power on"' \
-         before-sleep 'swaylock --font JuliaMono -l -k -f -c 000000'
+         before-sleep '~/.config/sway/lock.sh'
 
 ### Keyboard configuration
 input type:keyboard {
@@ -94,7 +97,7 @@ bindsym $mod+space     exec $menu
 floating_modifier $mod normal
 bindsym $mod+Shift+c   reload
 bindsym $mod+Shift+e   exec swaynag -t warning -m 'You pressed the exit shortcut. Do you really want to exit sway? This will end your Wayland session.' -B 'Yes, exit sway' 'swaymsg exit'
-bindsym $mod+Escape    exec swaylock --font JuliaMono -l -k -f -c 000000
+bindsym $mod+Escape    exec ~/.config/sway/lock.sh
 
 ### Moving around
 bindsym $mod+$left  focus left
@@ -156,12 +159,12 @@ bindsym $mod+Shift+minus move scratchpad
 bindsym $mod+minus       scratchpad show
 
 ### Function keys
-# Volume up/down/mute
-bindsym XF86AudioRaiseVolume exec amixer set Master 5%+    > /dev/null
-bindsym XF86AudioLowerVolume exec amixer set Master 5%-    > /dev/null
-bindsym XF86AudioMute        exec amixer set Master toggle > /dev/null
-# Mic mute toggle (no bar entry)
-bindsym XF86AudioMicMute     exec amixer set Capture toggle > /dev/null
+# Volume up/down/mute and mic mute, on the same PipeWire devices the bar
+# shows, capped at 100%. Each one then pops up Quickshell's readout.
+bindsym XF86AudioRaiseVolume exec wpctl set-volume -l 1.0 @DEFAULT_AUDIO_SINK@ 5%+ && qs ipc call osd volume
+bindsym XF86AudioLowerVolume exec wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%- && qs ipc call osd volume
+bindsym XF86AudioMute        exec wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle && qs ipc call osd volume
+bindsym XF86AudioMicMute     exec wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle && qs ipc call osd mic
 
 # Media keys (MPRIS-aware via playerctl)
 bindsym XF86AudioPlay  exec playerctl play-pause
@@ -199,11 +202,12 @@ mode "resize" {
 }
 bindsym $mod+r mode "resize"
 
-### Status bar, notifications and their popups: Quickshell, configured in
-### ~/.config/quickshell. It reloads itself when those files change, so it
-### only needs starting once. The bar follows changes made from key bindings
-### (volume, layout) on its own.
-exec quickshell
+### Status bar, notifications, popups, polkit prompt and lock screen:
+### Quickshell, configured in ~/.config/quickshell. It reloads itself when
+### those files change. exec_always with --no-duplicate makes a sway reload
+### start it if it isn't running (after a crash, or on first install) and
+### leave it alone if it is.
+exec_always quickshell --no-duplicate
 
 ### Misc configs
 title_align center

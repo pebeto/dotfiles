@@ -163,8 +163,22 @@ Singleton {
         blockLoading: true
     }
 
-    // sysfs doesn't report backlight changes made by the hardware keys, so
-    // poll; a scroll on the block restarts the timer for a prompt update.
+    // The backlight's uevents include changes made by the hardware keys, so
+    // a reading (and the on-screen readout) follows them at once rather than
+    // on the next poll.
+    Process {
+        running: Theme.profile.backlight !== ""
+        command: ["udevadm", "monitor", "--udev", "--subsystem-match=backlight"]
+        stdout: SplitParser {
+            onRead: line => {
+                if (line.includes(" change "))
+                    brightnessTimer.restart();
+            }
+        }
+    }
+
+    // inotify doesn't see backlight changes in sysfs, so poll too; a scroll
+    // on the block restarts the timer for a prompt update.
     Timer {
         id: brightnessTimer
         interval: 1000

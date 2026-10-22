@@ -5,8 +5,9 @@ import qs.components
 import qs.notifications
 import qs.services
 
-// The clock's panel: the date and a calendar, today's agenda, the sound
-// output, Syncthing's state, and the notification history.
+// The clock's panel: the date and a calendar, today's agenda, what's
+// playing, the sound output, Syncthing's state, and the notification
+// history.
 PanelPopup {
     id: root
 
@@ -52,6 +53,25 @@ PanelPopup {
             text: "Agenda"
         }
         AgendaView {
+            width: parent.width
+        }
+    }
+
+    // Only while some player has something loaded.
+    Rule {
+        visible: media.player !== null
+    }
+
+    Column {
+        visible: media.player !== null
+        width: root.contentWidth
+        spacing: Theme.gap
+
+        SectionTitle {
+            text: "Now playing"
+        }
+        MediaView {
+            id: media
             width: parent.width
         }
     }

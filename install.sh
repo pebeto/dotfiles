@@ -247,12 +247,12 @@ echo
 echo "Dependencies (referenced by the sway config / quickshell)"
 # Arch package for each command that isn't named after it.
 declare -A pkg_of=(
-    [swaymsg]=sway [swaynag]=sway [amixer]=alsa-utils [wl-copy]=wl-clipboard
+    [swaymsg]=sway [swaynag]=sway [wl-copy]=wl-clipboard
     [wl-paste]=wl-clipboard [notify-send]=libnotify [wpctl]=wireplumber
     [rfkill]=util-linux [iwctl]=iwd [bluetoothctl]=bluez-utils [emacs]=emacs-wayland
 )
 missing=() missing_pkgs=()
-for cmd in sway swaymsg swayidle swaylock playerctl amixer grim slurp swappy wl-copy wl-paste quickshell notify-send wpctl foot fuzzel gammastep swaynag rfkill iw btop brightnessctl iwctl bluetoothctl cliphist wf-recorder jq emacs; do
+for cmd in sway swaymsg swayidle swaylock playerctl grim slurp swappy wl-copy wl-paste quickshell notify-send wpctl foot fuzzel gammastep swaynag rfkill iw btop brightnessctl iwctl bluetoothctl cliphist wf-recorder jq emacs; do
     if command -v "$cmd" >/dev/null 2>&1; then
         printf '  ok      %s\n' "$cmd"
     else
@@ -279,11 +279,16 @@ if command -v dunst >/dev/null 2>&1; then
     printf '  TODO    dunst is still installed; Quickshell replaced it: sudo pacman -Rns dunst\n'
     n_warn=$((n_warn + 1))
 fi
-# sway runs `exec` lines only at login, so a session started before the switch
-# keeps its dunst, and a reload drops the old bar without starting Quickshell.
-if pgrep -x sway >/dev/null && { pgrep -x dunst >/dev/null || ! pgrep -x 'quickshell|qs' >/dev/null; }; then
-    printf '  TODO    this sway session predates Quickshell: log out and back in to start it\n'
-    n_warn=$((n_warn + 1))
+# A sway reload starts Quickshell (exec_always), but a session from before the
+# switch still runs dunst, which holds the notification name until it's gone.
+if pgrep -x sway >/dev/null; then
+    if pgrep -x dunst >/dev/null; then
+        printf '  TODO    the old dunst is still running: pkill -x dunst, then reload sway (Super+Shift+c)\n'
+        n_warn=$((n_warn + 1))
+    elif ! pgrep -x 'quickshell|qs' >/dev/null; then
+        printf '  TODO    Quickshell is not running: reload sway (Super+Shift+c) to start it\n'
+        n_warn=$((n_warn + 1))
+    fi
 fi
 # woverview isn't packaged, and the sway host configs call it by this path.
 if [ -x "$HOME/.local/bin/woverview" ]; then

@@ -116,7 +116,14 @@ Singleton {
         check: String.fromCodePoint(0xF012C),
         lock: String.fromCodePoint(0xF033E),
         refresh: String.fromCodePoint(0xF0450),
-        power: String.fromCodePoint(0xF0425)
+        power: String.fromCodePoint(0xF0425),
+        mic: String.fromCodePoint(0xF036C),
+        micOff: String.fromCodePoint(0xF036D),
+        music: String.fromCodePoint(0xF075A),
+        play: String.fromCodePoint(0xF040A),
+        pause: String.fromCodePoint(0xF03E4),
+        next: String.fromCodePoint(0xF04AD),
+        previous: String.fromCodePoint(0xF04AE)
     })
 
     FileView {

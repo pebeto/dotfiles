@@ -42,7 +42,7 @@ Font sizes differ because the workstation runs its 4K panel unscaled and the T47
 
 It skips the LLM checks on machines without an NVIDIA GPU. It never overwrites a real file; it reports the conflict and moves on. `--force-host` re-points the host links when a machine changes profile.
 
-On a machine that was running the older swaybar version of this setup, log out and back in once after installing. Reloading sway removes the old bar but doesn't start Quickshell, because sway only runs `exec` lines at login, and the old dunst keeps handling notifications until then.
+On a machine that was running the older swaybar version of this setup, run `pkill -x dunst` after installing, then reload sway with `Super+Shift+c`. The reload swaps the old bar for Quickshell. Idle locking keeps using swaylock until you next log in, because sway only starts swayidle at login.
 
 ## Sway
 
@@ -104,25 +104,36 @@ Pressing the current workspace's number again goes back to the previous one.
 | `XF86Display` | toggle region screen recording to `~/Videos/Screencasts` |
 | `XF86Favorites` | clipboard-history picker |
 | `Super+Shift+p` | cycle keyboard layout (us / latam) |
-| volume / media keys | wired to `amixer` and `playerctl` |
+| volume and mic keys | change the PipeWire default devices through `wpctl` (volume stops at 100%) and pop up a readout |
+| media keys | play/pause, next and previous through `playerctl` |
 
 Sway locks the screen after five minutes idle and before suspend.
 
 On the T470, the WiFi, Bluetooth and FnLock (`Fn+Esc`) keys run `indicators.sh`, which posts a notification with the new state. The laptop's embedded controller changes those states on its own, so the script only reports what happened.
 
-## Bar and notifications (`.config/quickshell`)
+## Bar, notifications and lock screen (`.config/quickshell`)
 
-The top bar, its panels and the notification popups are one Quickshell config. Sway starts it, and it reloads by itself when you edit one of its files.
+The top bar, its panels, the notification popups, the lock screen and the password prompt are one Quickshell config. Sway starts it, and it reloads by itself when you edit one of its files. If it crashes, reloading sway starts it again.
 
 - Click a workspace to switch to it, or scroll over them to step through. A workspace with an urgent window turns red, and the current binding mode (like `resize`) shows next to them.
-- The clock opens a panel with a calendar, today's org agenda, the audio outputs with a volume slider, Syncthing's status and recent notifications. The agenda comes from a cache that the `agenda-refresh` timer keeps up to date.
+- The clock opens a panel with a calendar, today's org agenda, what's playing (with play/pause, next and previous), the audio outputs with a volume slider, Syncthing's status and recent notifications. The agenda comes from a cache that the `agenda-refresh` timer keeps up to date. Clicking the track title brings up the player's window.
 - The CPU, GPU and RAM readings turn amber and then red as they climb. Clicking them opens `btop`.
 - Scroll over the volume to change it, click it to mute, and right-click it to switch outputs. On the T470, scrolling over brightness works the same way.
 - On the T470, the WiFi and Bluetooth blocks open panels for joining networks (through iwd) and connecting devices. `Super+F10` opens the Bluetooth panel.
-- Apps that keep running after you close their window, like Steam, get a tray icon to the left of the bell. Double-click it to open the app, right-click for its menu, middle-click for its secondary action. Steam's icon can't open its window by itself, so the bar runs Steam's launcher instead, which brings the running copy to the front.
+- Apps that keep running after you close their window, like Steam, get a tray icon to the left of the bell. Double-click it to open the app, right-click for its menu (drawn like the other panels), middle-click for its secondary action. Steam's icon can't open its window by itself, so the bar runs Steam's launcher instead, which brings the running copy to the front.
+- The volume and mic keys, and brightness changes on the T470, pop up a readout at the bottom of the screen.
 - Quickshell is also the notification server. Click a popup to close it, middle-click to run its default action, and right-click to close all of them.
 - The bell turns on focus mode. Popups wait and swayidle pauses, and when you turn it off you get one "you missed N" notification.
-- You can script all of it: `qs ipc call panel toggle clock` (or `wifi`, `bluetooth`) and `qs ipc call notifications toggleFocus`. `qs ipc show` lists the rest.
+- When something asks for admin rights through polkit (starting bluetoothd from the Bluetooth panel, `pkexec`), a password prompt opens in the middle of the screen. Quickshell is the session's polkit agent; without one, those requests fail without asking.
+- You can script all of it: `qs ipc call panel toggle clock` (or `wifi`, `bluetooth`), `qs ipc call notifications toggleFocus` and `qs ipc call lock lock`. `qs ipc show` lists the rest.
+
+The lock screen shows the wallpaper, the time and a password field on every screen. It fades in from black, and after the right password it fades down to the plain wallpaper, the same one behind your windows, before the desktop comes back. `Super+Escape`, the idle timer and suspend all go through `sway/lock.sh`, which uses swaylock instead when Quickshell isn't running. The password goes through swaylock's PAM settings, so three wrong tries still lock the account for ten minutes, as before. If Quickshell crashes while the screen is locked, sway keeps it locked and blank. To get back in, switch to a TTY (`Ctrl+Alt+F2`), log in, and run:
+
+```sh
+swaymsg -s /run/user/$(id -u)/sway-ipc.$(id -u).$(pidof sway).sock exec swaylock
+```
+
+Then switch back to sway's TTY (usually `Ctrl+Alt+F1`) and unlock in swaylock.
 
 ## Local LLM stack (`.config/llm`)
 
