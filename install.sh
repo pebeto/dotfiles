@@ -252,7 +252,7 @@ declare -A pkg_of=(
     [rfkill]=util-linux [iwctl]=iwd [bluetoothctl]=bluez-utils [emacs]=emacs-wayland
 )
 missing=() missing_pkgs=()
-for cmd in swayidle swaylock playerctl grim slurp swappy wl-copy wl-paste quickshell notify-send wpctl foot fuzzel gammastep rfkill iw btop brightnessctl iwctl bluetoothctl cliphist wf-recorder jq emacs; do
+for cmd in swayidle swaylock playerctl grim slurp swappy wl-copy wl-paste quickshell notify-send wpctl foot gammastep rfkill iw btop brightnessctl iwctl bluetoothctl cliphist wf-recorder jq emacs; do
     if command -v "$cmd" >/dev/null 2>&1; then
         printf '  ok      %s\n' "$cmd"
     else

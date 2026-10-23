@@ -7,12 +7,14 @@ import qs
 import qs.components
 import qs.services
 
-// The app launcher, after Spotlight in macOS Tahoe: a search capsule that
-// fades and springs in on the focused screen, and grows into a list of
-// results as you type. Down on an empty search lists the most used apps.
-// It's one of the Panels, so opening it closes the bar's panels, and
-// `qs ipc call panel toggle launcher` (Super+space) opens it. Arrows, Tab
-// or Ctrl+N/P move the selection, Enter launches, Escape or a click outside
+// The app launcher and the clipboard-history picker, after Spotlight in
+// macOS Tahoe: a search capsule that fades and springs in on the focused
+// screen, and grows into a list of results as you type. For apps, Down on an
+// empty search lists the most used ones; the clipboard opens on its newest
+// entries. Both are Panels ("launcher" and "clipboard"), so opening one
+// closes the bar's panels, and `qs ipc call panel toggle launcher` or
+// `... clipboard` opens it (Super+space, XF86Favorites). Arrows, Tab or
+// Ctrl+N/P move the selection, Enter picks, Escape or a click outside
 // closes.
 //
 // Its shadow is drawn here rather than by swayfx, whose effects belong to
@@ -20,13 +22,16 @@ import qs.services
 Scope {
     id: root
 
-    readonly property bool wanted: Panels.open === "launcher"
+    readonly property string request: Panels.open === "launcher" ? "apps" : Panels.open === "clipboard" ? "clipboard" : ""
+    // What's showing, "apps" or "clipboard". It outlives the request
+    // through the closing fade, so the card doesn't change under it.
+    property string mode: "apps"
     readonly property var screen: Quickshell.screens.find(s => s.name === Panels.screen) ?? Quickshell.screens[0]
     property string query: ""
-    readonly property var results: Apps.search(query).slice(0, 50)
+    readonly property var results: mode === "apps" ? Apps.search(query).slice(0, 50) : Clipboard.search(query).slice(0, 200)
     property int current: 0
     property bool browsing: false
-    readonly property bool expanded: query !== "" || browsing
+    readonly property bool expanded: query !== "" || browsing || mode === "clipboard"
 
     readonly property int rows: 8
     readonly property int rowHeight: Math.round(Theme.em * 1.9)
@@ -54,25 +59,30 @@ Scope {
         if (!r || !expanded)
             return;
         Panels.close();
-        Apps.launch(r.entry);
+        if (mode === "apps")
+            Apps.launch(r.entry);
+        else
+            Clipboard.restore(r.entry);
     }
 
-    // The name with the matched letters in the link color, plus the generic
-    // name in gray. StyledText, so the app's own text is escaped first.
+    // The app's name (or the clipboard preview) with the matched letters in
+    // the link color, plus the generic name in gray. StyledText, so the text
+    // itself is escaped first.
     function label(r) {
         const esc = s => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-        const name = r.entry.name;
+        const text = mode === "apps" ? r.entry.name : r.entry.text;
         let out = "";
-        for (let i = 0; i < name.length; i++)
-            out += r.hits.includes(i) ? `<font color="${Theme.link}">${esc(name[i])}</font>` : esc(name[i]);
-        const generic = r.entry.genericName;
-        if (generic && generic !== name)
+        for (let i = 0; i < text.length; i++)
+            out += r.hits.includes(i) ? `<font color="${Theme.link}">${esc(text[i])}</font>` : esc(text[i]);
+        const generic = mode === "apps" ? r.entry.genericName : "";
+        if (generic && generic !== text)
             out += `&nbsp;&nbsp;<font color="${Theme.inkDim}">${esc(generic)}</font>`;
         return out;
     }
 
-    onWantedChanged: {
-        if (!wanted) {
+    // Also runs when one mode is asked for while the other is open.
+    onRequestChanged: {
+        if (request === "") {
             // Closed again before the card left 0: nothing will fade out,
             // and the window mustn't keep the keyboard.
             if (body.opacity === 0)
@@ -80,6 +90,9 @@ Scope {
             up = false;
             return;
         }
+        mode = request;
+        if (mode === "clipboard")
+            Clipboard.refresh();
         input.text = "";
         browsing = false;
         current = 0;
@@ -92,7 +105,7 @@ Scope {
     // A transparent layer over the screen catches the click outside.
     PanelWindow {
         screen: root.screen
-        visible: root.wanted
+        visible: root.request !== ""
         anchors.top: true
         anchors.bottom: true
         anchors.left: true
@@ -197,7 +210,7 @@ Scope {
                     Glyph {
                         id: searchGlyph
                         anchors.verticalCenter: parent.verticalCenter
-                        text: Theme.icons.search
+                        text: root.mode === "apps" ? Theme.icons.search : Theme.icons.clipboard
                         color: Theme.inkDim
                         font.pixelSize: Math.round(Theme.em * 1.3)
                     }
@@ -206,7 +219,7 @@ Scope {
                         anchors.leftMargin: Theme.gap
                         anchors.verticalCenter: parent.verticalCenter
                         visible: input.text === ""
-                        text: "Search applications"
+                        text: root.mode === "apps" ? "Search applications" : "Search clipboard history"
                         color: Theme.inkDim
                         font.pixelSize: Math.round(Theme.em * 1.15)
                     }
@@ -296,7 +309,17 @@ Scope {
                                 x: Theme.gap
                                 anchors.verticalCenter: parent.verticalCenter
                                 implicitSize: Math.round(Theme.em * 1.3)
-                                source: Quickshell.iconPath(row.modelData.entry.icon, "application-x-executable")
+                                visible: root.mode === "apps"
+                                source: root.mode === "apps" ? Quickshell.iconPath(row.modelData.entry.icon, "application-x-executable") : ""
+                            }
+                            Glyph {
+                                x: Theme.gap
+                                width: appIcon.width
+                                horizontalAlignment: Text.AlignHCenter
+                                anchors.verticalCenter: parent.verticalCenter
+                                visible: root.mode === "clipboard"
+                                text: row.modelData.entry.image ? Theme.icons.image : Theme.icons.text
+                                color: Theme.inkDim
                             }
                             Ink {
                                 anchors.left: appIcon.right
@@ -308,10 +331,9 @@ Scope {
                                 text: root.label(row.modelData)
                             }
 
-                            // Moving the pointer selects, as in fuzzel;
-                            // position rather than enter, so a list scrolled
-                            // by the keys under a still pointer keeps the
-                            // keyboard's choice.
+                            // Moving the pointer selects; position rather
+                            // than enter, so a list the keys scrolled under
+                            // a still pointer keeps the keyboard's choice.
                             MouseArea {
                                 anchors.fill: parent
                                 hoverEnabled: true
@@ -324,7 +346,7 @@ Scope {
                         Ink {
                             anchors.centerIn: parent
                             visible: root.results.length === 0
-                            text: "No matching applications"
+                            text: root.mode === "apps" ? "No matching applications" : root.query === "" ? "The clipboard history is empty" : "No matching entries"
                             color: Theme.inkDim
                         }
                     }

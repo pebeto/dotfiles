@@ -80,7 +80,7 @@ Singleton {
     readonly property color good: "#57864e"
     readonly property color urgent: "#b85c57"
 
-    // Popup colors: the acme palette fuzzel uses too.
+    // Popup colors: the acme palette.
     readonly property color paper: "#ffffea"
     // The cards themselves (panels, notifications, the readout, the polkit
     // prompt): the same paper, a little see-through for the blur behind.
@@ -132,7 +132,10 @@ Singleton {
         pause: String.fromCodePoint(0xF03E4),
         next: String.fromCodePoint(0xF04AD),
         previous: String.fromCodePoint(0xF04AE),
-        search: String.fromCodePoint(0xF0349)
+        search: String.fromCodePoint(0xF0349),
+        clipboard: String.fromCodePoint(0xF014C),
+        text: String.fromCodePoint(0xF09A8),
+        image: String.fromCodePoint(0xF02E9)
     })
 
     FileView {

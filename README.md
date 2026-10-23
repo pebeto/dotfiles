@@ -46,7 +46,7 @@ On a machine that was running the older swaybar version of this setup, run `pkil
 
 ## Sway
 
-One `config` covers both machines, and `hosts/<hostname>.conf` adds each one's outputs, inputs and hardware keys. The mod key is `Super`, the terminal is `foot`, and the app launcher is part of the Quickshell setup (see below), with `fuzzel` as the fallback and for the clipboard-history picker.
+One `config` covers both machines, and `hosts/<hostname>.conf` adds each one's outputs, inputs and hardware keys. The mod key is `Super`, the terminal is `foot`, and the app launcher and clipboard-history picker are part of the Quickshell setup (see below).
 
 It runs on [swayfx](https://github.com/wlrfx/swayfx), sway with effects added, which installs as `sway` (`yay -S swayfx`). Tiled windows stay square and flush, with no gaps and no shadows. Floating windows get rounded corners and a soft shadow, the bar and its panels blur what's behind them, and windows animate when they open, move or change workspace. Plain sway reports the effect lines as config errors. If `yay` stops on `sway-git-debug` conflicting files, remove that package first.
 
@@ -104,7 +104,7 @@ Pressing the current workspace's number again goes back to the previous one.
 | `Print` | region screenshot to the clipboard |
 | `Shift+Print` | region screenshot into swappy to annotate (`Ctrl+S` saves, `Ctrl+C` copies) |
 | `XF86Display` | toggle region screen recording to `~/Videos/Screencasts` |
-| `XF86Favorites` | clipboard-history picker |
+| `Super+Shift+v` or `XF86Favorites` | clipboard-history picker |
 | `Super+Shift+p` | cycle keyboard layout (us / latam) |
 | volume and mic keys | change the PipeWire default devices through `wpctl` (volume stops at 100%) and pop up a readout |
 | media keys | play/pause, next and previous through `playerctl` |
@@ -124,7 +124,8 @@ The top bar, its panels, the notification popups, the lock screen and the passwo
 - On the T470, the WiFi and Bluetooth blocks open panels for joining networks (through iwd) and connecting devices. `Super+F10` opens the Bluetooth panel.
 - Apps that keep running after you close their window, like Steam, get a tray icon to the left of the bell. Double-click it to open the app, right-click for its menu (drawn like the other panels), middle-click for its secondary action. Steam's icon can't open its window by itself, so the bar runs Steam's launcher instead, which brings the running copy to the front.
 - The volume and mic keys, and brightness changes on the T470, pop up a readout at the bottom of the screen.
-- `Super+space` opens the app launcher, modeled on Spotlight in macOS Tahoe: a search bar fades and springs in, and grows into a list of results as you type (letters in order match, like fuzzel's fuzzy mode). Down on an empty search lists your most used apps; arrows or Tab pick, Enter launches, Escape closes. Apps you launch more rise to the top. The counts live in fuzzel's own cache, so fuzzel, which takes over when Quickshell isn't running, ranks them the same way.
+- `Super+space` opens the app launcher, modeled on Spotlight in macOS Tahoe: a search bar fades and springs in, and grows into a list of results as you type (letters in order match). Down on an empty search lists your most used apps; arrows or Tab pick, Enter launches, Escape closes. Apps you launch more rise to the top.
+- `Super+Shift+v` (or the T470's `XF86Favorites` key) opens the same bar on the clipboard history that cliphist keeps, newest first, filtered as you type. Picking an entry puts it back on the clipboard.
 - Quickshell is also the notification server. Click a popup to close it, middle-click to run its default action, and right-click to close all of them.
 - The bell turns on focus mode. Popups wait and swayidle pauses, and when you turn it off you get one "you missed N" notification.
 - When something asks for admin rights through polkit (starting bluetoothd from the Bluetooth panel, `pkexec`), a password prompt opens in the middle of the screen. Quickshell is the session's polkit agent; without one, those requests fail without asking.

@@ -1,3 +1,4 @@
 [screencast]
-chooser_type=dmenu
-chooser_cmd=fuzzel --dmenu
+# When a screencast asks which screen to share, click it.
+chooser_type=simple
+chooser_cmd=slurp -f %o -or

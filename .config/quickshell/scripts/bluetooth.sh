@@ -1,7 +1,6 @@
 #!/bin/bash
-# Bluetooth actions for the Quickshell panel, done the way the old fuzzel
-# picker did them. Every bluetoothctl call has a timeout: with bluetoothd
-# stopped, bluetoothctl blocks rather than failing.
+# Bluetooth actions for the Quickshell panel. Every bluetoothctl call has a
+# timeout: with bluetoothd stopped, bluetoothctl blocks rather than failing.
 #
 #   on               start bluetoothd if needed, unblock the radio and
 #                    power the controller on

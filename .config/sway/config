@@ -25,9 +25,9 @@ set $up k
 set $right l
 # Terminal emulator
 set $term foot
-# Application launcher: Quickshell's (quickshell/launcher), or fuzzel when the
-# shell isn't running. Both rank apps by fuzzel's launch counts.
-set $menu qs ipc call panel toggle launcher || fuzzel | xargs swaymsg exec --
+# Application launcher: Quickshell's (quickshell/launcher). If Quickshell is
+# down, reloading sway (Super+Shift+c) starts it again.
+set $menu qs ipc call panel toggle launcher
 
 ### Per-host bits (optional $indicators, outputs, inputs, hardware-key
 ### bindings). $mod is already defined.
@@ -41,7 +41,7 @@ include ~/.config/sway-host.conf
 output "*" bg ../wallpaper.jpeg fill
 
 ### Clipboard history: cliphist records every clipboard selection; recall it
-### with the XF86Favorites key (see below). exec_always so a config reload
+### with the XF86Favorites key (see below), which opens Quickshell's picker. exec_always so a config reload
 ### also starts it; the pgrep guard keeps it to a single watcher instance.
 exec_always pgrep -x wl-paste >/dev/null || wl-paste --watch cliphist store
 
@@ -230,8 +230,11 @@ bindsym Shift+Print exec grim -g "$(slurp)" - | swappy -f -
 # a region and start, press again to stop). Video analogue of the keys above.
 bindsym XF86Display exec ~/.config/sway/screen-record.sh
 
-# Clipboard history picker: pick a past selection via fuzzel, paste it back.
-bindsym XF86Favorites exec ~/.config/sway/clip-menu.sh
+# Clipboard history picker: pick a past selection to put it back on the
+# clipboard. XF86Favorites is the T470's star key; Super+Shift+v works on
+# any keyboard (Super+v is splitv).
+bindsym XF86Favorites exec qs ipc call panel toggle clipboard
+bindsym $mod+Shift+v  exec qs ipc call panel toggle clipboard
 
 ### Resizing containers
 mode "resize" {

@@ -52,7 +52,7 @@
 ;;;; ---------------------------------------------------------------------------
 ;;;; PATH: make GUI/daemon Emacs see your shell tools
 ;;;; ---------------------------------------------------------------------------
-;; Launched from Sway/fuzzel or as a daemon, Emacs inherits a bare session
+;; Launched from Sway's launcher or as a daemon, Emacs inherits a bare session
 ;; PATH (/usr/bin, ...) and never sources ~/.zshrc, so juliaup's `julia` and
 ;; npm-global binaries go missing and eglot/apheleia can't start them. Mirror
 ;; the user-bin dirs from ~/.zshrc onto exec-path and PATH.

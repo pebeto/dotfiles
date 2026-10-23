@@ -5,9 +5,9 @@ import Quickshell
 import Quickshell.Io
 
 // The applications the launcher offers, ranked by how well they match the
-// query and by how often each was launched. The counts live in fuzzel's
-// cache (~/.cache/fuzzel, "desktop-id|count" lines), so fuzzel, which sway
-// falls back to when the shell isn't running, ranks them the same way.
+// query and by how often each was launched. The counts are kept in the
+// shell's state directory as "desktop-id|count" lines; the first time,
+// they're taken from fuzzel's old cache, which used the same format.
 Singleton {
     id: root
 
@@ -24,8 +24,7 @@ Singleton {
 
     // How well `query` (lowercase) matches the name `text`: a prefix beats
     // the start of a later word, which beats any other substring, which
-    // beats the letters in order with gaps between them (fuzzel's fuzzy
-    // mode). Null for no match, else the score and the positions of the
+    // beats the letters in order with gaps between them. Null for no match, else the score and the positions of the
     // matched letters.
     function match(text, query) {
         const t = text.toLowerCase();
@@ -86,8 +85,21 @@ Singleton {
         return found;
     }
 
-    // Terminal apps (btop, Neovim) open in foot, as fuzzel's terminal=foot
-    // did.
+    function parse(text) {
+        const c = {};
+        for (const line of text.split("\n")) {
+            const bar = line.lastIndexOf("|");
+            if (bar > 0)
+                c[line.slice(0, bar)] = parseInt(line.slice(bar + 1)) || 0;
+        }
+        return c;
+    }
+
+    function save() {
+        store.setText(Object.keys(counts).sort().map(k => k + "|" + counts[k]).join("\n") + "\n");
+    }
+
+    // Terminal apps (btop, Neovim) open in foot.
     function launch(entry) {
         if (entry.runInTerminal)
             Quickshell.execDetached(["foot", "-e", ...entry.command]);
@@ -97,24 +109,26 @@ Singleton {
         const next = Object.assign({}, counts);
         next[key] = (next[key] ?? 0) + 1;
         counts = next;
-        cache.setText(Object.keys(next).sort().map(k => k + "|" + next[k]).join("\n") + "\n");
+        save();
     }
 
     FileView {
-        id: cache
+        id: store
 
-        path: Quickshell.env("HOME") + "/.cache/fuzzel"
+        path: Quickshell.statePath("launches")
         printErrors: false
-        watchChanges: true
-        onFileChanged: reload()
+        onLoaded: root.counts = root.parse(text())
+        // No counts of our own yet: start from fuzzel's.
+        onLoadFailed: legacy.path = Quickshell.env("HOME") + "/.cache/fuzzel"
+    }
+
+    FileView {
+        id: legacy
+
+        printErrors: false
         onLoaded: {
-            const c = {};
-            for (const line of text().split("\n")) {
-                const bar = line.lastIndexOf("|");
-                if (bar > 0)
-                    c[line.slice(0, bar)] = parseInt(line.slice(bar + 1)) || 0;
-            }
-            root.counts = c;
+            root.counts = root.parse(text());
+            root.save();
         }
     }
 }
