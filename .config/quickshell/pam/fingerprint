@@ -1,0 +1,4 @@
+#%PAM-1.0
+# The lock screen's fingerprint check (lock/Lock.qml). Fingerprint only: the
+# password goes through /etc/pam.d/login on its own, so neither waits on the other.
+auth required pam_fprintd.so

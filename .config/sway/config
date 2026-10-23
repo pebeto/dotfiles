@@ -75,11 +75,13 @@ for_window [app_id=".*"]  inhibit_idle fullscreen
 ### Idle configuration
 # Lock after 300s, power off outputs after another 300s (resumes on wake),
 # and lock before suspend. lock.sh uses the Quickshell lock screen, or
-# swaylock when Quickshell isn't running.
+# swaylock when Quickshell isn't running. The sleep/resume calls let the lock
+# screen drop the fingerprint reader across a suspend.
 exec swayidle -w \
          timeout 300 '~/.config/sway/lock.sh' \
          timeout 600 'swaymsg "output * power off"' resume 'swaymsg "output * power on"' \
-         before-sleep '~/.config/sway/lock.sh'
+         before-sleep '~/.config/sway/lock.sh sleep' \
+         after-resume 'qs ipc call lock resume'
 
 ### Keyboard configuration
 input type:keyboard {

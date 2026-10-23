@@ -20,7 +20,8 @@ Singleton {
     // /sys/class/backlight device behind the brightness block. The Bluetooth
     // block shows whenever a controller is present; the flag keeps it there
     // while the controller is switched off (the T470's vanishes when
-    // rfkill blocks it).
+    // rfkill blocks it). fingerprint lets the lock screen take a finger on
+    // the reader as well as the password.
     readonly property var profiles: ({
         workstation: {
             fontPx: 20,
@@ -32,7 +33,8 @@ Singleton {
             battery: false,
             backlight: "",
             wifi: false,
-            bluetooth: false
+            bluetooth: false,
+            fingerprint: false
         },
         t470: {
             fontPx: 13,
@@ -44,7 +46,8 @@ Singleton {
             battery: true,
             backlight: "intel_backlight",
             wifi: true,
-            bluetooth: true
+            bluetooth: true,
+            fingerprint: true
         }
     })
     readonly property var profile: profiles[host] ?? profiles.t470
