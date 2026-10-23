@@ -21,11 +21,12 @@ Singleton {
     // block shows whenever a controller is present; the flag keeps it there
     // while the controller is switched off (the T470's vanishes when
     // rfkill blocks it). fingerprint lets the lock screen take a finger on
-    // the reader as well as the password.
+    // the reader as well as the password, and llm shows the local LLM
+    // server's block (.config/llm).
     readonly property var profiles: ({
         workstation: {
             fontPx: 20,
-            barBg: "#cc000000",
+            barBg: "#000000",
             dim: "#b7b19c",
             low: "#b85c57",
             cpuSensor: { chip: "asusec", label: "CPU Package" },
@@ -34,11 +35,12 @@ Singleton {
             backlight: "",
             wifi: false,
             bluetooth: false,
-            fingerprint: false
+            fingerprint: false,
+            llm: true
         },
         t470: {
             fontPx: 13,
-            barBg: "#cc323232",
+            barBg: "#323232",
             dim: "#888888",
             low: "#ff5555",
             cpuSensor: { chip: "coretemp", label: "Core " },
@@ -47,7 +49,8 @@ Singleton {
             backlight: "intel_backlight",
             wifi: true,
             bluetooth: true,
-            fingerprint: true
+            fingerprint: true,
+            llm: false
         }
     })
     readonly property var profile: profiles[host] ?? profiles.t470
@@ -66,9 +69,7 @@ Singleton {
     readonly property string iconFont: "Symbols Nerd Font Mono"
 
     // Bar colors, carried over from the swaybar setup: the orange accent
-    // of the focused workspace and the warning shades of the readings. The
-    // bar background is slightly see-through (#AARRGGBB in the profiles) so
-    // swayfx's blur behind it shows (layer_effects in sway/config).
+    // of the focused workspace and the warning shades of the readings.
     readonly property color barBg: profile.barBg
     readonly property color fg: "#ffffff"
     readonly property color dim: profile.dim
@@ -79,12 +80,14 @@ Singleton {
     readonly property color low: profile.low
     readonly property color good: "#57864e"
     readonly property color urgent: "#b85c57"
+    // In-use indicators, after macOS: orange microphone, green camera,
+    // purple screen sharing.
+    readonly property color micInUse: "#ffa500"
+    readonly property color cameraInUse: "#57b84e"
+    readonly property color screenInUse: "#a77bdb"
 
     // Popup colors: the acme palette.
     readonly property color paper: "#ffffea"
-    // The cards themselves (panels, notifications, the readout, the polkit
-    // prompt): the same paper, a little see-through for the blur behind.
-    readonly property color paperGlass: "#ebffffea"
     readonly property color paperHover: "#f4f4d4"
     readonly property color ink: "#000000"
     readonly property color inkDim: "#666666"
@@ -135,7 +138,15 @@ Singleton {
         search: String.fromCodePoint(0xF0349),
         clipboard: String.fromCodePoint(0xF014C),
         text: String.fromCodePoint(0xF09A8),
-        image: String.fromCodePoint(0xF02E9)
+        image: String.fromCodePoint(0xF02E9),
+        sleep: String.fromCodePoint(0xF0904),
+        logout: String.fromCodePoint(0xF0343),
+        restart: String.fromCodePoint(0xF0709),
+        record: String.fromCodePoint(0xF044A),
+        camera: String.fromCodePoint(0xF0100),
+        calculator: String.fromCodePoint(0xF00EC),
+        console: String.fromCodePoint(0xF018D),
+        brain: String.fromCodePoint(0xF09D1)
     })
 
     FileView {

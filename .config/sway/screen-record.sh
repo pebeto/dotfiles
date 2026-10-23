@@ -2,7 +2,8 @@
 # Region screen-recording toggle, the video analogue of the grim/slurp
 # screenshot keys. First press: pick a region (slurp) and start recording to
 # a timestamped file under ~/Videos/Screencasts. Second press: stop, which
-# finalizes the .mp4. Bound to XF86Display (F7) in the sway config.
+# finalizes the .mp4. Bound to XF86Display (F7) in the sway config. The
+# Quickshell bar shows a red dot and the elapsed time while it records.
 set -u
 
 notify() {
@@ -14,6 +15,7 @@ notify() {
 
 # Already recording? A SIGINT lets wf-recorder flush and close the file.
 if pkill -INT -x wf-recorder; then
+    qs ipc call recording stopped >/dev/null 2>&1
     notify media-playback-stop "Recording stopped"
     exit 0
 fi
@@ -30,6 +32,6 @@ dir="$HOME/Videos/Screencasts"
 mkdir -p "$dir"
 file="$dir/$(date +%Y-%m-%d_%H-%M-%S).mp4"
 
-notify media-record "Recording. Press the key again to stop"
+qs ipc call recording started >/dev/null 2>&1
 # exec so the process is literally `wf-recorder`, matching the pkill above.
 exec wf-recorder -g "$region" -f "$file"

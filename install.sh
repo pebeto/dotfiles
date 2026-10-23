@@ -280,6 +280,13 @@ else
     printf '  MISSING Symbols Nerd Font Mono (the bar icons)\n'
     missing_pkgs+=(ttf-nerd-fonts-symbols-mono)
 fi
+# The launcher's emoji search reads Unicode's emoji list.
+if [ -f /usr/share/unicode/emoji/emoji-test.txt ]; then
+    printf '  ok      unicode-emoji\n'
+else
+    printf '  MISSING unicode-emoji (emoji search in the launcher)\n'
+    missing_pkgs+=(unicode-emoji)
+fi
 if fc-list -q JuliaMono; then
     printf '  ok      JuliaMono\n'
 else

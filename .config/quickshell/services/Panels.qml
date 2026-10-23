@@ -5,8 +5,9 @@ import Quickshell
 import Quickshell.I3
 import Quickshell.Io
 
-// Which panel is open ("clock", "wifi", "bluetooth", "tray", "launcher",
-// "clipboard" or ""), and on which output. One at a time, like menus.
+// Which panel is open ("clock", "wifi", "bluetooth", "tray", "llm",
+// "launcher", "clipboard", "session" or ""), and on which output. One at a
+// time, like menus.
 Singleton {
     id: root
 

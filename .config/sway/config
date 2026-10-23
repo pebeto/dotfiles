@@ -72,43 +72,27 @@ client.urgent            #b85c57 #b85c57 #ffffea #b85c57 #b85c57
 # corners. Shadows go on floating windows only too, since on tiled ones they
 # would darken the neighbour's edge. [floating] matches windows that open
 # floating (dialogs); rules that float a window themselves enable the shadow
-# too. $radius and $blur_passes come from the host file.
+# too. $radius comes from the host file.
 corner_radius $radius
 smart_corner_radius enable
 shadows disable
 shadow_blur_radius 20
 shadow_color #00000066
 for_window [floating] shadows enable
-blur disable
-blur_passes $blur_passes
-blur_radius 5
 animation_duration_ms 200
 
-# The bar and the Quickshell cards are slightly see-through (Theme.qml), so
-# blur what's behind them. The panels and the readout get their card's
-# rounding and a shadow; the notification window holds several cards with
-# gaps between them, so it only gets blur, which skips the transparent gaps.
-layer_effects "quickshell-bar" {
-    blur enable;
-    blur_ignore_transparent enable;
-}
+# The clock panel and the volume readout get their card's rounding and a
+# shadow. No blur anywhere: the Quickshell surfaces are solid. The other bar
+# panels (quickshell-dropdown) and the launcher draw their own shadow, since
+# their card moves or scales inside a window that stays put, and effects here
+# would apply to the whole window.
 layer_effects "quickshell-panel" {
-    blur enable;
-    blur_ignore_transparent enable;
     shadows enable;
     corner_radius $radius;
 }
 layer_effects "quickshell-osd" {
-    blur enable;
-    blur_ignore_transparent enable;
     shadows enable;
     corner_radius $radius;
-}
-# The launcher (quickshell-launcher) draws its own shadow so it can fade and
-# scale with its card; effects here apply to its whole window.
-layer_effects "quickshell-notifications" {
-    blur enable;
-    blur_ignore_transparent enable;
 }
 
 ### btop popup (toggled by clicking the temp/cpu block in the status bar)
@@ -144,7 +128,8 @@ bindsym $mod+Shift+q      kill
 bindsym $mod+space     exec $menu
 floating_modifier $mod normal
 bindsym $mod+Shift+c   reload
-bindsym $mod+Shift+e   exec swaynag -t warning -m 'You pressed the exit shortcut. Do you really want to exit sway? This will end your Wayland session.' -B 'Yes, exit sway' 'swaymsg exit'
+# The Quickshell session menu; swaynag when the shell isn't running.
+bindsym $mod+Shift+e   exec qs ipc call panel toggle session || swaynag -t warning -m 'You pressed the exit shortcut. Do you really want to exit sway? This will end your Wayland session.' -B 'Yes, exit sway' 'swaymsg exit'
 bindsym $mod+Escape    exec ~/.config/sway/lock.sh
 
 ### Moving around

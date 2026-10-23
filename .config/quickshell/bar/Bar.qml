@@ -45,6 +45,43 @@ PanelWindow {
         anchors.rightMargin: Math.round(Theme.gap * 0.3)
         height: parent.height
 
+        // Screen recording (sway/screen-record.sh): a red dot and how long
+        // it's been going; a click stops it.
+        BarBlock {
+            visible: Recording.active
+            onClicked: Recording.toggle()
+
+            Segment {
+                icon: Theme.icons.record
+                iconTint: Theme.low
+                label: Math.floor(Recording.elapsed / 60) + ":" + String(Recording.elapsed % 60).padStart(2, "0")
+            }
+        }
+
+        // What's using the microphone, the camera or the screen, in macOS's
+        // colors; the microphone names the app.
+        BarBlock {
+            visible: Privacy.any
+            interactive: false
+
+            Segment {
+                visible: Privacy.micApps.length > 0
+                icon: Theme.icons.mic
+                iconTint: Theme.micInUse
+                label: Privacy.micApps.length > 1 ? Privacy.micApps[0] + " +" + (Privacy.micApps.length - 1) : Privacy.micApps[0] ?? ""
+            }
+            Segment {
+                visible: Privacy.cameraUsed
+                icon: Theme.icons.camera
+                iconTint: Theme.cameraInUse
+            }
+            Segment {
+                visible: Privacy.screenShared
+                icon: Theme.icons.monitor
+                iconTint: Theme.screenInUse
+            }
+        }
+
         // Tray icons of apps that keep running with their windows closed
         // (Steam, Slack). Double click opens the app's window (see Tray.qml),
         // right click opens its menu, middle click is its secondary action.
@@ -114,6 +151,21 @@ PanelWindow {
             Segment {
                 icon: Theme.icons.keyboard
                 label: Sway.layout
+            }
+        }
+
+        // The local LLM server (workstation): its model, or its speed while
+        // it generates; a click opens its panel.
+        BarBlock {
+            id: llmBlock
+
+            visible: Theme.profile.llm
+            onClicked: Panels.toggle("llm", bar.outputName)
+
+            Segment {
+                icon: Theme.icons.brain
+                label: Llm.state === "ready" ? (Llm.tokensPerSecond >= 1 ? Math.round(Llm.tokensPerSecond) + " t/s" : Llm.served) : Llm.state === "off" ? "" : Llm.state
+                tint: Llm.state === "ready" ? Theme.fg : Theme.dim
             }
         }
 
@@ -229,6 +281,12 @@ PanelWindow {
     Process {
         id: btop
         command: ["foot", "--app-id=btop-popup", "--", "btop"]
+    }
+
+    LlmPanel {
+        anchorItem: llmBlock
+        screen: bar.modelData
+        maxHeight: bar.panelMax
     }
 
     TrayMenu {

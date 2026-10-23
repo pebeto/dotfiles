@@ -12,6 +12,7 @@ PanelPopup {
     id: root
 
     name: "clock"
+    slideFrom: "right"
     onOpened: {
         calendar.reset();
         Syncthing.update();

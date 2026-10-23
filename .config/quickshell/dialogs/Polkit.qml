@@ -81,7 +81,7 @@ Scope {
             width: Math.round(Theme.em * 24)
             height: column.implicitHeight + Theme.gap * 4
             radius: Theme.radius
-            color: Theme.paperGlass
+            color: Theme.paper
             border.width: 1
             border.color: Theme.rule
 

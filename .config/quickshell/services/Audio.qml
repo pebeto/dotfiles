@@ -4,8 +4,9 @@ import QtQuick
 import Quickshell
 import Quickshell.Services.Pipewire
 
-// The default output and the list of outputs to switch between. Volume is
-// Pipewire's 0..1 scale, the same one `wpctl get-volume` prints.
+// The default output and the list of outputs to switch between, plus each
+// app that is playing sound, with its own volume. Volume is Pipewire's 0..1
+// scale, the same one `wpctl get-volume` prints.
 Singleton {
     id: root
 
@@ -16,6 +17,18 @@ Singleton {
     // The default microphone, for the mic-mute key's on-screen readout.
     readonly property PwNode source: Pipewire.defaultAudioSource
     readonly property bool micMuted: source?.audio?.muted ?? false
+    // Apps playing sound: their output streams.
+    readonly property var streams: Pipewire.nodes.values.filter(n => n.audio && n.type === PwNodeType.AudioOutStream)
+
+    function appName(node) {
+        const p = node.properties;
+        return p["application.name"] || node.description || node.name;
+    }
+
+    function appIcon(node) {
+        const p = node.properties;
+        return Quickshell.iconPath(p["application.icon-name"] || (p["application.name"] ?? "").toLowerCase(), "audio-x-generic");
+    }
 
     // Names for the outputs whose own descriptions are unhelpful.
     readonly property var names: ({
@@ -53,6 +66,6 @@ Singleton {
     // Pipewire only fills in a node's audio properties while something
     // tracks it.
     PwObjectTracker {
-        objects: [...root.sinks, root.source].filter(n => n)
+        objects: [...root.sinks, ...root.streams, root.source].filter(n => n)
     }
 }

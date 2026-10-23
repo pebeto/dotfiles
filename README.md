@@ -39,6 +39,7 @@ Font sizes differ because the workstation runs its 4K panel unscaled and the T47
 - removes links that point at files deleted from the repo
 - lists missing dependencies and prints the `pacman` command for them, or `yay` for swayfx and JuliaMono, which are only in the AUR
 - warns if dunst is still installed, because it competes with Quickshell for notifications
+- checks for `unicode-emoji`, the list the launcher's emoji search reads
 
 It skips the LLM checks on machines without an NVIDIA GPU. It never overwrites a real file; it reports the conflict and moves on. `--force-host` re-points the host links when a machine changes profile.
 
@@ -48,7 +49,7 @@ On a machine that was running the older swaybar version of this setup, run `pkil
 
 One `config` covers both machines, and `hosts/<hostname>.conf` adds each one's outputs, inputs and hardware keys. The mod key is `Super`, the terminal is `foot`, and the app launcher and clipboard-history picker are part of the Quickshell setup (see below).
 
-It runs on [swayfx](https://github.com/wlrfx/swayfx), sway with effects added, which installs as `sway` (`yay -S swayfx`). Tiled windows stay square and flush, with no gaps and no shadows. Floating windows get rounded corners and a soft shadow, the bar and its panels blur what's behind them, and windows animate when they open, move or change workspace. Plain sway reports the effect lines as config errors. If `yay` stops on `sway-git-debug` conflicting files, remove that package first.
+It runs on [swayfx](https://github.com/wlrfx/swayfx), sway with effects added, which installs as `sway` (`yay -S swayfx`). Tiled windows stay square and flush, with no gaps and no shadows. Floating windows and the bar's panels get rounded corners and a soft shadow, everything is solid (no blur or see-through surfaces), and windows animate when they open, move or change workspace. Plain sway reports the effect lines as config errors. If `yay` stops on `sway-git-debug` conflicting files, remove that package first.
 
 ### Windows and session
 
@@ -63,7 +64,7 @@ It runs on [swayfx](https://github.com/wlrfx/swayfx), sway with effects added, w
 | `Alt+space` (workstation), three-finger swipe up (T470) | window overview; the same again closes it |
 | `Super+Escape` | lock the screen |
 | `Super+Shift+c` | reload the config |
-| `Super+Shift+e` | exit Sway (asks first) |
+| `Super+Shift+e` | session menu: lock, suspend, log out, restart, shut down |
 
 The window overview is [woverview](https://github.com/pebeto/woverview), another project of mine. It shows live thumbnails of every window, including the ones on other workspaces and in the scratchpad. It isn't packaged anywhere, so `install.sh` prints the command that downloads the release into `~/.local/bin`.
 
@@ -118,18 +119,23 @@ On the T470, the WiFi, Bluetooth and FnLock (`Fn+Esc`) keys run `indicators.sh`,
 The top bar, its panels, the notification popups, the lock screen and the password prompt are one Quickshell config. Sway starts it, and it reloads by itself when you edit one of its files. If it crashes, reloading sway starts it again.
 
 - Click a workspace to switch to it, or scroll over them to step through. A workspace with an urgent window turns red, and the current binding mode (like `resize`) shows next to them.
-- The clock opens a panel with a calendar, today's org agenda, what's playing (with play/pause, next and previous), the audio outputs with a volume slider, Syncthing's status and recent notifications. The agenda comes from a cache that the `agenda-refresh` timer keeps up to date. Clicking the track title brings up the player's window.
+- The clock opens a panel with a calendar, today's org agenda, what's playing (with play/pause, next and previous), the audio outputs with a volume slider, a slider for each app playing sound (click its icon to mute it), Syncthing's status and recent notifications. The agenda comes from a cache that the `agenda-refresh` timer keeps up to date. Clicking the track title brings up the player's window.
 - The CPU, GPU and RAM readings turn amber and then red as they climb. Clicking them opens `btop`.
 - Scroll over the volume to change it, click it to mute, and right-click it to switch outputs. On the T470, scrolling over brightness works the same way.
 - On the T470, the WiFi and Bluetooth blocks open panels for joining networks (through iwd) and connecting devices. `Super+F10` opens the Bluetooth panel.
 - Apps that keep running after you close their window, like Steam, get a tray icon to the left of the bell. Double-click it to open the app, right-click for its menu (drawn like the other panels), middle-click for its secondary action. Steam's icon can't open its window by itself, so the bar runs Steam's launcher instead, which brings the running copy to the front.
 - The volume and mic keys, and brightness changes on the T470, pop up a readout at the bottom of the screen.
 - `Super+space` opens the app launcher, modeled on Spotlight in macOS Tahoe: a search bar fades and springs in, and grows into a list of results as you type (letters in order match). Down on an empty search lists your most used apps; arrows or Tab pick, Enter launches, Escape closes. Apps you launch more rise to the top.
+- The launcher also does sums, emoji and commands. Type `2*37` (or `=` and anything) for the result, `:` and a name for emoji (`:fire`), or `>` and a shell command to run it. Enter copies a result or an emoji to the clipboard.
 - `Super+Shift+v` (or the T470's `XF86Favorites` key) opens the same bar on the clipboard history that cliphist keeps, newest first, filtered as you type. Picking an entry puts it back on the clipboard.
+- `Super+Shift+e` opens the session menu: lock, suspend, log out, restart or shut down. Arrows or the underlined letter pick one, and the last three ask first. Without Quickshell, the key falls back to swaynag.
+- While `XF86Display` records the screen, the bar shows a red dot and the elapsed time. Click it to stop.
+- When an app uses the microphone, a camera or a shared screen, the bar shows an orange mic with the app's name, a green camera or a purple screen, the same colors as on macOS.
+- On the workstation, the brain block shows the local LLM server: the model it serves, or tokens per second while it generates. Its panel shows GPU memory, running requests and KV cache use, and starts, stops or switches models. The Log button opens the server's log in a terminal.
 - Quickshell is also the notification server. Click a popup to close it, middle-click to run its default action, and right-click to close all of them.
 - The bell turns on focus mode. Popups wait and swayidle pauses, and when you turn it off you get one "you missed N" notification.
 - When something asks for admin rights through polkit (starting bluetoothd from the Bluetooth panel, `pkexec`), a password prompt opens in the middle of the screen. Quickshell is the session's polkit agent; without one, those requests fail without asking.
-- You can script all of it: `qs ipc call panel toggle clock` (or `wifi`, `bluetooth`), `qs ipc call notifications toggleFocus` and `qs ipc call lock lock`. `qs ipc show` lists the rest.
+- You can script all of it: `qs ipc call panel toggle clock` (or `wifi`, `bluetooth`, `llm`, `session`, `launcher`, `clipboard`), `qs ipc call notifications toggleFocus` and `qs ipc call lock lock`. `qs ipc show` lists the rest.
 
 The lock screen shows the wallpaper, the time and a password field on every screen. It fades in from black, and after the right password it fades down to the plain wallpaper, the same one behind your windows, before the desktop comes back. `Super+Escape`, the idle timer and suspend all go through `sway/lock.sh`, which uses swaylock instead when Quickshell isn't running. The password goes through the `login` PAM settings, so three wrong tries still lock the account for ten minutes, as before. On the T470 the lock also takes a finger on the reader, through its own PAM file (`quickshell/pam/fingerprint`), so typing the password never waits on the reader. If the reader gives up after three bad scans, press Enter on the empty field to scan again. If Quickshell crashes while the screen is locked, sway keeps it locked and blank. To get back in, switch to a TTY (`Ctrl+Alt+F2`), log in, and run:
 
@@ -149,7 +155,7 @@ llm qwen3.8-27b        # main: research, general reasoning, tools (NVFP4)
 llm gpt-oss-20b        # lighter reasoning + tools (MXFP4)
 ```
 
-Models run in the official vLLM OpenAI server in Docker, one at a time, on port 8000. Each config is flat YAML where `flag: value` becomes `vllm serve --flag value`, plus three special keys: `image:`, `model:` and `env-NAME:`. Weights download to `~/.cache/huggingface`, which `run.sh` mounts into the container.
+Models run in the official vLLM OpenAI server in Docker, one at a time, on port 8000. Each config is flat YAML where `flag: value` becomes `vllm serve --flag value`, plus three special keys: `image:`, `model:` and `env-NAME:`. Weights download to `~/.cache/huggingface`, which `run.sh` mounts into the container. The bar's LLM panel does the same as `llm <model>`, but runs it as a systemd user unit, `llm-<model>`, so it keeps going without a terminal.
 
 | Model | Quant | Use |
 |-------|-------|-----|

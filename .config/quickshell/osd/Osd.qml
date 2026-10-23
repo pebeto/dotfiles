@@ -97,7 +97,7 @@ Scope {
             width: Math.round(Theme.em * 15)
             height: Math.round(Theme.em * 2.8)
             radius: Theme.radius
-            color: Theme.paperGlass
+            color: Theme.paper
             border.width: 1
             border.color: Theme.rule
             opacity: root.up ? 1 : 0

@@ -47,7 +47,7 @@ Rectangle {
         duration: 220
         easing.type: Easing.OutCubic
     }
-    color: popup ? Theme.paperGlass : mouse.containsMouse ? Theme.paperHover : "transparent"
+    color: popup ? Theme.paper : mouse.containsMouse ? Theme.paperHover : "transparent"
     border.width: popup ? 1 : 0
     border.color: critical ? Theme.critical : Theme.rule
     radius: Math.round(Theme.radius * 0.6)

@@ -11,7 +11,10 @@ import qs.services
 // macOS Tahoe: a search capsule that fades and springs in on the focused
 // screen, and grows into a list of results as you type. For apps, Down on an
 // empty search lists the most used ones; the clipboard opens on its newest
-// entries. Both are Panels ("launcher" and "clipboard"), so opening one
+// entries. In the app launcher, a sum ("2*37", or anything after "=")
+// shows its result first, ":" searches emoji by name, and ">" runs the rest
+// as a shell command; Enter copies a result or an emoji to the clipboard.
+// Both are Panels ("launcher" and "clipboard"), so opening one
 // closes the bar's panels, and `qs ipc call panel toggle launcher` or
 // `... clipboard` opens it (Super+space, XF86Favorites). Arrows, Tab or
 // Ctrl+N/P move the selection, Enter picks, Escape or a click outside
@@ -28,7 +31,38 @@ Scope {
     property string mode: "apps"
     readonly property var screen: Quickshell.screens.find(s => s.name === Panels.screen) ?? Quickshell.screens[0]
     property string query: ""
-    readonly property var results: mode === "apps" ? Apps.search(query).slice(0, 50) : Clipboard.search(query).slice(0, 200)
+    // Rows of one shape whatever they come from: kind ("app", "calc",
+    // "emoji", "run" or "clip"), the text and its matched letters, a gray
+    // detail, and an icon, glyph or emoji to show.
+    readonly property var results: {
+        if (mode === "clipboard")
+            return Clipboard.search(query).slice(0, 200).map(r => ({ kind: "clip", entry: r.entry, text: r.entry.text, hits: r.hits, detail: "", glyph: r.entry.image ? Theme.icons.image : Theme.icons.text }));
+        const q = query.trim();
+        if (q.startsWith(":"))
+            return Emoji.search(q.slice(1)).slice(0, 50).map(e => ({ kind: "emoji", text: e.name, hits: e.hits, detail: "", emoji: e.char }));
+        if (q.startsWith(">"))
+            return q.length > 1 ? [{ kind: "run", text: q.slice(1).trim(), hits: [], detail: "run", glyph: Theme.icons.console }] : [];
+        const rows = [];
+        const sum = Calc.result(q);
+        if (sum !== null)
+            rows.push({ kind: "calc", text: "= " + sum, value: sum, hits: [], detail: "Enter copies it", glyph: Theme.icons.calculator });
+        if (!q.startsWith("=")) {
+            for (const r of Apps.search(query).slice(0, 50))
+                rows.push({ kind: "app", entry: r.entry, text: r.entry.name, hits: r.hits, detail: r.entry.genericName !== r.entry.name ? r.entry.genericName : "", iconSource: Quickshell.iconPath(r.entry.icon, "application-x-executable") });
+        }
+        return rows;
+    }
+    // What the list says when it's empty.
+    readonly property string emptyText: {
+        const q = query.trim();
+        if (mode === "clipboard")
+            return query === "" ? "The clipboard history is empty" : "No matching entries";
+        if (q.startsWith(">"))
+            return "Type a command to run";
+        if (q.startsWith(":"))
+            return q.length > 1 ? (Emoji.loaded ? "No matching emoji" : "The emoji list isn't installed (unicode-emoji)") : "Type an emoji's name";
+        return "No matching applications";
+    }
     property int current: 0
     property bool browsing: false
     readonly property bool expanded: query !== "" || browsing || mode === "clipboard"
@@ -59,24 +93,27 @@ Scope {
         if (!r || !expanded)
             return;
         Panels.close();
-        if (mode === "apps")
+        if (r.kind === "app")
             Apps.launch(r.entry);
-        else
+        else if (r.kind === "clip")
             Clipboard.restore(r.entry);
+        else if (r.kind === "calc")
+            Quickshell.execDetached(["wl-copy", "--", r.value]);
+        else if (r.kind === "emoji")
+            Quickshell.execDetached(["wl-copy", "--", r.emoji]);
+        else if (r.kind === "run")
+            Quickshell.execDetached(["sh", "-c", r.text]);
     }
 
-    // The app's name (or the clipboard preview) with the matched letters in
-    // the link color, plus the generic name in gray. StyledText, so the text
-    // itself is escaped first.
+    // The row's text with the matched letters in the link color, plus its
+    // detail in gray. StyledText, so the text itself is escaped first.
     function label(r) {
         const esc = s => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-        const text = mode === "apps" ? r.entry.name : r.entry.text;
         let out = "";
-        for (let i = 0; i < text.length; i++)
-            out += r.hits.includes(i) ? `<font color="${Theme.link}">${esc(text[i])}</font>` : esc(text[i]);
-        const generic = mode === "apps" ? r.entry.genericName : "";
-        if (generic && generic !== text)
-            out += `&nbsp;&nbsp;<font color="${Theme.inkDim}">${esc(generic)}</font>`;
+        for (let i = 0; i < r.text.length; i++)
+            out += r.hits.includes(i) ? `<font color="${Theme.link}">${esc(r.text[i])}</font>` : esc(r.text[i]);
+        if (r.detail)
+            out += `&nbsp;&nbsp;<font color="${Theme.inkDim}">${esc(r.detail)}</font>`;
         return out;
     }
 
@@ -309,17 +346,27 @@ Scope {
                                 x: Theme.gap
                                 anchors.verticalCenter: parent.verticalCenter
                                 implicitSize: Math.round(Theme.em * 1.3)
-                                visible: root.mode === "apps"
-                                source: root.mode === "apps" ? Quickshell.iconPath(row.modelData.entry.icon, "application-x-executable") : ""
+                                visible: row.modelData.kind === "app"
+                                source: row.modelData.iconSource ?? ""
                             }
                             Glyph {
                                 x: Theme.gap
                                 width: appIcon.width
                                 horizontalAlignment: Text.AlignHCenter
                                 anchors.verticalCenter: parent.verticalCenter
-                                visible: root.mode === "clipboard"
-                                text: row.modelData.entry.image ? Theme.icons.image : Theme.icons.text
+                                visible: !!row.modelData.glyph
+                                text: row.modelData.glyph ?? ""
                                 color: Theme.inkDim
+                            }
+                            Text {
+                                x: Theme.gap
+                                width: appIcon.width
+                                horizontalAlignment: Text.AlignHCenter
+                                anchors.verticalCenter: parent.verticalCenter
+                                visible: row.modelData.kind === "emoji"
+                                text: row.modelData.emoji ?? ""
+                                font.family: "Noto Color Emoji"
+                                font.pixelSize: Math.round(Theme.em * 1.1)
                             }
                             Ink {
                                 anchors.left: appIcon.right
@@ -346,7 +393,7 @@ Scope {
                         Ink {
                             anchors.centerIn: parent
                             visible: root.results.length === 0
-                            text: root.mode === "apps" ? "No matching applications" : root.query === "" ? "The clipboard history is empty" : "No matching entries"
+                            text: root.emptyText
                             color: Theme.inkDim
                         }
                     }

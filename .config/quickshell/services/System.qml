@@ -7,12 +7,16 @@ import qs
 
 // Hardware readings for the bar. Sysfs and /proc files are re-read in place
 // on a timer instead of forking a process per tick; the GPU temperature
-// streams from one long-running nvidia-smi.
+// streams from one long-running nvidia-smi, along with its memory use for
+// the LLM panel.
 Singleton {
     id: root
 
     property real cpuTemp: NaN
     property real gpuTemp: NaN
+    // MiB, from the same nvidia-smi.
+    property real gpuMemUsed: NaN
+    property real gpuMemTotal: NaN
     property real memPct: NaN
     property var cpuPaths: []
 
@@ -111,9 +115,14 @@ Singleton {
     Process {
         id: gpuProc
         running: Theme.profile.gpu
-        command: ["nvidia-smi", "--query-gpu=temperature.gpu", "--format=csv,noheader,nounits", "-l", "2"]
+        command: ["nvidia-smi", "--query-gpu=temperature.gpu,memory.used,memory.total", "--format=csv,noheader,nounits", "-l", "2"]
         stdout: SplitParser {
-            onRead: line => root.gpuTemp = parseFloat(line)
+            onRead: line => {
+                const f = line.split(",").map(parseFloat);
+                root.gpuTemp = f[0];
+                root.gpuMemUsed = f[1];
+                root.gpuMemTotal = f[2];
+            }
         }
         // nvidia-smi exits when the driver goes away (a reload, say); try
         // again a little later rather than leaving a stale reading.
