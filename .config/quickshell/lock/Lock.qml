@@ -27,7 +27,7 @@ import qs.components
 // behind the windows, before letting go.
 //
 // If the shell dies while locked, sway keeps the screens blank and locked;
-// lock again from a TTY to get a prompt back (see the README).
+// lock again from a TTY to get a prompt back (see docs/quickshell.md).
 Scope {
     id: root
 
