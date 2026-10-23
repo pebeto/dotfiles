@@ -15,6 +15,8 @@ import qs
 // keeps going in the background with its log in the journal. Stop is a
 // `docker stop`, which also ends a server started from a terminal with
 // `llm <model>`. Asking for another model while one runs stops it first.
+// The model a container is loading comes from its --served-model-name, so
+// one started from a terminal shows up too.
 Singleton {
     id: root
 
@@ -28,6 +30,9 @@ Singleton {
     // current server is down.
     property string starting: ""
     property string next: ""
+    // When start() last ran: the unit can take a moment to appear, and
+    // until then a poll would find nothing running.
+    property real startedAt: 0
     property int requests: 0
     property int waiting: 0
     property real kvUsage: NaN
@@ -42,6 +47,7 @@ Singleton {
             return;
         }
         starting = model;
+        startedAt = Date.now();
         state = "starting";
         Quickshell.execDetached(["systemd-run", "--user", "--collect", "--unit=llm-" + model, runSh, model]);
         poll();
@@ -125,24 +131,32 @@ Singleton {
         xhr.send();
     }
 
-    // The container publishing the port, if any, and whether the unit of a
-    // model being started is still running (run.sh may be waiting for VRAM
-    // before it creates the container).
+    // The container publishing the port and the model it serves, if any,
+    // and whether the unit of a model being started is still running
+    // (run.sh may be waiting for VRAM before it creates the container).
     Process {
         id: lister
 
-        command: ["sh", "-c", "docker ps -q --filter publish=8000 | head -1; echo; [ -n \"$1\" ] && systemctl --user is-active \"llm-$1\" 2>/dev/null", "sh", root.starting]
+        command: ["sh", "-c", `id=$(docker ps -q --filter publish=8000 | head -1)
+model=
+[ -n "$id" ] && model=$(docker inspect -f '{{range .Args}}{{println .}}{{end}}' "$id" | grep -x -A1 -- --served-model-name | tail -n1)
+unit=
+[ -n "$1" ] && unit=$(systemctl --user is-active "llm-$1" 2>/dev/null)
+printf '%s\\n%s\\n%s\\n' "$id" "$model" "$unit"`, "sh", root.starting]
         stdout: StdioCollector {
             onStreamFinished: {
-                const lines = text.split("\n");
-                root.container = (lines[0] ?? "").trim();
-                const unit = (lines[2] ?? "").trim();
+                const lines = text.split("\n").map(l => l.trim());
+                root.container = lines[0] ?? "";
+                const model = lines[1] ?? "";
+                const unit = lines[2] ?? "";
                 if (root.served)
                     return;
                 if (root.container) {
-                    if (root.state !== "stopping")
+                    if (root.state !== "stopping") {
                         root.state = "starting";
-                } else if (root.starting && (unit === "active" || unit === "activating")) {
+                        root.starting = model || root.starting;
+                    }
+                } else if (root.state !== "stopping" && root.starting && (unit === "active" || unit === "activating" || Date.now() - root.startedAt < 5000)) {
                     root.state = "starting";
                 } else {
                     root.starting = "";

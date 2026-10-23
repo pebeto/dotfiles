@@ -6,7 +6,9 @@ import qs.services
 
 // The local LLM server's panel (workstation): what's running and how busy
 // it is, the GPU's memory, and the configured models to start, stop or
-// switch to (services/Llm.qml).
+// switch to (services/Llm.qml). While a model loads or one is switched
+// for another, the buttons give way to pulsing dots; hovering the loading
+// model's row offers to cancel it.
 PanelPopup {
     id: root
 
@@ -123,6 +125,8 @@ PanelPopup {
                 required property string modelData
                 readonly property bool current: modelData === Llm.served || modelData === Llm.starting
                 readonly property bool busy: Llm.state !== "off"
+                readonly property bool loading: Llm.state === "starting" || Llm.state === "stopping"
+                readonly property bool cancellable: Llm.state === "starting" && modelData === Llm.starting
 
                 width: root.contentWidth
                 height: Math.round(Theme.em * 1.9)
@@ -143,12 +147,22 @@ PanelPopup {
                     text: row.modelData
                     font.bold: row.current
                 }
+                HoverHandler {
+                    id: hover
+                }
+                Dots {
+                    anchors.right: parent.right
+                    anchors.rightMargin: Math.round(Theme.gap * 0.8)
+                    anchors.verticalCenter: parent.verticalCenter
+                    visible: row.loading && !(row.cancellable && hover.hovered)
+                    animating: visible && root.shown
+                }
                 TextButton {
                     anchors.right: parent.right
                     anchors.rightMargin: Math.round(Theme.gap * 0.4)
                     anchors.verticalCenter: parent.verticalCenter
-                    visible: Llm.state !== "stopping"
-                    text: row.current ? "Stop" : row.busy ? "Switch" : "Start"
+                    visible: !row.loading || (row.cancellable && hover.hovered)
+                    text: row.loading ? "Cancel" : row.current ? "Stop" : row.busy ? "Switch" : "Start"
                     strong: !row.current
                     onClicked: {
                         if (row.current)
