@@ -25,8 +25,9 @@ set $up k
 set $right l
 # Terminal emulator
 set $term foot
-# Application launcher
-set $menu fuzzel | xargs swaymsg exec --
+# Application launcher: Quickshell's (quickshell/launcher), or fuzzel when the
+# shell isn't running. Both rank apps by fuzzel's launch counts.
+set $menu qs ipc call panel toggle launcher || fuzzel | xargs swaymsg exec --
 
 ### Per-host bits (optional $indicators, outputs, inputs, hardware-key
 ### bindings). $mod is already defined.
@@ -65,8 +66,53 @@ client.focused_tab_title #555555 #2a2a2a #ffffff #ffa500 #555555
 client.unfocused         #2a2a2a #1a1a1a #888888 #2a2a2a #2a2a2a
 client.urgent            #b85c57 #b85c57 #ffffea #b85c57 #b85c57
 
+### Effects (swayfx; plain sway rejects these lines)
+# Tiled windows stay square and flush: smart_corner_radius only rounds a window
+# with gaps around it, and there are none, so only floating windows get
+# corners. Shadows go on floating windows only too, since on tiled ones they
+# would darken the neighbour's edge. [floating] matches windows that open
+# floating (dialogs); rules that float a window themselves enable the shadow
+# too. $radius and $blur_passes come from the host file.
+corner_radius $radius
+smart_corner_radius enable
+shadows disable
+shadow_blur_radius 20
+shadow_color #00000066
+for_window [floating] shadows enable
+blur disable
+blur_passes $blur_passes
+blur_radius 5
+animation_duration_ms 200
+
+# The bar and the Quickshell cards are slightly see-through (Theme.qml), so
+# blur what's behind them. The panels and the readout get their card's
+# rounding and a shadow; the notification window holds several cards with
+# gaps between them, so it only gets blur, which skips the transparent gaps.
+layer_effects "quickshell-bar" {
+    blur enable;
+    blur_ignore_transparent enable;
+}
+layer_effects "quickshell-panel" {
+    blur enable;
+    blur_ignore_transparent enable;
+    shadows enable;
+    corner_radius $radius;
+}
+layer_effects "quickshell-osd" {
+    blur enable;
+    blur_ignore_transparent enable;
+    shadows enable;
+    corner_radius $radius;
+}
+# The launcher (quickshell-launcher) draws its own shadow so it can fade and
+# scale with its card; effects here apply to its whole window.
+layer_effects "quickshell-notifications" {
+    blur enable;
+    blur_ignore_transparent enable;
+}
+
 ### btop popup (toggled by clicking the temp/cpu block in the status bar)
-for_window [app_id="btop-popup"] floating enable, border pixel 3, resize set 80 ppt 80 ppt, move position center
+for_window [app_id="btop-popup"] floating enable, border pixel 3, resize set 80 ppt 80 ppt, move position center, shadows enable
 
 ### Idle inhibit while any window is fullscreen (videos, games, etc.)
 for_window [class=".*"]   inhibit_idle fullscreen

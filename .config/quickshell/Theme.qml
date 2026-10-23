@@ -25,7 +25,7 @@ Singleton {
     readonly property var profiles: ({
         workstation: {
             fontPx: 20,
-            barBg: "#000000",
+            barBg: "#cc000000",
             dim: "#b7b19c",
             low: "#b85c57",
             cpuSensor: { chip: "asusec", label: "CPU Package" },
@@ -38,7 +38,7 @@ Singleton {
         },
         t470: {
             fontPx: 13,
-            barBg: "#323232",
+            barBg: "#cc323232",
             dim: "#888888",
             low: "#ff5555",
             cpuSensor: { chip: "coretemp", label: "Core " },
@@ -66,7 +66,9 @@ Singleton {
     readonly property string iconFont: "Symbols Nerd Font Mono"
 
     // Bar colors, carried over from the swaybar setup: the orange accent
-    // of the focused workspace and the warning shades of the readings.
+    // of the focused workspace and the warning shades of the readings. The
+    // bar background is slightly see-through (#AARRGGBB in the profiles) so
+    // swayfx's blur behind it shows (layer_effects in sway/config).
     readonly property color barBg: profile.barBg
     readonly property color fg: "#ffffff"
     readonly property color dim: profile.dim
@@ -80,6 +82,9 @@ Singleton {
 
     // Popup colors: the acme palette fuzzel uses too.
     readonly property color paper: "#ffffea"
+    // The cards themselves (panels, notifications, the readout, the polkit
+    // prompt): the same paper, a little see-through for the blur behind.
+    readonly property color paperGlass: "#ebffffea"
     readonly property color paperHover: "#f4f4d4"
     readonly property color ink: "#000000"
     readonly property color inkDim: "#666666"
@@ -126,7 +131,8 @@ Singleton {
         play: String.fromCodePoint(0xF040A),
         pause: String.fromCodePoint(0xF03E4),
         next: String.fromCodePoint(0xF04AD),
-        previous: String.fromCodePoint(0xF04AE)
+        previous: String.fromCodePoint(0xF04AE),
+        search: String.fromCodePoint(0xF0349)
     })
 
     FileView {

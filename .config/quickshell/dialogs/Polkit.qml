@@ -44,18 +44,44 @@ Scope {
         WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
         color: "#66000000"
         onVisibleChanged: {
-            if (visible)
+            if (visible) {
                 input.forceActiveFocus();
+                appear.restart();
+            }
         }
 
         Rectangle {
             id: card
 
             anchors.centerIn: parent
+            // Fades and grows in a little when a request arrives.
+            opacity: 0
+            scale: 0.96
+
+            ParallelAnimation {
+                id: appear
+
+                NumberAnimation {
+                    target: card
+                    property: "opacity"
+                    from: 0
+                    to: 1
+                    duration: 160
+                    easing.type: Easing.OutCubic
+                }
+                NumberAnimation {
+                    target: card
+                    property: "scale"
+                    from: 0.96
+                    to: 1
+                    duration: 160
+                    easing.type: Easing.OutCubic
+                }
+            }
             width: Math.round(Theme.em * 24)
             height: column.implicitHeight + Theme.gap * 4
             radius: Theme.radius
-            color: Theme.paper
+            color: Theme.paperGlass
             border.width: 1
             border.color: Theme.rule
 

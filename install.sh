@@ -247,12 +247,12 @@ echo
 echo "Dependencies (referenced by the sway config / quickshell)"
 # Arch package for each command that isn't named after it.
 declare -A pkg_of=(
-    [swaymsg]=sway [swaynag]=sway [wl-copy]=wl-clipboard
+    [wl-copy]=wl-clipboard
     [wl-paste]=wl-clipboard [notify-send]=libnotify [wpctl]=wireplumber
     [rfkill]=util-linux [iwctl]=iwd [bluetoothctl]=bluez-utils [emacs]=emacs-wayland
 )
 missing=() missing_pkgs=()
-for cmd in sway swaymsg swayidle swaylock playerctl grim slurp swappy wl-copy wl-paste quickshell notify-send wpctl foot fuzzel gammastep swaynag rfkill iw btop brightnessctl iwctl bluetoothctl cliphist wf-recorder jq emacs; do
+for cmd in swayidle swaylock playerctl grim slurp swappy wl-copy wl-paste quickshell notify-send wpctl foot fuzzel gammastep rfkill iw btop brightnessctl iwctl bluetoothctl cliphist wf-recorder jq emacs; do
     if command -v "$cmd" >/dev/null 2>&1; then
         printf '  ok      %s\n' "$cmd"
     else
@@ -263,6 +263,17 @@ for cmd in sway swaymsg swayidle swaylock playerctl grim slurp swappy wl-copy wl
 done
 # The bar draws its icons from the Nerd Font symbols; sway, foot and the bar
 # all set their text in JuliaMono, which only the AUR packages.
+# The sway config uses swayfx's effects (blur, shadows, corners), which plain
+# sway reports as errors. swayfx provides sway, swaymsg and swaynag, and only
+# the AUR packages it. A leftover sway-git-debug blocks its install.
+if sway --version 2>/dev/null | grep -q swayfx; then
+    printf '  ok      swayfx\n'
+else
+    pre=""
+    pacman -Q sway-git-debug >/dev/null 2>&1 && pre="sudo pacman -Rns sway-git-debug && "
+    printf '  TODO    the sway config needs swayfx: %syay -S swayfx\n' "$pre"
+    n_warn=$((n_warn + 1))
+fi
 if fc-list -q 'Symbols Nerd Font Mono'; then
     printf '  ok      Symbols Nerd Font Mono\n'
 else

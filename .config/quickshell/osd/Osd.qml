@@ -17,6 +17,9 @@ Scope {
 
     // "volume", "mic", "brightness", or "" while hidden.
     property string kind: ""
+    // Up while it should show. It fades in and out rather than popping, and
+    // keeps the last kind while fading so its contents don't change.
+    property bool up: false
     // NaN until the first reading, which is the shell starting, not a change.
     property real lastBrightness: NaN
 
@@ -25,6 +28,7 @@ Scope {
 
     function show(k) {
         kind = k;
+        up = true;
         hideTimer.restart();
     }
 
@@ -49,7 +53,7 @@ Scope {
     Timer {
         id: hideTimer
         interval: 1500
-        onTriggered: root.kind = ""
+        onTriggered: root.up = false
     }
 
     Connections {
@@ -75,7 +79,7 @@ Scope {
 
     PanelWindow {
         screen: Quickshell.screens.find(s => s.name === I3.focusedMonitor?.name) ?? Quickshell.screens[0]
-        visible: root.kind !== ""
+        visible: root.up || card.opacity > 0
         anchors.bottom: true
         margins.bottom: Math.round(Theme.em * 5)
         exclusiveZone: 0
@@ -93,9 +97,17 @@ Scope {
             width: Math.round(Theme.em * 15)
             height: Math.round(Theme.em * 2.8)
             radius: Theme.radius
-            color: Theme.paper
+            color: Theme.paperGlass
             border.width: 1
             border.color: Theme.rule
+            opacity: root.up ? 1 : 0
+
+            Behavior on opacity {
+                NumberAnimation {
+                    duration: 150
+                    easing.type: Easing.InOutQuad
+                }
+            }
 
             Glyph {
                 id: glyph

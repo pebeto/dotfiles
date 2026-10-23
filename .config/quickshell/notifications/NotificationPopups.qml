@@ -29,6 +29,14 @@ PanelWindow {
 
     Column {
         id: column
+        // The popups already showing glide down to make room for a new one.
+        move: Transition {
+            NumberAnimation {
+                property: "y"
+                duration: 180
+                easing.type: Easing.OutCubic
+            }
+        }
         width: parent.width
         spacing: Theme.gap
 

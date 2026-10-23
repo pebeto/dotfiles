@@ -33,7 +33,21 @@ Rectangle {
     }
 
     implicitHeight: content.implicitHeight + pad * 2
-    color: popup ? Theme.paper : mouse.containsMouse ? Theme.paperHover : "transparent"
+    // A popup slides in from the right as it arrives.
+    transform: Translate {
+        id: arrival
+    }
+
+    NumberAnimation {
+        running: root.popup
+        target: arrival
+        property: "x"
+        from: Theme.notifWidth
+        to: 0
+        duration: 220
+        easing.type: Easing.OutCubic
+    }
+    color: popup ? Theme.paperGlass : mouse.containsMouse ? Theme.paperHover : "transparent"
     border.width: popup ? 1 : 0
     border.color: critical ? Theme.critical : Theme.rule
     radius: Math.round(Theme.radius * 0.6)

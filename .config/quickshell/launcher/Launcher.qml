@@ -1,0 +1,345 @@
+import QtQuick
+import QtQuick.Effects
+import Quickshell
+import Quickshell.Wayland
+import Quickshell.Widgets
+import qs
+import qs.components
+import qs.services
+
+// The app launcher, after Spotlight in macOS Tahoe: a search capsule that
+// fades and springs in on the focused screen, and grows into a list of
+// results as you type. Down on an empty search lists the most used apps.
+// It's one of the Panels, so opening it closes the bar's panels, and
+// `qs ipc call panel toggle launcher` (Super+space) opens it. Arrows, Tab
+// or Ctrl+N/P move the selection, Enter launches, Escape or a click outside
+// closes.
+//
+// Its shadow is drawn here rather than by swayfx, whose effects belong to
+// the whole window and couldn't fade and scale with the card.
+Scope {
+    id: root
+
+    readonly property bool wanted: Panels.open === "launcher"
+    readonly property var screen: Quickshell.screens.find(s => s.name === Panels.screen) ?? Quickshell.screens[0]
+    property string query: ""
+    readonly property var results: Apps.search(query).slice(0, 50)
+    property int current: 0
+    property bool browsing: false
+    readonly property bool expanded: query !== "" || browsing
+
+    readonly property int rows: 8
+    readonly property int rowHeight: Math.round(Theme.em * 1.9)
+    readonly property int cardWidth: Theme.panelWidth + Theme.gap * 4
+    readonly property int barHeight: Math.round(Theme.em * 2.8)
+    readonly property int fullHeight: barHeight + 1 + rows * rowHeight + Theme.gap * 2
+    // Room around the card for its shadow, inside the window.
+    readonly property int pad: Math.round(Theme.em * 2.5)
+    // Where the capsule sits: about a fifth of the way down.
+    readonly property int restTop: Math.round((screen?.height ?? 1080) * 0.2)
+
+    // `shown` maps the window; `up` is the card fading and springing in.
+    property bool shown: false
+    property bool up: false
+
+    function move(steps) {
+        if (results.length === 0)
+            return;
+        current = Math.max(0, Math.min(results.length - 1, current + steps));
+        list.positionViewAtIndex(current, ListView.Contain);
+    }
+
+    function launch(index) {
+        const r = results[index];
+        if (!r || !expanded)
+            return;
+        Panels.close();
+        Apps.launch(r.entry);
+    }
+
+    // The name with the matched letters in the link color, plus the generic
+    // name in gray. StyledText, so the app's own text is escaped first.
+    function label(r) {
+        const esc = s => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        const name = r.entry.name;
+        let out = "";
+        for (let i = 0; i < name.length; i++)
+            out += r.hits.includes(i) ? `<font color="${Theme.link}">${esc(name[i])}</font>` : esc(name[i]);
+        const generic = r.entry.genericName;
+        if (generic && generic !== name)
+            out += `&nbsp;&nbsp;<font color="${Theme.inkDim}">${esc(generic)}</font>`;
+        return out;
+    }
+
+    onWantedChanged: {
+        if (!wanted) {
+            // Closed again before the card left 0: nothing will fade out,
+            // and the window mustn't keep the keyboard.
+            if (body.opacity === 0)
+                shown = false;
+            up = false;
+            return;
+        }
+        input.text = "";
+        browsing = false;
+        current = 0;
+        list.positionViewAtBeginning();
+        shown = true;
+        up = true;
+        input.forceActiveFocus();
+    }
+
+    // A transparent layer over the screen catches the click outside.
+    PanelWindow {
+        screen: root.screen
+        visible: root.wanted
+        anchors.top: true
+        anchors.bottom: true
+        anchors.left: true
+        anchors.right: true
+        exclusionMode: ExclusionMode.Ignore
+        WlrLayershell.layer: WlrLayer.Top
+        WlrLayershell.namespace: "quickshell-launcher-shade"
+        color: "transparent"
+
+        MouseArea {
+            anchors.fill: parent
+            acceptedButtons: Qt.AllButtons
+            onPressed: Panels.close()
+        }
+    }
+
+    PanelWindow {
+        id: window
+
+        screen: root.screen
+        visible: root.shown
+        anchors.top: true
+        margins.top: root.restTop - root.pad
+        exclusionMode: ExclusionMode.Ignore
+        WlrLayershell.layer: WlrLayer.Overlay
+        WlrLayershell.namespace: "quickshell-launcher"
+        WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
+        color: "transparent"
+        implicitWidth: root.cardWidth + root.pad * 2
+        implicitHeight: root.fullHeight + root.pad * 2
+        // Only the card takes clicks; around it they reach the shade.
+        mask: Region {
+            item: card
+        }
+
+        Item {
+            id: body
+
+            x: root.pad
+            y: root.pad
+            width: root.cardWidth
+            height: card.height
+            // Springs in from a little smaller, growing from the capsule's top.
+            transformOrigin: Item.Top
+            opacity: root.up ? 1 : 0
+            scale: root.up ? 1 : 0.9
+
+            Behavior on opacity {
+                NumberAnimation {
+                    duration: root.up ? 160 : 120
+                    easing.type: root.up ? Easing.OutCubic : Easing.InCubic
+                }
+            }
+            Behavior on scale {
+                NumberAnimation {
+                    duration: root.up ? 320 : 120
+                    easing.type: root.up ? Easing.OutBack : Easing.InCubic
+                    easing.overshoot: 1.6
+                }
+            }
+            onOpacityChanged: {
+                if (opacity === 0 && !root.up)
+                    root.shown = false;
+            }
+
+            RectangularShadow {
+                anchors.fill: card
+                radius: card.radius
+                blur: Math.round(Theme.em * 1.6)
+                offset.y: Math.round(Theme.em * 0.4)
+                color: "#4d000000"
+            }
+
+            ClippingRectangle {
+                id: card
+
+                width: root.cardWidth
+                height: root.expanded ? root.fullHeight : root.barHeight
+                radius: root.expanded ? Theme.radius * 2 : root.barHeight / 2
+                color: Theme.paper
+
+                Behavior on height {
+                    NumberAnimation {
+                        duration: 220
+                        easing.type: Easing.OutCubic
+                    }
+                }
+                Behavior on radius {
+                    NumberAnimation {
+                        duration: 220
+                        easing.type: Easing.OutCubic
+                    }
+                }
+
+                Item {
+                    id: bar
+
+                    x: Theme.gap * 2
+                    width: parent.width - Theme.gap * 4
+                    height: root.barHeight
+
+                    Glyph {
+                        id: searchGlyph
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: Theme.icons.search
+                        color: Theme.inkDim
+                        font.pixelSize: Math.round(Theme.em * 1.3)
+                    }
+                    Ink {
+                        anchors.left: searchGlyph.right
+                        anchors.leftMargin: Theme.gap
+                        anchors.verticalCenter: parent.verticalCenter
+                        visible: input.text === ""
+                        text: "Search applications"
+                        color: Theme.inkDim
+                        font.pixelSize: Math.round(Theme.em * 1.15)
+                    }
+                    TextInput {
+                        id: input
+
+                        anchors.left: searchGlyph.right
+                        anchors.leftMargin: Theme.gap
+                        anchors.right: parent.right
+                        anchors.verticalCenter: parent.verticalCenter
+                        font.family: Theme.font
+                        font.pixelSize: Math.round(Theme.em * 1.15)
+                        color: Theme.ink
+                        selectionColor: Theme.highlight
+                        selectedTextColor: Theme.ink
+                        clip: true
+                        focus: true
+                        onTextChanged: {
+                            root.query = text;
+                            root.current = 0;
+                            list.positionViewAtBeginning();
+                        }
+                        Keys.onPressed: e => {
+                            const ctrl = e.modifiers & Qt.ControlModifier;
+                            const down = e.key === Qt.Key_Down || e.key === Qt.Key_Tab || (ctrl && e.key === Qt.Key_N);
+                            if (e.key === Qt.Key_Escape)
+                                Panels.close();
+                            else if (e.key === Qt.Key_Return || e.key === Qt.Key_Enter)
+                                root.launch(root.current);
+                            else if (down && !root.expanded)
+                                root.browsing = true;
+                            else if (down)
+                                root.move(1);
+                            else if (e.key === Qt.Key_Up || e.key === Qt.Key_Backtab || (ctrl && e.key === Qt.Key_P))
+                                root.move(-1);
+                            else if (e.key === Qt.Key_PageDown)
+                                root.move(root.rows);
+                            else if (e.key === Qt.Key_PageUp)
+                                root.move(-root.rows);
+                            else
+                                return;
+                            e.accepted = true;
+                        }
+                    }
+                }
+
+                // The results, faded in as the capsule grows.
+                Column {
+                    x: Theme.gap
+                    y: root.barHeight
+                    width: parent.width - Theme.gap * 2
+                    opacity: root.expanded ? 1 : 0
+
+                    Behavior on opacity {
+                        NumberAnimation {
+                            duration: 180
+                            easing.type: Easing.OutCubic
+                        }
+                    }
+
+                    Rule {}
+
+                    ListView {
+                        id: list
+
+                        width: parent.width
+                        height: root.rows * root.rowHeight
+                        topMargin: Theme.gap
+                        clip: true
+                        boundsBehavior: Flickable.StopAtBounds
+                        model: root.results
+
+                        delegate: Rectangle {
+                            id: row
+
+                            required property var modelData
+                            required property int index
+
+                            width: list.width
+                            height: root.rowHeight
+                            radius: Theme.radius
+                            color: index === root.current ? Theme.highlight : "transparent"
+                            clip: true
+
+                            IconImage {
+                                id: appIcon
+                                x: Theme.gap
+                                anchors.verticalCenter: parent.verticalCenter
+                                implicitSize: Math.round(Theme.em * 1.3)
+                                source: Quickshell.iconPath(row.modelData.entry.icon, "application-x-executable")
+                            }
+                            Ink {
+                                anchors.left: appIcon.right
+                                anchors.leftMargin: Theme.gap
+                                anchors.right: parent.right
+                                anchors.rightMargin: Theme.gap
+                                anchors.verticalCenter: parent.verticalCenter
+                                textFormat: Text.StyledText
+                                text: root.label(row.modelData)
+                            }
+
+                            // Moving the pointer selects, as in fuzzel;
+                            // position rather than enter, so a list scrolled
+                            // by the keys under a still pointer keeps the
+                            // keyboard's choice.
+                            MouseArea {
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onPositionChanged: root.current = row.index
+                                onClicked: root.launch(row.index)
+                            }
+                        }
+
+                        Ink {
+                            anchors.centerIn: parent
+                            visible: root.results.length === 0
+                            text: "No matching applications"
+                            color: Theme.inkDim
+                        }
+                    }
+                }
+            }
+
+            // The same hairline as the other cards, drawn over the clipped
+            // content.
+            Rectangle {
+                anchors.fill: card
+                radius: card.radius
+                color: "transparent"
+                border.width: 1
+                border.color: Theme.rule
+            }
+        }
+    }
+}
