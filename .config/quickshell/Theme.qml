@@ -146,7 +146,8 @@ Singleton {
         camera: String.fromCodePoint(0xF0100),
         calculator: String.fromCodePoint(0xF00EC),
         console: String.fromCodePoint(0xF018D),
-        brain: String.fromCodePoint(0xF09D1)
+        brain: String.fromCodePoint(0xF09D1),
+        capture: String.fromCodePoint(0xF039D)
     })
 
     FileView {

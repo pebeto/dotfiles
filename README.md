@@ -102,8 +102,7 @@ Pressing the current workspace's number again goes back to the previous one.
 
 | Keys | Action |
 |------|--------|
-| `Print` | region screenshot to the clipboard |
-| `Shift+Print` | region screenshot into swappy to annotate (`Ctrl+S` saves, `Ctrl+C` copies) |
+| `Print` | region screenshot to the clipboard, with a thumbnail to edit or save it |
 | `XF86Display` | toggle region screen recording to `~/Videos/Screencasts` |
 | `Super+Shift+v` or `XF86Favorites` | clipboard-history picker |
 | `Super+Shift+p` | cycle keyboard layout (us / latam) |
@@ -126,9 +125,10 @@ The top bar, its panels, the notification popups, the lock screen and the passwo
 - Apps that keep running after you close their window, like Steam, get a tray icon to the left of the bell. Double-click it to open the app, right-click for its menu (drawn like the other panels), middle-click for its secondary action. Steam's icon can't open its window by itself, so the bar runs Steam's launcher instead, which brings the running copy to the front.
 - The volume and mic keys, and brightness changes on the T470, pop up a readout at the bottom of the screen.
 - `Super+space` opens the app launcher, modeled on Spotlight in macOS Tahoe: a search bar fades and springs in, and grows into a list of results as you type (letters in order match). Down on an empty search lists your most used apps; arrows or Tab pick, Enter launches, Escape closes. Apps you launch more rise to the top.
-- The launcher also does sums, emoji and commands. Type `2*37` (or `=` and anything) for the result, `:` and a name for emoji (`:fire`), or `>` and a shell command to run it. Enter copies a result or an emoji to the clipboard.
-- `Super+Shift+v` (or the T470's `XF86Favorites` key) opens the same bar on the clipboard history that cliphist keeps, newest first, filtered as you type. Picking an entry puts it back on the clipboard.
+- The launcher also does sums, emoji, commands and quick capture. Type `2*37` (or `=` and anything) for the result, `:` and a name for emoji (`:fire`), `>` and a shell command to run it, or `+` and a task to add it as a TODO to `~/Sync/orgfiles/refile.org`. Enter copies a result or an emoji to the clipboard.
+- `Super+Shift+v` (or the T470's `XF86Favorites` key) opens the same bar on the clipboard history that cliphist keeps, newest first, filtered as you type. Images show as thumbnails. Picking an entry puts it back on the clipboard.
 - `Super+Shift+e` opens the session menu: lock, suspend, log out, restart or shut down. Arrows or the underlined letter pick one, and the last three ask first. Without Quickshell, the key falls back to swaynag.
+- After a `Print` screenshot, a thumbnail of it sits in the bottom-right corner for a few seconds, as on macOS. Drag it into another window to drop the file there: foot pastes its path (so Claude Code attaches it), and a browser uploads it. Click it to annotate it in swappy, right-click to save it to `~/Pictures/Screenshots`, or middle-click to dismiss it. It stays while the pointer is on it.
 - While `XF86Display` records the screen, the bar shows a red dot and the elapsed time. Click it to stop.
 - When an app uses the microphone, a camera or a shared screen, the bar shows an orange mic with the app's name, a green camera or a purple screen, the same colors as on macOS.
 - On the workstation, the brain block shows the local LLM server: the model it serves, or tokens per second while it generates. Its panel shows GPU memory, running requests and KV cache use, and starts, stops or switches models. The Log button opens the server's log in a terminal.

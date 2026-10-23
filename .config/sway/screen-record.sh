@@ -1,6 +1,6 @@
 #!/bin/bash
-# Region screen-recording toggle, the video analogue of the grim/slurp
-# screenshot keys. First press: pick a region (slurp) and start recording to
+# Region screen-recording toggle, the video analogue of the screenshot
+# key (screenshot.sh). First press: pick a region (slurp) and start recording to
 # a timestamped file under ~/Videos/Screencasts. Second press: stop, which
 # finalizes the .mp4. Bound to XF86Display (F7) in the sway config. The
 # Quickshell bar shows a red dot and the elapsed time while it records.

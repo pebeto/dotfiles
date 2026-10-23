@@ -11,9 +11,10 @@ import qs.services
 // macOS Tahoe: a search capsule that fades and springs in on the focused
 // screen, and grows into a list of results as you type. For apps, Down on an
 // empty search lists the most used ones; the clipboard opens on its newest
-// entries. In the app launcher, a sum ("2*37", or anything after "=")
-// shows its result first, ":" searches emoji by name, and ">" runs the rest
-// as a shell command; Enter copies a result or an emoji to the clipboard.
+// entries, with thumbnails for images. In the app launcher, a sum ("2*37",
+// or anything after "=") shows its result first, ":" searches emoji by
+// name, ">" runs the rest as a shell command, and "+" adds it as a TODO to
+// refile.org; Enter copies a result or an emoji to the clipboard.
 // Both are Panels ("launcher" and "clipboard"), so opening one
 // closes the bar's panels, and `qs ipc call panel toggle launcher` or
 // `... clipboard` opens it (Super+space, XF86Favorites). Arrows, Tab or
@@ -32,16 +33,19 @@ Scope {
     readonly property var screen: Quickshell.screens.find(s => s.name === Panels.screen) ?? Quickshell.screens[0]
     property string query: ""
     // Rows of one shape whatever they come from: kind ("app", "calc",
-    // "emoji", "run" or "clip"), the text and its matched letters, a gray
-    // detail, and an icon, glyph or emoji to show.
+    // "emoji", "run", "capture" or "clip"), the text and its matched
+    // letters, a gray detail, and an icon, glyph, emoji or thumbnail to
+    // show.
     readonly property var results: {
         if (mode === "clipboard")
-            return Clipboard.search(query).slice(0, 200).map(r => ({ kind: "clip", entry: r.entry, text: r.entry.text, hits: r.hits, detail: "", glyph: r.entry.image ? Theme.icons.image : Theme.icons.text }));
+            return Clipboard.search(query).slice(0, 200).map(r => ({ kind: "clip", entry: r.entry, text: r.entry.text, hits: r.hits, detail: r.entry.detail, glyph: r.entry.image ? Theme.icons.image : Theme.icons.text, thumb: r.entry.thumb }));
         const q = query.trim();
         if (q.startsWith(":"))
             return Emoji.search(q.slice(1)).slice(0, 50).map(e => ({ kind: "emoji", text: e.name, hits: e.hits, detail: "", emoji: e.char }));
         if (q.startsWith(">"))
             return q.length > 1 ? [{ kind: "run", text: q.slice(1).trim(), hits: [], detail: "run", glyph: Theme.icons.console }] : [];
+        if (q.startsWith("+"))
+            return q.slice(1).trim() ? [{ kind: "capture", text: q.slice(1).trim(), hits: [], detail: "TODO in refile.org", glyph: Theme.icons.capture }] : [];
         const rows = [];
         const sum = Calc.result(q);
         if (sum !== null)
@@ -59,6 +63,8 @@ Scope {
             return query === "" ? "The clipboard history is empty" : "No matching entries";
         if (q.startsWith(">"))
             return "Type a command to run";
+        if (q.startsWith("+"))
+            return "Type a task for refile.org";
         if (q.startsWith(":"))
             return q.length > 1 ? (Emoji.loaded ? "No matching emoji" : "The emoji list isn't installed (unicode-emoji)") : "Type an emoji's name";
         return "No matching applications";
@@ -69,6 +75,7 @@ Scope {
 
     readonly property int rows: 8
     readonly property int rowHeight: Math.round(Theme.em * 1.9)
+    readonly property int thumbRowHeight: Math.round(Theme.em * 3.8)
     readonly property int cardWidth: Theme.panelWidth + Theme.gap * 4
     readonly property int barHeight: Math.round(Theme.em * 2.8)
     readonly property int fullHeight: barHeight + 1 + rows * rowHeight + Theme.gap * 2
@@ -103,6 +110,8 @@ Scope {
             Quickshell.execDetached(["wl-copy", "--", r.emoji]);
         else if (r.kind === "run")
             Quickshell.execDetached(["sh", "-c", r.text]);
+        else if (r.kind === "capture")
+            Org.capture(r.text);
     }
 
     // The row's text with the matched letters in the link color, plus its
@@ -336,7 +345,7 @@ Scope {
                             required property int index
 
                             width: list.width
-                            height: root.rowHeight
+                            height: row.modelData.thumb ? root.thumbRowHeight : root.rowHeight
                             radius: Theme.radius
                             color: index === root.current ? Theme.highlight : "transparent"
                             clip: true
@@ -354,9 +363,25 @@ Scope {
                                 width: appIcon.width
                                 horizontalAlignment: Text.AlignHCenter
                                 anchors.verticalCenter: parent.verticalCenter
-                                visible: !!row.modelData.glyph
+                                visible: !!row.modelData.glyph && !thumb.visible
                                 text: row.modelData.glyph ?? ""
                                 color: Theme.inkDim
+                            }
+                            // An image entry's picture, once Clipboard has
+                            // decoded it.
+                            Image {
+                                id: thumb
+                                x: Theme.gap
+                                anchors.verticalCenter: parent.verticalCenter
+                                width: Math.round(Theme.em * 5)
+                                height: root.thumbRowHeight - Theme.gap
+                                visible: status === Image.Ready
+                                source: row.modelData.thumb && Clipboard.thumbsReady ? "file://" + row.modelData.thumb : ""
+                                sourceSize.width: width * 2
+                                sourceSize.height: height * 2
+                                fillMode: Image.PreserveAspectFit
+                                horizontalAlignment: Image.AlignLeft
+                                asynchronous: true
                             }
                             Text {
                                 x: Theme.gap
@@ -369,7 +394,7 @@ Scope {
                                 font.pixelSize: Math.round(Theme.em * 1.1)
                             }
                             Ink {
-                                anchors.left: appIcon.right
+                                anchors.left: thumb.visible ? thumb.right : appIcon.right
                                 anchors.leftMargin: Theme.gap
                                 anchors.right: parent.right
                                 anchors.rightMargin: Theme.gap
