@@ -56,7 +56,14 @@ elif [ -s /usr/local/opt/nvm/nvm.sh ]; then          # Homebrew, Intel
     export NVM_DIR="$HOME/.nvm"; source /usr/local/opt/nvm/nvm.sh
 fi
 
-command -v sway >/dev/null 2>&1 && alias sway='sway --unsupported-gpu'
+# sway, and the apps it starts, log to ~/.sway_log; the previous session's
+# log moves to ~/.sway_log.old, and the sway-log timer trims a long one.
+if command -v sway >/dev/null 2>&1; then
+    sway() {
+        [ -f ~/.sway_log ] && mv -f ~/.sway_log ~/.sway_log.old
+        command sway --unsupported-gpu "$@" >>~/.sway_log 2>&1
+    }
+fi
 # color ls: GNU (Linux) uses --color=auto; BSD (macOS) uses -G
 if [[ "$OSTYPE" == darwin* ]]; then alias ls='ls -G'; else alias ls='ls --color=auto'; fi
 alias grep='grep --color=auto'

@@ -16,6 +16,8 @@ model: unsloth/Qwen3.8-27B-NVFP4
 served-model-name: qwen3.8-27b
 host: 0.0.0.0
 port: 8000
+# The bar's LLM panel polls these every 3 s, so their requests stay out of the log.
+disable-access-log-for-endpoints: /v1/models,/metrics
 
 # KV is pinned, not sized from gpu-memory-utilization: vLLM measures device-wide free VRAM
 # while it starts, so desktop allocations during those two minutes come out of the pool and

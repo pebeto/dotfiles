@@ -1,0 +1,6 @@
+[Unit]
+Description=Trim ~/.sway_log
+
+[Service]
+Type=oneshot
+ExecStart=%h/.config/sway/sway-log.sh

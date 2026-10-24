@@ -3,7 +3,9 @@
 # key (screenshot.sh). First press: pick a region (slurp) and start recording to
 # a timestamped file under ~/Videos/Screencasts. Second press: stop, which
 # finalizes the .mp4. Bound to XF86Display (F7) in the sway config. The
-# Quickshell bar shows a red dot and the elapsed time while it records.
+# Quickshell bar shows a red dot and the elapsed time while it records, and
+# afterwards the same corner thumbnail as a screenshot, with a frame from the
+# middle of the video.
 set -u
 
 notify() {
@@ -15,8 +17,6 @@ notify() {
 
 # Already recording? A SIGINT lets wf-recorder flush and close the file.
 if pkill -INT -x wf-recorder; then
-    qs ipc call recording stopped >/dev/null 2>&1
-    notify media-playback-stop "Recording stopped"
     exit 0
 fi
 
@@ -24,6 +24,9 @@ if ! command -v wf-recorder >/dev/null 2>&1; then
     notify dialog-error "wf-recorder is not installed"
     exit 1
 fi
+
+# Hide the last thumbnail so it isn't in the recording.
+qs ipc call screenshot hide >/dev/null 2>&1
 
 region=$(slurp) || exit 0          # cancelled with Escape
 [ -z "$region" ] && exit 0
@@ -33,5 +36,17 @@ mkdir -p "$dir"
 file="$dir/$(date +%Y-%m-%d_%H-%M-%S).mp4"
 
 qs ipc call recording started >/dev/null 2>&1
-# exec so the process is literally `wf-recorder`, matching the pkill above.
-exec wf-recorder -g "$region" -f "$file"
+wf-recorder -g "$region" -f "$file"
+qs ipc call recording stopped >/dev/null 2>&1
+[ -s "$file" ] || exit 0
+
+# A frame from the middle and the length, for the thumbnail.
+frames="${XDG_RUNTIME_DIR:-/tmp}/screenshots"
+mkdir -p "$frames"
+rm -f "$frames"/recording-*.png
+frame="$frames/recording-$(basename "$file" .mp4).png"
+seconds=$(ffprobe -v error -show_entries format=duration -of csv=p=0 "$file")
+ffmpeg -v error -y -ss "$(awk -v d="${seconds:-0}" 'BEGIN { print d / 2 }')" -i "$file" \
+    -frames:v 1 "$frame"
+qs ipc call screenshot video "$file" "$frame" \
+    "$(awk -v d="${seconds:-0}" 'BEGIN { printf "%d", d + 0.5 }')" >/dev/null 2>&1

@@ -50,29 +50,35 @@ On the workstation, the brain block's panel shows GPU memory, running requests a
 | `:` and a name, like `:fire` | matching emoji | copies the emoji |
 | `>` and a command | the command | runs it |
 | `+` and a task | a TODO | adds it to `~/Sync/orgfiles/refile.org` |
+| `?` and a question | an answer, written out as it streams in | copies it |
+| `#` | a color picker | lets you click any pixel, then copies its hex code |
 
 The emoji search reads Unicode's own list from the `unicode-emoji` package. A captured task gets the same shape as nvim-orgmode's task template, the heading and then the day you wrote it, and a notification confirms it.
 
+A question goes to the local LLM server when it's serving a model, and to Claude Code otherwise. Both answer at medium effort, the setting every other client uses, and Claude Code runs with no tools or MCP servers, so a question can't make it change anything. Arrows scroll a long answer. A picked color shows up in the readout at the bottom of the screen, next to a swatch.
+
 `Super+Shift+v` (or the T470's `XF86Favorites` key) opens the same bar on the clipboard history that cliphist keeps, newest first, filtered as you type. Images show as thumbnails. Picking an entry puts it back on the clipboard.
 
-## Screenshot thumbnail
+## Screenshot and recording thumbnails
 
-After a `Print` screenshot, a thumbnail of it sits in the bottom-right corner for a few seconds, as on macOS. It stays while the pointer is on it.
+After a `Print` screenshot or an `XF86Display` recording, a thumbnail sits in the bottom-right corner for a few seconds, as on macOS. A recording's shows a frame from its middle, a play button and its length. It stays while the pointer is on it.
 
-| Action | What happens |
-|--------|--------------|
-| drag | Drops the file into another window: foot pastes its path (so Claude Code attaches it), and a browser uploads it. |
-| click | Opens it in swappy to annotate. |
-| right-click | Saves it to `~/Pictures/Screenshots`. |
-| middle-click | Dismisses it. |
+| Action | Screenshot | Recording |
+|--------|------------|-----------|
+| drag | Drops the file into another window: foot pastes its path (so Claude Code attaches it), and a browser uploads it. | The same, with the video. |
+| click | Opens it in swappy to annotate. | Plays it in your default video app, or ffplay when there's none. |
+| right-click | Saves it to `~/Pictures/Screenshots`. | Moves it to the trash. |
+| middle-click | Dismisses it. | Dismisses it. |
 
-The shots themselves stay in `$XDG_RUNTIME_DIR/screenshots`, the last five of them, so a path you dropped somewhere still works after your next screenshot.
+The shots themselves stay in `$XDG_RUNTIME_DIR/screenshots`, the last five of them, so a path you dropped somewhere still works after your next screenshot. Recordings live in `~/Videos/Screencasts`.
 
 ## Notifications
 
 Quickshell is the notification server. Click a popup to close it, middle-click to run its default action, and right-click to close all of them.
 
 The bell turns on focus mode. Popups wait and swayidle pauses, and when you turn it off you get one "you missed N" notification.
+
+Popups also wait on their own while a window is fullscreen (a game, a video), while you share your screen, and while you record it, so nothing private shows up on a call or in a video. The bell is crossed out meanwhile, with a count once something comes in, and one summary follows when it ends.
 
 The volume and mic keys, and brightness changes on the T470, pop up a readout at the bottom of the screen.
 
@@ -106,5 +112,6 @@ Everything above answers to `qs ipc call`:
 | `notifications toggleFocus` | turns focus mode on or off |
 | `lock lock` | locks the screen |
 | `screenshot preview <file>` | shows a thumbnail for any image |
+| `osd color <#rrggbb>` | shows a color in the readout |
 
 `qs ipc show` lists the rest. Some of them exist for the sway scripts, like `recording started` and `osd volume`.

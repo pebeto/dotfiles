@@ -8,20 +8,29 @@ import qs
 import qs.components
 import qs.services
 
-// The thumbnail in the corner after a screenshot, as on macOS. Print runs
-// sway/screenshot.sh, which copies the shot to the clipboard and calls
-// `qs ipc call screenshot preview <file>`. Dragging it drops the file into
-// another window (foot pastes its path, a browser uploads it), a click opens
-// it in swappy to annotate, a right click saves it next to swappy's own
-// saves, and a middle click dismisses it. It goes away after a few seconds,
-// but not while the pointer is on it or it's being dragged.
+// The thumbnail in the corner after a screenshot or a screen recording, as
+// on macOS. Print runs sway/screenshot.sh, which copies the shot to the
+// clipboard and calls `qs ipc call screenshot preview <file>`; when a
+// recording ends, sway/screen-record.sh calls `... video <file> <frame>
+// <seconds>` with a frame from its middle. Dragging it drops the file into
+// another window (foot pastes its path, a browser uploads it). A click
+// opens a screenshot in swappy to annotate or plays a recording, a right
+// click saves a screenshot next to swappy's own saves or moves a recording
+// to the trash, and a middle click dismisses it. It goes away after a few
+// seconds, but not while the pointer is on it or it's being dragged.
 Scope {
     id: root
 
-    // The shot, a file in $XDG_RUNTIME_DIR; screenshot.sh keeps the last few.
+    // The shot, a file in $XDG_RUNTIME_DIR that screenshot.sh keeps the last
+    // few of, or the recording in ~/Videos/Screencasts.
     property string file: ""
+    property bool video: false
+    // The picture shown: the shot itself, or the recording's frame.
+    property string frame: ""
+    property int seconds: 0
     property string screenName: ""
     property bool saved: false
+    property bool trashed: false
     property bool dragging: false
     property bool shown: false
     property bool up: false
@@ -30,9 +39,13 @@ Scope {
     readonly property int maxWidth: Math.round(Theme.em * 14)
     readonly property int maxHeight: Math.round(Theme.em * 9)
 
-    function show(path) {
+    function show(path, still, length) {
         file = path;
+        video = still !== undefined;
+        frame = still ?? path;
+        seconds = length ?? 0;
         saved = false;
+        trashed = false;
         screenName = Sway.focusedOutput;
         shown = true;
         up = true;
@@ -56,12 +69,25 @@ Scope {
         saver.running = true;
     }
 
+    function trash() {
+        saver.command = ["gio", "trash", file];
+        saver.running = true;
+    }
+
+    // In the default video app, or ffplay when there's none.
+    function play() {
+        Quickshell.execDetached(["sh", "-c", "[ -n \"$(xdg-mime query default video/mp4)\" ] && exec xdg-open \"$1\"; exec ffplay -autoexit -loglevel error \"$1\"", "sh", file]);
+    }
+
     IpcHandler {
         target: "screenshot"
 
         // Not "show", which `qs ipc` takes for its own subcommand.
         function preview(path: string): void {
             root.show(path);
+        }
+        function video(path: string, frame: string, seconds: int): void {
+            root.show(path, frame, seconds);
         }
         // Before the next shot, so the thumbnail isn't in it.
         function hide(): void {
@@ -82,7 +108,10 @@ Scope {
         onExited: code => {
             if (code !== 0)
                 return;
-            root.saved = true;
+            if (root.video)
+                root.trashed = true;
+            else
+                root.saved = true;
             timer.interval = 1500;
             timer.restart();
         }
@@ -169,12 +198,46 @@ Scope {
                         Image {
                             id: image
                             anchors.fill: parent
-                            source: root.file ? "file://" + root.file : ""
+                            source: root.frame ? "file://" + root.frame : ""
                             sourceSize.width: root.maxWidth * 2
                             sourceSize.height: root.maxHeight * 2
                             fillMode: Image.PreserveAspectFit
                             cache: false
                             smooth: true
+                        }
+
+                        // A recording: a play button and its length.
+                        Rectangle {
+                            anchors.centerIn: parent
+                            visible: root.video
+                            width: Math.round(Theme.em * 2.6)
+                            height: width
+                            radius: width / 2
+                            color: Theme.paper
+
+                            Glyph {
+                                anchors.centerIn: parent
+                                text: Theme.icons.play
+                                color: Theme.ink
+                                font.pixelSize: Math.round(Theme.em * 1.5)
+                            }
+                        }
+                        Rectangle {
+                            anchors.right: parent.right
+                            anchors.bottom: parent.bottom
+                            anchors.margins: Math.round(Theme.gap * 0.6)
+                            visible: root.video
+                            width: duration.implicitWidth + Theme.gap
+                            height: duration.implicitHeight + Math.round(Theme.gap * 0.4)
+                            radius: Math.round(Theme.radius * 0.5)
+                            color: Theme.paper
+
+                            Ink {
+                                id: duration
+                                anchors.centerIn: parent
+                                text: Math.floor(root.seconds / 60) + ":" + String(root.seconds % 60).padStart(2, "0")
+                                font.pixelSize: Theme.small
+                            }
                         }
                     }
 
@@ -185,8 +248,8 @@ Scope {
                         width: card.width - Theme.gap * 2
                         horizontalAlignment: Text.AlignHCenter
                         wrapMode: Text.WordWrap
-                        text: root.saved ? "Saved to Pictures/Screenshots" : "Copied · drag it, click to edit, right-click to save"
-                        color: root.saved ? Theme.good : Theme.inkDim
+                        text: root.video ? (root.trashed ? "Moved to the trash" : "Saved · drag it, click to play, right-click to trash") : root.saved ? "Saved to Pictures/Screenshots" : "Copied · drag it, click to edit, right-click to save"
+                        color: root.saved || root.trashed ? Theme.good : Theme.inkDim
                         font.pixelSize: Theme.small
                     }
 
@@ -242,10 +305,16 @@ Scope {
                         }
                         onClicked: e => {
                             if (e.button === Qt.LeftButton) {
-                                Quickshell.execDetached(["swappy", "-f", root.file]);
+                                if (root.video)
+                                    root.play();
+                                else
+                                    Quickshell.execDetached(["swappy", "-f", root.file]);
                                 root.dismiss();
                             } else if (e.button === Qt.RightButton) {
-                                root.save();
+                                if (root.video)
+                                    root.trash();
+                                else
+                                    root.save();
                             } else {
                                 root.dismiss();
                             }

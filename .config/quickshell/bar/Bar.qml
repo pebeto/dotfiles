@@ -133,13 +133,15 @@ PanelWindow {
             }
         }
 
-        // Focus mode: notifications held back and swayidle paused.
+        // Focus mode: notifications held back and swayidle paused. The bell
+        // is also crossed out while popups wait on their own (screen shared
+        // or recorded, a fullscreen window).
         BarBlock {
             onClicked: Notifs.setDnd(!Notifs.dnd)
 
             Segment {
-                icon: Notifs.dnd ? Theme.icons.bellOff : Theme.icons.bell
-                label: !Notifs.dnd ? "" : Notifs.missed > 0 ? "focus · " + Notifs.missed : "focus"
+                icon: Notifs.quiet ? Theme.icons.bellOff : Theme.icons.bell
+                label: Notifs.dnd ? (Notifs.missed > 0 ? "focus · " + Notifs.missed : "focus") : Notifs.held && Notifs.missed > 0 ? "held · " + Notifs.missed : ""
                 tint: Notifs.dnd ? Theme.good : Theme.fg
                 iconTint: Notifs.dnd ? Theme.good : Theme.dim
             }

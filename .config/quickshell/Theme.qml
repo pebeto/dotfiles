@@ -147,7 +147,9 @@ Singleton {
         calculator: String.fromCodePoint(0xF00EC),
         console: String.fromCodePoint(0xF018D),
         brain: String.fromCodePoint(0xF09D1),
-        capture: String.fromCodePoint(0xF039D)
+        capture: String.fromCodePoint(0xF039D),
+        ask: String.fromCodePoint(0xF1739),
+        eyedropper: String.fromCodePoint(0xF020A)
     })
 
     FileView {

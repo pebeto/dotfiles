@@ -175,16 +175,18 @@ systemd_dst="$CONFIG_DST/systemd/user"
 if [ -d "$systemd_src" ]; then
     [ "$DRY" = 1 ] || mkdir -p "$systemd_dst"
     shopt -s nullglob
+    timers=()
     for unit in "$systemd_src"/*.service "$systemd_src"/*.timer; do
         name=$(basename "$unit")
         link "$unit" "$systemd_dst/$name"
+        [[ "$name" == *.timer ]] && timers+=("$name")
     done
     shopt -u nullglob
     if [ "$DRY" = 0 ]; then
         systemctl --user daemon-reload 2>/dev/null || true
-        # Enable+start the agenda timers. `|| true` because a fresh box may
+        # Enable+start every timer here. `|| true` because a fresh box may
         # not have a user session bus yet; re-running after login fixes it.
-        systemctl --user enable --now agenda-refresh.timer battery-notify.timer 2>/dev/null || true
+        [ ${#timers[@]} -gt 0 ] && systemctl --user enable --now "${timers[@]}" 2>/dev/null || true
         # Quickshell is the notification server. A dunst still installed would
         # grab the D-Bus name whenever a notification fires before Quickshell
         # is up (a timer at login, say), so it stays masked until it's removed.

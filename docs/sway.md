@@ -67,8 +67,8 @@ Pressing the current workspace's number again goes back to the previous one.
 
 | Keys | Action |
 |------|--------|
-| `Print` | region screenshot to the clipboard, with a [thumbnail](quickshell.md#screenshot-thumbnail) to drag, edit or save |
-| `XF86Display` | toggle region screen recording to `~/Videos/Screencasts` |
+| `Print` | region screenshot to the clipboard, with a [thumbnail](quickshell.md#screenshot-and-recording-thumbnails) to drag, edit or save |
+| `XF86Display` | toggle region screen recording to `~/Videos/Screencasts`, with a thumbnail afterwards |
 | `Super+Shift+v` or `XF86Favorites` | clipboard-history picker |
 | `Super+Shift+p` | cycle keyboard layout (us / latam) |
 | volume and mic keys | change the PipeWire default devices through `wpctl` (volume stops at 100%) and pop up a readout |
@@ -79,3 +79,7 @@ Pressing the current workspace's number again goes back to the previous one.
 Sway locks the screen after five minutes idle and before suspend, and turns the screens off after ten minutes.
 
 On the T470, the WiFi, Bluetooth and FnLock (`Fn+Esc`) keys run `indicators.sh`, which posts a notification with the new state. The laptop's embedded controller changes those states on its own, so the script only reports what happened.
+
+## Log
+
+Sway starts from the login shell's `sway` function in `.zshrc`, which sends its output, and that of every app it starts, to `~/.sway_log`. Each start moves the previous session's log to `~/.sway_log.old`. The `sway-log` timer checks the size every ten minutes: past 5 MiB, the last 1 MiB moves to `~/.sway_log.old` and the log starts over.

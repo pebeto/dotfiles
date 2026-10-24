@@ -1,0 +1,10 @@
+[Unit]
+Description=Trim ~/.sway_log every ten minutes
+
+[Timer]
+OnBootSec=10min
+OnUnitActiveSec=10min
+Unit=sway-log.service
+
+[Install]
+WantedBy=timers.target

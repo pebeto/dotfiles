@@ -7,15 +7,18 @@ import qs.components
 import qs.services
 
 // The readout at the bottom of the focused screen when a key changes the
-// volume, the microphone or the brightness. The sway bindings call
+// volume, the microphone or the brightness, or a color was picked
+// (scripts/color-pick.sh). The sway bindings call
 // `qs ipc call osd volume` (or `mic`) after changing the value. Brightness
 // has no binding, since the T470's firmware handles those keys, so any
 // change of System.brightness shows it instead.
 Scope {
     id: root
 
-    // "volume", "mic", "brightness", or "" while hidden.
+    // "volume", "mic", "brightness", "color", or "" while hidden.
     property string kind: ""
+    // The picked color, as "#rrggbb".
+    property string swatch: ""
     // Up while it should show. It fades in and out rather than popping, and
     // keeps the last kind while fading so its contents don't change.
     property bool up: false
@@ -32,6 +35,8 @@ Scope {
     }
 
     function icon() {
+        if (kind === "color")
+            return Theme.icons.eyedropper;
         if (kind === "mic")
             return Audio.micMuted ? Theme.icons.micOff : Theme.icons.mic;
         if (kind === "brightness")
@@ -42,6 +47,8 @@ Scope {
     }
 
     function label() {
+        if (kind === "color")
+            return swatch + " copied";
         if (kind === "mic")
             return Audio.micMuted ? "Microphone off" : "Microphone on";
         if (kind === "volume" && Audio.muted)
@@ -73,6 +80,10 @@ Scope {
         }
         function mic(): void {
             root.show("mic");
+        }
+        function color(hex: string): void {
+            root.swatch = hex;
+            root.show("color");
         }
     }
 
@@ -122,21 +133,35 @@ Scope {
                 anchors.right: parent.right
                 anchors.rightMargin: Math.round(Theme.gap * 1.5)
                 anchors.verticalCenter: parent.verticalCenter
-                visible: root.kind !== "mic"
+                visible: root.kind !== "mic" && root.kind !== "color"
                 width: Math.round(Theme.em * 3)
                 horizontalAlignment: Text.AlignRight
                 text: root.label()
                 color: root.off ? Theme.inkDim : Theme.ink
             }
 
-            // The microphone is on or off, so it gets words instead of a bar.
+            // The microphone is on or off, so it gets words instead of a bar,
+            // and a picked color gets its code next to a swatch.
             Ink {
                 anchors.left: glyph.right
                 anchors.leftMargin: Theme.gap
                 anchors.verticalCenter: parent.verticalCenter
-                visible: root.kind === "mic"
+                visible: root.kind === "mic" || root.kind === "color"
                 text: root.label()
                 color: root.off ? Theme.critical : Theme.ink
+            }
+
+            Rectangle {
+                anchors.right: parent.right
+                anchors.rightMargin: Math.round(Theme.gap * 1.5)
+                anchors.verticalCenter: parent.verticalCenter
+                visible: root.kind === "color"
+                width: Math.round(Theme.em * 1.6)
+                height: width
+                radius: Math.round(Theme.radius * 0.6)
+                color: root.swatch || "transparent"
+                border.width: 1
+                border.color: Theme.rule
             }
 
             Item {
@@ -145,7 +170,7 @@ Scope {
                 anchors.right: pct.left
                 anchors.rightMargin: Theme.gap
                 anchors.verticalCenter: parent.verticalCenter
-                visible: root.kind !== "mic"
+                visible: root.kind !== "mic" && root.kind !== "color"
                 height: Math.max(4, Math.round(Theme.em * 0.3))
 
                 Rectangle {

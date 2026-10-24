@@ -13,8 +13,10 @@ import qs.services
 // empty search lists the most used ones; the clipboard opens on its newest
 // entries, with thumbnails for images. In the app launcher, a sum ("2*37",
 // or anything after "=") shows its result first, ":" searches emoji by
-// name, ">" runs the rest as a shell command, and "+" adds it as a TODO to
-// refile.org; Enter copies a result or an emoji to the clipboard.
+// name, ">" runs the rest as a shell command, "+" adds it as a TODO to
+// refile.org, "?" asks the local LLM or Claude Code (services/Ask.qml), and
+// "#" picks a color off the screen; Enter copies a result, an emoji or an
+// answer to the clipboard.
 // Both are Panels ("launcher" and "clipboard"), so opening one
 // closes the bar's panels, and `qs ipc call panel toggle launcher` or
 // `... clipboard` opens it (Super+space, XF86Favorites). Arrows, Tab or
@@ -46,6 +48,10 @@ Scope {
             return q.length > 1 ? [{ kind: "run", text: q.slice(1).trim(), hits: [], detail: "run", glyph: Theme.icons.console }] : [];
         if (q.startsWith("+"))
             return q.slice(1).trim() ? [{ kind: "capture", text: q.slice(1).trim(), hits: [], detail: "TODO in refile.org", glyph: Theme.icons.capture }] : [];
+        if (q.startsWith("?"))
+            return q.slice(1).trim() ? [{ kind: "ask", text: q.slice(1).trim(), hits: [], detail: "ask " + Ask.answerer, glyph: Ask.answerer === "Claude" ? Theme.icons.ask : Theme.icons.brain }] : [];
+        if (q.startsWith("#"))
+            return [{ kind: "color", text: "Pick a color", hits: [], detail: "click anywhere to copy its hex code", glyph: Theme.icons.eyedropper }];
         const rows = [];
         const sum = Calc.result(q);
         if (sum !== null)
@@ -65,12 +71,16 @@ Scope {
             return "Type a command to run";
         if (q.startsWith("+"))
             return "Type a task for refile.org";
+        if (q.startsWith("?"))
+            return "Type a question for " + Ask.answerer;
         if (q.startsWith(":"))
             return q.length > 1 ? (Emoji.loaded ? "No matching emoji" : "The emoji list isn't installed (unicode-emoji)") : "Type an emoji's name";
         return "No matching applications";
     }
     property int current: 0
     property bool browsing: false
+    // Showing Ask's answer instead of the results; typing again goes back.
+    property bool answering: false
     readonly property bool expanded: query !== "" || browsing || mode === "clipboard"
 
     readonly property int rows: 8
@@ -89,6 +99,10 @@ Scope {
     property bool up: false
 
     function move(steps) {
+        if (answering) {
+            answer.contentY = Math.max(0, Math.min(answer.contentHeight - answer.height, answer.contentY + steps * rowHeight));
+            return;
+        }
         if (results.length === 0)
             return;
         current = Math.max(0, Math.min(results.length - 1, current + steps));
@@ -96,9 +110,24 @@ Scope {
     }
 
     function launch(index) {
+        if (answering) {
+            if (!Ask.busy && Ask.answer) {
+                // Closing resets Ask, so the answer is taken first.
+                const text = Ask.answer;
+                Panels.close();
+                Quickshell.execDetached(["wl-copy", "--", text]);
+            }
+            return;
+        }
         const r = results[index];
         if (!r || !expanded)
             return;
+        if (r.kind === "ask") {
+            answering = true;
+            answer.contentY = 0;
+            Ask.ask(r.text);
+            return;
+        }
         Panels.close();
         if (r.kind === "app")
             Apps.launch(r.entry);
@@ -112,6 +141,8 @@ Scope {
             Quickshell.execDetached(["sh", "-c", r.text]);
         else if (r.kind === "capture")
             Org.capture(r.text);
+        else if (r.kind === "color")
+            Quickshell.execDetached([Quickshell.shellPath("scripts/color-pick.sh")]);
     }
 
     // The row's text with the matched letters in the link color, plus its
@@ -134,6 +165,8 @@ Scope {
             if (body.opacity === 0)
                 shown = false;
             up = false;
+            answering = false;
+            Ask.reset();
             return;
         }
         mode = request;
@@ -287,6 +320,10 @@ Scope {
                             root.query = text;
                             root.current = 0;
                             list.positionViewAtBeginning();
+                            if (root.answering) {
+                                root.answering = false;
+                                Ask.reset();
+                            }
                         }
                         Keys.onPressed: e => {
                             const ctrl = e.modifiers & Qt.ControlModifier;
@@ -331,6 +368,7 @@ Scope {
                     ListView {
                         id: list
 
+                        visible: !root.answering
                         width: parent.width
                         height: root.rows * root.rowHeight
                         topMargin: Theme.gap
@@ -420,6 +458,68 @@ Scope {
                             visible: root.results.length === 0
                             text: root.emptyText
                             color: Theme.inkDim
+                        }
+                    }
+
+                    // Ask's answer, in place of the results.
+                    Flickable {
+                        id: answer
+
+                        visible: root.answering
+                        width: parent.width
+                        height: root.rows * root.rowHeight
+                        contentHeight: answerColumn.implicitHeight + Theme.gap * 2
+                        clip: true
+                        boundsBehavior: Flickable.StopAtBounds
+
+                        Column {
+                            id: answerColumn
+
+                            x: Theme.gap
+                            y: Theme.gap
+                            width: answer.width - Theme.gap * 2
+                            spacing: Theme.gap
+
+                            Row {
+                                spacing: Theme.gap
+
+                                Glyph {
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    text: Ask.by === "Claude" ? Theme.icons.ask : Theme.icons.brain
+                                    color: Theme.inkDim
+                                }
+                                Ink {
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    text: Ask.by + (Ask.thinking ? " is thinking" : "")
+                                    color: Theme.inkDim
+                                    font.pixelSize: Theme.small
+                                }
+                                Dots {
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    visible: Ask.busy
+                                    animating: visible && root.shown
+                                }
+                            }
+
+                            Text {
+                                width: parent.width
+                                visible: text !== ""
+                                text: Ask.error || Ask.answer
+                                textFormat: Ask.error ? Text.PlainText : Text.MarkdownText
+                                wrapMode: Text.Wrap
+                                font.family: Theme.font
+                                font.pixelSize: Theme.em
+                                color: Ask.error ? Theme.critical : Theme.ink
+                                linkColor: Theme.link
+                                onLinkActivated: link => Qt.openUrlExternally(link)
+                            }
+
+                            Ink {
+                                visible: !Ask.busy && Ask.answer !== ""
+                                text: "Enter copies it · Escape closes"
+                                color: Theme.inkDim
+                                font.pixelSize: Theme.small
+                            }
                         }
                     }
                 }

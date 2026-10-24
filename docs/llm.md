@@ -10,7 +10,7 @@ llm gpt-oss-20b        # lighter reasoning + tools (MXFP4)
 
 Models run in the official vLLM OpenAI server in Docker, one at a time, on port 8000. Each config is flat YAML where `flag: value` becomes `vllm serve --flag value`, plus three special keys: `image:`, `model:` and `env-NAME:`. Weights download to `~/.cache/huggingface`, which `run.sh` mounts into the container.
 
-The bar's [LLM panel](quickshell.md#llm-panel) does the same as `llm <model>`, but runs it as a systemd user unit, `llm-<model>`, so it keeps going without a terminal.
+The bar's [LLM panel](quickshell.md#llm-panel) does the same as `llm <model>`, but runs it as a systemd user unit, `llm-<model>`, so it keeps going without a terminal. The panel polls `/v1/models` and `/metrics` every three seconds, so both configs keep those two endpoints out of the access log. The launcher's `?` also asks this server while it runs ([quickshell.md](quickshell.md#launcher)).
 
 | Model | Quant | Use |
 |-------|-------|-----|

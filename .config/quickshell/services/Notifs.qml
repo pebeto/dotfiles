@@ -8,6 +8,10 @@ import Quickshell.Services.Notifications
 // The notification server, the popups on screen, a short history for the
 // clock panel, and focus mode: do-not-disturb plus a frozen
 // swayidle, so the screen neither locks nor blanks while you work.
+//
+// Popups also wait on their own while a window is fullscreen (a game, a
+// video), the screen is shared, or it's being recorded, and one summary
+// follows when that ends.
 Singleton {
     id: root
 
@@ -18,6 +22,10 @@ Singleton {
     readonly property int historyLength: 30
 
     property bool dnd: false
+    readonly property bool held: Sway.fullscreen || Privacy.screenShared || Recording.active
+    readonly property bool quiet: dnd || held
+    // What held them, for the summary.
+    property string heldFor: ""
     property int missed: 0
     readonly property string statePath: Quickshell.env("XDG_RUNTIME_DIR") + "/focus-mode.state"
 
@@ -74,7 +82,7 @@ Singleton {
             tag: tag,
             timeout: timeout,
             remaining: timeout,
-            missed: dnd
+            missed: quiet
         });
         n.summaryChanged.connect(() => refresh(e));
         n.bodyChanged.connect(() => refresh(e));
@@ -88,7 +96,7 @@ Singleton {
         // those were already seen, so they only go to the history.
         if (n.lastGeneration)
             return;
-        if (dnd) {
+        if (quiet) {
             missed += 1;
             return;
         }
@@ -105,7 +113,7 @@ Singleton {
         e.icon = iconFor(e.n);
         e.time = new Date();
         e.remaining = e.timeout;
-        if (!dnd && !popups.includes(e))
+        if (!quiet && !popups.includes(e))
             popups = [e, ...popups];
     }
 
@@ -163,20 +171,30 @@ Singleton {
         dnd = on;
         Quickshell.execDetached(["pkill", on ? "-STOP" : "-CONT", "swayidle"]);
         if (on) {
-            missed = 0;
             Quickshell.execDetached(["touch", statePath]);
-            for (const e of popups)
-                drop(e, "popups");
+            if (!held)
+                hold();
             return;
         }
         Quickshell.execDetached(["rm", "-f", statePath]);
-        // One summary instead of replaying everything that came in; the
-        // notifications themselves are in the history, marked as missed.
+        if (!held)
+            summarize("Focus mode off", `You missed ${missed} notification${missed === 1 ? "" : "s"}`);
+    }
+
+    function hold() {
+        missed = 0;
+        for (const e of popups)
+            drop(e, "popups");
+    }
+
+    // One summary instead of replaying everything that came in; the
+    // notifications themselves are in the history, marked as missed.
+    function summarize(summary, body) {
         if (missed > 0) {
             const e = entry.createObject(root, {
                 app: "Focus",
-                summary: "Focus mode off",
-                body: `You missed ${missed} notification${missed === 1 ? "" : "s"}`,
+                summary: summary,
+                body: body,
                 time: new Date(),
                 timeout: defaultTimeout,
                 remaining: defaultTimeout
@@ -184,6 +202,17 @@ Singleton {
             popups = [e, ...popups];
         }
         missed = 0;
+    }
+
+    onHeldChanged: {
+        if (held) {
+            heldFor = Privacy.screenShared ? "while you shared your screen" : Recording.active ? "while you recorded the screen" : "while a window was fullscreen";
+            if (!dnd)
+                hold();
+            return;
+        }
+        if (!dnd)
+            summarize("Notifications held", `${missed} notification${missed === 1 ? "" : "s"} came in ${heldFor}`);
     }
 
     component Entry: QtObject {

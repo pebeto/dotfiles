@@ -15,6 +15,8 @@ model: openai/gpt-oss-20b
 served-model-name: gpt-oss-20b
 host: 0.0.0.0
 port: 8000
+# The bar's LLM panel polls these every 3 s, so their requests stay out of the log.
+disable-access-log-for-endpoints: /v1/models,/metrics
 
 # MXFP4 is declared in the checkpoint, so vLLM selects it without a --quantization flag. On
 # this card it runs the Marlin kernel: the recipe's FlashInfer MXFP4 env vars target
