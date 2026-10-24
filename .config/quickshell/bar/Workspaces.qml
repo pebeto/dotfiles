@@ -41,6 +41,9 @@ Row {
 
             required property var modelData
             readonly property var ws: modelData
+            // From Sway, not ws.focused, which Quickshell works out from
+            // its focused output (see services/Sway.qml).
+            readonly property bool focused: ws.name === Sway.focusedWorkspace
 
             width: Math.max(Theme.barHeight, label.implicitWidth + Theme.gap * 2)
             height: Theme.barHeight
@@ -49,9 +52,9 @@ Row {
                 anchors.fill: parent
                 anchors.margins: Math.round(Theme.em * 0.15)
                 radius: Math.round(Theme.radius * 0.6)
-                color: button.ws.focused ? Theme.accent : button.ws.urgent ? Theme.urgent : mouse.containsMouse ? Theme.hover : "transparent"
+                color: button.focused ? Theme.accent : button.ws.urgent ? Theme.urgent : mouse.containsMouse ? Theme.hover : "transparent"
                 // Shown on another output, but not the focused one.
-                border.width: button.ws.active && !button.ws.focused ? 1 : 0
+                border.width: button.ws.active && !button.focused ? 1 : 0
                 border.color: Theme.accent
             }
 
@@ -59,8 +62,8 @@ Row {
                 id: label
                 anchors.centerIn: parent
                 text: button.ws.name
-                color: button.ws.focused ? Theme.accentFg : Theme.fg
-                font.bold: button.ws.focused
+                color: button.focused ? Theme.accentFg : Theme.fg
+                font.bold: button.focused
             }
 
             MouseArea {

@@ -88,7 +88,7 @@ The lock screen shows the wallpaper, the time and a password field on every scre
 
 The password goes through the `login` PAM settings, so three wrong tries still lock the account for ten minutes. On the T470 the lock also takes a finger on the reader, through its own PAM file (`quickshell/pam/fingerprint`), so typing the password never waits on the reader. If the reader gives up after three bad scans, press Enter on the empty field to scan again.
 
-If Quickshell crashes while the screen is locked, sway keeps it locked and blank. To get back in, switch to a TTY (`Ctrl+Alt+F2`), log in, and run:
+If Quickshell crashes while the screen is locked, sway keeps the session locked and turns the screens red. Quickshell restarts itself and takes the lock back within a second or so, and the lock screen returns. It doesn't come back after a crash in its first ten seconds, or if its config changes while the screen is locked (the reload makes it exit). If the screens stay red, switch to a TTY (`Ctrl+Alt+F2`), log in, and run:
 
 ```sh
 swaymsg -s /run/user/$(id -u)/sway-ipc.$(id -u).$(pidof sway).sock exec swaylock

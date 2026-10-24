@@ -2,7 +2,6 @@ pragma Singleton
 
 import QtQuick
 import Quickshell
-import Quickshell.I3
 import Quickshell.Io
 
 // Which panel is open ("clock", "wifi", "bluetooth", "tray", "llm",
@@ -32,7 +31,7 @@ Singleton {
         target: "panel"
 
         function toggle(name: string): void {
-            root.toggle(name, I3.focusedMonitor?.name ?? "");
+            root.toggle(name, Sway.focusedOutput);
         }
         function close(): void {
             root.close();

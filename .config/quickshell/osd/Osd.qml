@@ -1,6 +1,5 @@
 import QtQuick
 import Quickshell
-import Quickshell.I3
 import Quickshell.Io
 import Quickshell.Wayland
 import qs
@@ -78,7 +77,7 @@ Scope {
     }
 
     PanelWindow {
-        screen: Quickshell.screens.find(s => s.name === I3.focusedMonitor?.name) ?? Quickshell.screens[0]
+        screen: Quickshell.screens.find(s => s.name === Sway.focusedOutput) ?? Quickshell.screens[0]
         visible: root.up || card.opacity > 0
         anchors.bottom: true
         margins.bottom: Math.round(Theme.em * 5)

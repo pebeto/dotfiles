@@ -1,10 +1,10 @@
 import QtQuick
 import Quickshell
-import Quickshell.I3
 import Quickshell.Services.Polkit
 import Quickshell.Wayland
 import qs
 import qs.components
+import qs.services
 
 // The password prompt for anything that asks polkit for admin rights, such
 // as starting bluetoothd from the Bluetooth panel. Quickshell registers as
@@ -32,7 +32,7 @@ Scope {
     }
 
     PanelWindow {
-        screen: Quickshell.screens.find(s => s.name === I3.focusedMonitor?.name) ?? Quickshell.screens[0]
+        screen: Quickshell.screens.find(s => s.name === Sway.focusedOutput) ?? Quickshell.screens[0]
         visible: agent.isActive && root.flow !== null
         anchors.top: true
         anchors.bottom: true

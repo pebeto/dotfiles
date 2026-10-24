@@ -1,12 +1,12 @@
 import QtQuick
 import QtQuick.Effects
 import Quickshell
-import Quickshell.I3
 import Quickshell.Io
 import Quickshell.Wayland
 import Quickshell.Widgets
 import qs
 import qs.components
+import qs.services
 
 // The thumbnail in the corner after a screenshot, as on macOS. Print runs
 // sway/screenshot.sh, which copies the shot to the clipboard and calls
@@ -33,7 +33,7 @@ Scope {
     function show(path) {
         file = path;
         saved = false;
-        screenName = I3.focusedMonitor?.name ?? "";
+        screenName = Sway.focusedOutput;
         shown = true;
         up = true;
         timer.interval = 6000;

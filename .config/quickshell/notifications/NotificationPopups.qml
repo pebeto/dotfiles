@@ -1,6 +1,5 @@
 import QtQuick
 import Quickshell
-import Quickshell.I3
 import Quickshell.Wayland
 import qs
 import qs.services
@@ -11,7 +10,7 @@ import qs.services
 PanelWindow {
     id: root
 
-    screen: Quickshell.screens.find(s => s.name === I3.focusedMonitor?.name) ?? Quickshell.screens[0]
+    screen: Quickshell.screens.find(s => s.name === Sway.focusedOutput) ?? Quickshell.screens[0]
     visible: Notifs.popups.length > 0
     anchors.top: true
     anchors.right: true

@@ -26,8 +26,11 @@ import qs.components
 // and on unlock it fades down to the plain wallpaper, the same one sway puts
 // behind the windows, before letting go.
 //
-// If the shell dies while locked, sway keeps the screens blank and locked;
-// lock again from a TTY to get a prompt back (see docs/quickshell.md).
+// If the shell dies while locked, sway keeps the session locked and paints
+// the screens red. While locked, a marker in $XDG_RUNTIME_DIR holds this
+// sway session's socket, so the shell restarted after a crash finds it and
+// locks again, taking over the abandoned lock. Failing that, lock from a
+// TTY (see docs/quickshell.md).
 Scope {
     id: root
 
@@ -49,6 +52,7 @@ Scope {
     // Loading dots for "Checking" and the reader coming back.
     property int dots: 0
     readonly property int fadeMs: 250
+    readonly property string marker: Quickshell.env("XDG_RUNTIME_DIR") + "/quickshell-locked"
 
     function lock() {
         if (sessionLock.locked)
@@ -137,11 +141,51 @@ Scope {
         onTriggered: {
             sessionLock.locked = false;
             root.password = "";
+            Quickshell.execDetached(["rm", "-f", root.marker]);
+        }
+    }
+
+    // A marker left by a shell that died while locked in this session.
+    FileView {
+        path: root.marker
+        printErrors: false
+        onLoaded: {
+            if (text().trim() !== Quickshell.env("SWAYSOCK"))
+                return;
+            // Taken, so a lock someone else ends (swaylock from a TTY)
+            // doesn't come back on the next reload.
+            Quickshell.execDetached(["rm", "-f", root.marker]);
+            relock.start();
+        }
+    }
+
+    // sway refuses a new lock while the crashed shell is still connected
+    // (it can take a moment to exit), so keep asking until it's granted.
+    Timer {
+        id: relock
+
+        property int tries: 0
+
+        interval: 500
+        repeat: true
+        triggeredOnStart: true
+        onTriggered: {
+            if (sessionLock.secure || ++tries > 40)
+                stop();
+            else if (!sessionLock.locked)
+                root.lock();
         }
     }
 
     WlSessionLock {
         id: sessionLock
+
+        // Written once sway has granted the lock, not when it's asked for,
+        // since it can refuse.
+        onSecureChanged: {
+            if (secure)
+                Quickshell.execDetached(["sh", "-c", "printf '%s' \"$SWAYSOCK\" > \"$1\"", "sh", root.marker]);
+        }
 
         WlSessionLockSurface {
             id: surface
