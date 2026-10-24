@@ -1,16 +1,34 @@
 #!/bin/bash
-# Region screenshot (Print): pick a region with slurp and copy the shot to
-# the clipboard. Quickshell then shows it as a thumbnail in the corner, which
-# you can drag into another window, click to annotate in swappy, or
-# right-click to save to ~/Pictures/Screenshots. The last few shots stay in
-# $XDG_RUNTIME_DIR, since a window the thumbnail was dropped on may read the
-# file later (Claude Code reads it when the message is sent).
+# screenshot.sh [region|window|screen]: a screenshot copied to the
+# clipboard. Print takes a region picked with slurp; the Control Center also
+# asks for a window (click one) or the whole focused screen. Quickshell then
+# shows the shot as a thumbnail in the corner, which you can drag into
+# another window, click to annotate in swappy, or right-click to save to
+# ~/Pictures/Screenshots. The last few shots stay in $XDG_RUNTIME_DIR, since
+# a window the thumbnail was dropped on may read the file later (Claude Code
+# reads it when the message is sent).
 set -u
 
 # Hide the last thumbnail so it isn't in this shot.
 qs ipc call screenshot hide >/dev/null 2>&1
 
-region=$(slurp) || exit 0          # cancelled with Escape
+case "${1:-region}" in
+window)
+    # slurp offers each visible window's content area; a click picks one.
+    region=$(swaymsg -t get_tree | jq -r '.. | select(.pid? and .visible?) |
+        "\(.rect.x + .window_rect.x),\(.rect.y + .window_rect.y) \(.window_rect.width)x\(.window_rect.height)"' |
+        slurp -r) || exit 0
+    ;;
+screen)
+    region=$(swaymsg -t get_outputs | jq -r '.[] | select(.focused) |
+        "\(.rect.x),\(.rect.y) \(.rect.width)x\(.rect.height)"')
+    # The Control Center that asked is still sliding away.
+    sleep 0.3
+    ;;
+*)
+    region=$(slurp) || exit 0      # cancelled with Escape
+    ;;
+esac
 [ -z "$region" ] && exit 0
 
 dir="${XDG_RUNTIME_DIR:-/tmp}/screenshots"

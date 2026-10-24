@@ -7,7 +7,9 @@ import Quickshell.Services.Notifications
 
 // The notification server, the popups on screen, a short history for the
 // clock panel, and focus mode: do-not-disturb plus a frozen
-// swayidle, so the screen neither locks nor blanks while you work.
+// swayidle, so the screen neither locks nor blanks while you work. Keep
+// awake (the Control Center) freezes swayidle the same way without the
+// do-not-disturb, so swayidle is paused while either is on.
 //
 // Popups also wait on their own while a window is fullscreen (a game, a
 // video), the screen is shared, or it's being recorded, and one summary
@@ -28,6 +30,13 @@ Singleton {
     property string heldFor: ""
     property int missed: 0
     readonly property string statePath: Quickshell.env("XDG_RUNTIME_DIR") + "/focus-mode.state"
+    property bool keepAwake: false
+    // When focus mode and keep awake turn themselves off, in ms since the
+    // epoch, or 0 for when you turn them off. Their state files hold it.
+    property real focusUntil: 0
+    property real keepAwakeUntil: 0
+    readonly property string keepAwakePath: Quickshell.env("XDG_RUNTIME_DIR") + "/keep-awake.state"
+    readonly property bool idlePaused: dnd || keepAwake
 
     // Ten seconds, and critical ones stay until dismissed. A timeout the
     // sender asks for wins.
@@ -165,13 +174,20 @@ Singleton {
         dismiss(e);
     }
 
-    function setDnd(on) {
-        if (on === dnd)
+    // `until` makes it end by itself (see focusUntil).
+    function setDnd(on, until) {
+        const end = on ? (until ?? 0) : 0;
+        if (on === dnd) {
+            if (on && end !== focusUntil) {
+                focusUntil = end;
+                writeState(statePath, end);
+            }
             return;
+        }
         dnd = on;
-        Quickshell.execDetached(["pkill", on ? "-STOP" : "-CONT", "swayidle"]);
+        focusUntil = end;
         if (on) {
-            Quickshell.execDetached(["touch", statePath]);
+            writeState(statePath, end);
             if (!held)
                 hold();
             return;
@@ -180,6 +196,36 @@ Singleton {
         if (!held)
             summarize("Focus mode off", `You missed ${missed} notification${missed === 1 ? "" : "s"}`);
     }
+
+    function setKeepAwake(on, until) {
+        keepAwake = on;
+        keepAwakeUntil = on ? (until ?? 0) : 0;
+        if (on)
+            writeState(keepAwakePath, keepAwakeUntil);
+        else
+            Quickshell.execDetached(["rm", "-f", keepAwakePath]);
+    }
+
+    function writeState(path, until) {
+        Quickshell.execDetached(["sh", "-c", "printf '%s' \"$2\" > \"$1\"", "sh", path, String(until)]);
+    }
+
+    // Whatever has a time runs out, also after a suspend went past it.
+    Timer {
+        interval: 10000
+        repeat: true
+        triggeredOnStart: true
+        running: root.focusUntil > 0 || root.keepAwakeUntil > 0
+        onTriggered: {
+            const now = Date.now();
+            if (root.focusUntil > 0 && now >= root.focusUntil)
+                root.setDnd(false);
+            if (root.keepAwakeUntil > 0 && now >= root.keepAwakeUntil)
+                root.setKeepAwake(false);
+        }
+    }
+
+    onIdlePausedChanged: Quickshell.execDetached(["pkill", idlePaused ? "-STOP" : "-CONT", "swayidle"])
 
     function hold() {
         missed = 0;
@@ -267,7 +313,19 @@ Singleton {
         id: stateFile
         path: root.statePath
         printErrors: false
-        onLoaded: root.dnd = true
+        onLoaded: {
+            root.focusUntil = parseFloat(text()) || 0;
+            root.dnd = true;
+        }
+    }
+
+    FileView {
+        path: root.keepAwakePath
+        printErrors: false
+        onLoaded: {
+            root.keepAwakeUntil = parseFloat(text()) || 0;
+            root.keepAwake = true;
+        }
     }
 
     IpcHandler {

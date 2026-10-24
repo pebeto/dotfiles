@@ -13,14 +13,13 @@ The blocks on the right, in order:
 | red dot and a timer | Shows while `XF86Display` records the screen. Click it to stop. |
 | orange mic, green camera, purple screen | An app is using the microphone (its name shows), a camera, or a shared screen. The colors are the ones macOS uses. |
 | tray icons | Apps that keep running after you close their window, like Steam. Double-click opens the app, right-click opens its menu, middle-click runs its secondary action. |
-| bell | Focus mode, see [Notifications](#notifications). |
-| keyboard | The current layout. Click to switch. |
 | brain (workstation) | The local LLM server: the model it serves, or tokens per second while it generates. Click for its panel. |
 | CPU, GPU, RAM | Temperatures and memory, amber and then red as they climb. Click to open `btop`. GPU is workstation-only. |
 | brightness (T470) | Scroll to change it. |
-| volume | Scroll to change it, click to mute, right-click to open the clock panel with the outputs. |
+| volume | Scroll to change it, click to mute, right-click to open the Control Center with the outputs. |
 | batteries (T470) | `i` is the internal pack, `e` the hot-swap one. |
 | WiFi, Bluetooth (T470) | Panels for joining networks (through iwd) and connecting devices. `Super+F10` opens the Bluetooth one. |
+| two sliders | The [Control Center](#control-center). It turns into a crossed-out bell while focus mode is on ("focus") or popups are held ("held · N"). |
 | clock | The clock panel. |
 
 Steam's tray icon can't open its window by itself, so the bar runs Steam's launcher instead, which brings the running copy to the front.
@@ -29,11 +28,31 @@ The panels drop down from under the bar, except the clock panel, which slides in
 
 ## Clock panel
 
-The clock opens a calendar, today's org agenda, what's playing, the sound outputs, Syncthing's status and recent notifications.
+The clock opens a calendar, today's org agenda and recent notifications. The agenda comes from a cache that the `agenda-refresh` timer keeps up to date.
 
-- The agenda comes from a cache that the `agenda-refresh` timer keeps up to date.
+## Control Center
+
+The icon next to the clock opens the quick settings, the sound, the microphone, what's playing and Syncthing.
+
+| Tile | What it does |
+|------|--------------|
+| Focus | Focus mode, see [Notifications](#notifications). |
+| Keep awake | Keeps the screen from locking or turning off, like focus mode, but notifications still show. |
+| Night light | Pauses or resumes gammastep's warmer colors, for a game or work where the colors matter. |
+| Microphone | Mutes or unmutes the default microphone. |
+| Screenshot | Asks for a region, a window (click one) or the whole screen, then shows the same thumbnail as `Print`. |
+| Record | Starts a region recording, the same as `XF86Display`, or stops one, showing how long it's been. |
+| Layout | Switches the keyboard layout. |
+| WiFi, Bluetooth (T470) | Show the network or the connected device, and open their panels. |
+
+Right-click Focus or Keep awake to give it a time limit: 30 minutes, an hour, or until 8:00. The tile counts down, and the limit holds through a reload or a suspend. On the T470 a brightness slider follows the tiles.
+
+- The sound section lists the outputs to switch to, a volume slider, and a slider for each app playing sound. Click an app's icon to mute it, or its name to send it to another output; a small icon shows when an app isn't on the default one. The choice lasts while that app keeps playing.
+- The microphone section has the input level, and when more than one microphone is plugged in (a webcam beside the headset), the list to pick from.
 - Now playing shows the cover, the track and play/pause, next and previous. Clicking the title brings up the player's window.
-- The sound section lists the outputs to switch to, a volume slider, and a slider for each app playing sound. Click an app's icon to mute it.
+- Syncthing's line shows whether everything is synced and which of your other devices are connected.
+
+Keep awake and the night light survive a reload of the shell. A night light pause lasts until gammastep itself restarts.
 
 ## LLM panel
 
@@ -76,9 +95,9 @@ The shots themselves stay in `$XDG_RUNTIME_DIR/screenshots`, the last five of th
 
 Quickshell is the notification server. Click a popup to close it, middle-click to run its default action, and right-click to close all of them.
 
-The bell turns on focus mode. Popups wait and swayidle pauses, and when you turn it off you get one "you missed N" notification.
+Focus mode, from the Control Center, holds popups back and pauses swayidle, and when you turn it off you get one "you missed N" notification.
 
-Popups also wait on their own while a window is fullscreen (a game, a video), while you share your screen, and while you record it, so nothing private shows up on a call or in a video. The bell is crossed out meanwhile, with a count once something comes in, and one summary follows when it ends.
+Popups also wait on their own while a window is fullscreen (a game, a video), while you share your screen, and while you record it, so nothing private shows up on a call or in a video. The Control Center's icon shows a crossed-out bell meanwhile, with a count once something comes in, and one summary follows when it ends.
 
 The volume and mic keys, and brightness changes on the T470, pop up a readout at the bottom of the screen.
 
@@ -108,7 +127,7 @@ Everything above answers to `qs ipc call`:
 
 | Call | Does |
 |------|------|
-| `panel toggle <name>` | opens or closes `clock`, `wifi`, `bluetooth`, `llm`, `launcher`, `clipboard` or `session` |
+| `panel toggle <name>` | opens or closes `clock`, `control`, `wifi`, `bluetooth`, `llm`, `launcher`, `clipboard` or `session` |
 | `notifications toggleFocus` | turns focus mode on or off |
 | `lock lock` | locks the screen |
 | `screenshot preview <file>` | shows a thumbnail for any image |

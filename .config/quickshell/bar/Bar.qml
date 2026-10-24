@@ -133,29 +133,6 @@ PanelWindow {
             }
         }
 
-        // Focus mode: notifications held back and swayidle paused. The bell
-        // is also crossed out while popups wait on their own (screen shared
-        // or recorded, a fullscreen window).
-        BarBlock {
-            onClicked: Notifs.setDnd(!Notifs.dnd)
-
-            Segment {
-                icon: Notifs.quiet ? Theme.icons.bellOff : Theme.icons.bell
-                label: Notifs.dnd ? (Notifs.missed > 0 ? "focus · " + Notifs.missed : "focus") : Notifs.held && Notifs.missed > 0 ? "held · " + Notifs.missed : ""
-                tint: Notifs.dnd ? Theme.good : Theme.fg
-                iconTint: Notifs.dnd ? Theme.good : Theme.dim
-            }
-        }
-
-        BarBlock {
-            onClicked: Sway.nextLayout()
-
-            Segment {
-                icon: Theme.icons.keyboard
-                label: Sway.layout
-            }
-        }
-
         // The local LLM server (workstation): its model, or its speed while
         // it generates; a click opens its panel.
         BarBlock {
@@ -206,10 +183,10 @@ PanelWindow {
             }
         }
 
-        // Left or middle click mutes; right click opens the clock panel,
+        // Left or middle click mutes; right click opens the Control Center,
         // which lists the outputs to switch to.
         BarBlock {
-            onClicked: button => button === Qt.RightButton ? Panels.toggle("clock", bar.outputName) : Audio.toggleMute()
+            onClicked: button => button === Qt.RightButton ? Panels.toggle("control", bar.outputName) : Audio.toggleMute()
             onWheel: steps => Audio.step(steps)
 
             Segment {
@@ -263,6 +240,23 @@ PanelWindow {
             }
         }
 
+        // The Control Center: toggles, sound, what's playing. Its icon is
+        // also where focus mode shows, as a crossed-out bell, and popups
+        // waiting on their own (screen shared or recorded, a fullscreen
+        // window), with how many came in.
+        BarBlock {
+            id: controlBlock
+
+            onClicked: Panels.toggle("control", bar.outputName)
+
+            Segment {
+                icon: Notifs.quiet ? Theme.icons.bellOff : Theme.icons.control
+                label: Notifs.dnd ? (Notifs.missed > 0 ? "focus · " + Notifs.missed : "focus") : Notifs.held && Notifs.missed > 0 ? "held · " + Notifs.missed : ""
+                tint: Notifs.dnd ? Theme.good : Theme.fg
+                iconTint: Notifs.dnd ? Theme.good : Theme.dim
+            }
+        }
+
         BarBlock {
             id: clockBlock
             onClicked: Panels.toggle("clock", bar.outputName)
@@ -293,6 +287,12 @@ PanelWindow {
 
     TrayMenu {
         anchorItem: bar.trayAnchor ?? clockBlock
+        screen: bar.modelData
+        maxHeight: bar.panelMax
+    }
+
+    ControlCenter {
+        anchorItem: controlBlock
         screen: bar.modelData
         maxHeight: bar.panelMax
     }

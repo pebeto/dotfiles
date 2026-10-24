@@ -5,18 +5,15 @@ import qs.components
 import qs.notifications
 import qs.services
 
-// The clock's panel: the date and a calendar, today's agenda, what's
-// playing, the sound output, Syncthing's state, and the notification
-// history.
+// The clock's panel: the date and a calendar, today's agenda and the
+// notification history. Sound, what's playing and Syncthing are in the
+// Control Center.
 PanelPopup {
     id: root
 
     name: "clock"
     slideFrom: "right"
-    onOpened: {
-        calendar.reset();
-        Syncthing.update();
-    }
+    onOpened: calendar.reset()
 
     SystemClock {
         id: clock
@@ -55,56 +52,6 @@ PanelPopup {
         }
         AgendaView {
             width: parent.width
-        }
-    }
-
-    // Only while some player has something loaded.
-    Rule {
-        visible: media.player !== null
-    }
-
-    Column {
-        visible: media.player !== null
-        width: root.contentWidth
-        spacing: Theme.gap
-
-        SectionTitle {
-            text: "Now playing"
-        }
-        MediaView {
-            id: media
-            width: parent.width
-        }
-    }
-
-    Rule {}
-
-    Column {
-        width: root.contentWidth
-        spacing: Theme.gap
-
-        SectionTitle {
-            text: "Sound"
-        }
-        SoundView {
-            width: parent.width
-        }
-
-        Row {
-            spacing: Theme.gap
-            topPadding: Math.round(Theme.gap * 0.5)
-
-            Glyph {
-                text: Theme.icons.sync
-                color: Theme.ink
-            }
-            Ink {
-                text: "Syncthing"
-            }
-            Ink {
-                text: Syncthing.state === "synced" ? "up to date" : Syncthing.state === "syncing" ? "syncing " + Syncthing.percent + "%" : "offline"
-                color: Syncthing.state === "synced" ? Theme.good : Syncthing.state === "syncing" ? Theme.olive : Theme.inkDim
-            }
         }
     }
 

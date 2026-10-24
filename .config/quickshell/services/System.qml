@@ -54,6 +54,12 @@ Singleton {
         brightnessTimer.restart();
     }
 
+    // 0..1, from the Control Center's slider.
+    function setBrightness(level) {
+        Quickshell.execDetached(["brightnessctl", "set", Math.round(Math.max(0.01, Math.min(1, level)) * 100) + "%"]);
+        brightnessTimer.restart();
+    }
+
     function refreshWifi() {
         if (Theme.profile.wifi)
             wifiProc.running = true;

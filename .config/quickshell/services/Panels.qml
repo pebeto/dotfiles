@@ -4,9 +4,9 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 
-// Which panel is open ("clock", "wifi", "bluetooth", "tray", "llm",
-// "launcher", "clipboard", "session" or ""), and on which output. One at a
-// time, like menus.
+// Which panel is open ("clock", "control", "wifi", "bluetooth", "tray",
+// "llm", "launcher", "clipboard", "session" or ""), and on which output. One
+// at a time, like menus.
 Singleton {
     id: root
 

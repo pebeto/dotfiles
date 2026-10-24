@@ -149,7 +149,11 @@ Singleton {
         brain: String.fromCodePoint(0xF09D1),
         capture: String.fromCodePoint(0xF039D),
         ask: String.fromCodePoint(0xF1739),
-        eyedropper: String.fromCodePoint(0xF020A)
+        eyedropper: String.fromCodePoint(0xF020A),
+        control: String.fromCodePoint(0xF1542),
+        coffee: String.fromCodePoint(0xF06CA),
+        night: String.fromCodePoint(0xF0594),
+        screenshot: String.fromCodePoint(0xF0E51)
     })
 
     FileView {
