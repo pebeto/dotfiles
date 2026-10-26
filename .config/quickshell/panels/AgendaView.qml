@@ -3,11 +3,14 @@ import qs
 import qs.components
 import qs.services
 
-// Today's agenda, grouped under one heading per org category, with times in
-// their own column and the TODO keywords colored as in the old popup.
+// A day's agenda, today's unless told otherwise, grouped under one heading
+// per org category, with times in their own column and the TODO keywords
+// colored as in the old popup.
 Column {
     id: root
 
+    property var groups: Agenda.groups
+    property string note: Agenda.note
     readonly property int timeWidth: Math.round(Theme.em * 3.6)
 
     function escapeHtml(s) {
@@ -32,7 +35,7 @@ Column {
     spacing: Math.round(Theme.gap * 0.8)
 
     Repeater {
-        model: Agenda.groups
+        model: root.groups
 
         Column {
             required property var modelData
@@ -82,10 +85,10 @@ Column {
     }
 
     Ink {
-        visible: Agenda.groups.length === 0
+        visible: root.groups.length === 0
         width: root.width
         wrapMode: Text.Wrap
-        text: Agenda.note || "Nothing scheduled"
+        text: root.note || "Nothing scheduled"
         color: Theme.inkDim
     }
 }

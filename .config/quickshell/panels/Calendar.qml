@@ -3,11 +3,14 @@ import qs
 import qs.components
 
 // A month grid with today marked, starting on Sunday like `cal`. The arrows
-// or the wheel change month; clicking the title goes back to this one.
+// or the wheel change month; clicking the title goes back to this one and to
+// today. Clicking a day picks it, and the picked one is highlighted.
 Column {
     id: root
 
     required property date today
+    // The picked day, or null.
+    property var selected: null
     property int year: today.getFullYear()
     property int month: today.getMonth()
     readonly property int firstWeekday: new Date(year, month, 1).getDay()
@@ -19,6 +22,8 @@ Column {
         year = today.getFullYear();
         month = today.getMonth();
     }
+
+    signal picked(var day)
 
     function shift(by) {
         const m = month + by;
@@ -54,7 +59,10 @@ Column {
             MouseArea {
                 anchors.fill: parent
                 cursorShape: Qt.PointingHandCursor
-                onClicked: root.reset()
+                onClicked: {
+                    root.reset();
+                    root.picked(root.today);
+                }
             }
         }
 
@@ -99,6 +107,7 @@ Column {
                 readonly property int date: index - root.firstWeekday + 1
                 readonly property bool inMonth: date >= 1 && date <= root.days
                 readonly property bool isToday: inMonth && date === root.today.getDate() && root.month === root.today.getMonth() && root.year === root.today.getFullYear()
+                readonly property bool isSelected: inMonth && root.selected !== null && date === root.selected.getDate() && root.month === root.selected.getMonth() && root.year === root.selected.getFullYear()
 
                 width: root.cell
                 height: Math.round(Theme.em * 1.6)
@@ -108,14 +117,23 @@ Column {
                     width: parent.height - 2
                     height: width
                     radius: width / 2
-                    color: day.isToday ? Theme.accent : "transparent"
+                    color: day.isToday ? Theme.accent : day.isSelected ? Theme.highlight : dayMouse.containsMouse && day.inMonth ? Theme.paperHover : "transparent"
                 }
 
                 Ink {
                     anchors.centerIn: parent
                     visible: day.inMonth
                     text: day.date
-                    font.bold: day.isToday
+                    font.bold: day.isToday || day.isSelected
+                }
+
+                MouseArea {
+                    id: dayMouse
+                    anchors.fill: parent
+                    enabled: day.inMonth
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: root.picked(new Date(root.year, root.month, day.date))
                 }
             }
         }

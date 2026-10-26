@@ -30,6 +30,8 @@ The panels drop down from under the bar, except the clock panel, which slides in
 
 The clock opens a calendar, today's org agenda and recent notifications. The agenda comes from a cache that the `agenda-refresh` timer keeps up to date.
 
+Click a day in the calendar to see its agenda instead; the Today button, or the month's title, goes back. The first day you click in a month takes about half a second, while `agenda.sh month` renders the whole month with `emacs --batch`, and the rest of that month is instant.
+
 ## Control Center
 
 The icon next to the clock opens the quick settings, the sound, the microphone, what's playing and Syncthing.

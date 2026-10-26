@@ -5,15 +5,28 @@ import qs.components
 import qs.notifications
 import qs.services
 
-// The clock's panel: the date and a calendar, today's agenda and the
-// notification history. Sound, what's playing and Syncthing are in the
-// Control Center.
+// The clock's panel: the date and a calendar, an agenda and the
+// notification history. The agenda is today's, or the day clicked in the
+// calendar's. Sound, what's playing and Syncthing are in the Control
+// Center.
 PanelPopup {
     id: root
 
     name: "clock"
     slideFrom: "right"
-    onOpened: calendar.reset()
+    // The day whose agenda shows, or null for today.
+    property var day: null
+    readonly property var picked: day ? Agenda.day(Qt.formatDate(day, "yyyy-MM-dd")) : null
+
+    function sameDay(a, b) {
+        return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+    }
+
+    onOpened: {
+        calendar.reset();
+        day = null;
+        Agenda.invalidate();
+    }
 
     SystemClock {
         id: clock
@@ -39,6 +52,12 @@ PanelPopup {
         id: calendar
         width: root.contentWidth
         today: clock.date
+        selected: root.day
+        onPicked: d => {
+            root.day = root.sameDay(d, clock.date) ? null : d;
+            if (root.day)
+                Agenda.loadMonth(d.getFullYear(), d.getMonth());
+        }
     }
 
     Rule {}
@@ -47,11 +66,26 @@ PanelPopup {
         width: root.contentWidth
         spacing: Theme.gap
 
-        SectionTitle {
-            text: "Agenda"
+        Item {
+            width: parent.width
+            height: todayButton.implicitHeight
+
+            SectionTitle {
+                anchors.verticalCenter: parent.verticalCenter
+                text: root.day ? "Agenda · " + Qt.formatDate(root.day, "dddd d MMMM") : "Agenda"
+            }
+            TextButton {
+                id: todayButton
+                anchors.right: parent.right
+                visible: root.day !== null
+                text: "Today"
+                onClicked: root.day = null
+            }
         }
         AgendaView {
             width: parent.width
+            groups: root.day ? root.picked?.groups ?? [] : Agenda.groups
+            note: root.day ? (root.picked ? root.picked.note : "Loading…") : Agenda.note
         }
     }
 
