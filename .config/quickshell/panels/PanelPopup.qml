@@ -16,10 +16,11 @@ import qs.services
 // including the one on the panel's own bar block.
 //
 // The card drops down from under the bar, or with `slideFrom: "right"`
-// (the clock panel) slides in from the right edge of the screen. Dropping,
-// it moves inside a window that stays put and clips it at the bar's edge,
-// so it draws its own shadow. Sliding, the whole window moves (its right
-// margin animates), so swayfx's shadow and corners stay on the card.
+// (the clock panel) slides in from the right edge of the screen. Either way
+// it moves inside a window that stays put, which clips it at the bar's edge
+// or at the screen's, and it draws its own shadow. Moving the window itself
+// doesn't animate: Qt only sends a frame when the content changes, so the
+// compositor would see each new position only at the panel's next repaint.
 Scope {
     id: root
 
@@ -32,7 +33,7 @@ Scope {
     // "top" or "right".
     property string slideFrom: "top"
     readonly property bool drops: slideFrom === "top"
-    // The dropping card's room for its shadow, and its gap below the bar.
+    // The card's room for its shadow, and its gap below the bar.
     readonly property int pad: 32
     readonly property int top: Math.round(Theme.gap * 0.5)
     readonly property bool wanted: Panels.open === name && Panels.screen === screen.name
@@ -107,23 +108,23 @@ Scope {
         visible: root.shown
         anchors.top: true
         anchors.right: true
-        margins.top: root.drops ? 0 : root.top
-        margins.right: root.drops ? root.rightMargin - root.pad : Math.round(root.rightMargin - root.slide * (card.width + root.rightMargin))
+        // Sliding in from the right, the window reaches the screen's edge,
+        // so the card can start beyond it.
+        margins.right: root.drops ? root.rightMargin - root.pad : 0
         exclusiveZone: 0
         WlrLayershell.layer: WlrLayer.Overlay
-        WlrLayershell.namespace: root.drops ? "quickshell-dropdown" : "quickshell-panel"
+        WlrLayershell.namespace: "quickshell-popup"
         WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
         color: "transparent"
-        implicitWidth: card.width + (root.drops ? root.pad * 2 : 0)
-        implicitHeight: card.height + (root.drops ? root.top + root.pad : 0)
+        implicitWidth: card.width + root.pad + (root.drops ? root.pad : root.rightMargin)
+        implicitHeight: card.height + root.top + root.pad
         mask: Region {
             item: card
         }
 
-        // The same shadow swayfx gives the clock panel (shadow_blur_radius
-        // and shadow_color in sway/config).
+        // swayfx's floating-window shadow (shadow_blur_radius and
+        // shadow_color in sway/config).
         RectangularShadow {
-            visible: root.drops
             anchors.fill: card
             radius: card.radius
             blur: 20
@@ -133,8 +134,8 @@ Scope {
         Rectangle {
             id: card
 
-            x: root.drops ? root.pad : 0
-            y: root.drops ? Math.round(root.top - root.slide * (root.top + height + root.pad)) : 0
+            x: root.drops ? root.pad : Math.round(root.pad + root.slide * (width + root.rightMargin + root.pad))
+            y: root.drops ? Math.round(root.top - root.slide * (root.top + height + root.pad)) : root.top
             width: root.contentWidth + Theme.gap * 4
             height: Math.min(column.implicitHeight + Theme.gap * 4, root.maxHeight)
             color: Theme.paper

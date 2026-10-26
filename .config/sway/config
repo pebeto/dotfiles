@@ -81,15 +81,10 @@ shadow_color #00000066
 for_window [floating] shadows enable
 animation_duration_ms 200
 
-# The clock panel and the volume readout get their card's rounding and a
-# shadow. No blur anywhere: the Quickshell surfaces are solid. The other bar
-# panels (quickshell-dropdown) and the launcher draw their own shadow, since
-# their card moves or scales inside a window that stays put, and effects here
-# would apply to the whole window.
-layer_effects "quickshell-panel" {
-    shadows enable;
-    corner_radius $radius;
-}
+# The volume readout gets its card's rounding and a shadow. No blur anywhere:
+# the Quickshell surfaces are solid. The bar's panels and the launcher draw
+# their own shadow, since their card moves or scales inside a window that
+# stays put, and effects here would apply to the whole window.
 layer_effects "quickshell-osd" {
     shadows enable;
     corner_radius $radius;
