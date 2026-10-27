@@ -21,8 +21,9 @@ Singleton {
     // block shows whenever a controller is present; the flag keeps it there
     // while the controller is switched off (the T470's vanishes when
     // rfkill blocks it). fingerprint lets the lock screen take a finger on
-    // the reader as well as the password, and llm shows the local LLM
-    // server's block (.config/llm).
+    // the reader as well as the password, llm shows the local LLM server's
+    // block (.config/llm), and vrr has the Sway service turn adaptive sync
+    // on while a window is fullscreen.
     readonly property var profiles: ({
         workstation: {
             fontPx: 20,
@@ -36,7 +37,8 @@ Singleton {
             wifi: false,
             bluetooth: false,
             fingerprint: false,
-            llm: true
+            llm: true,
+            vrr: true
         },
         t470: {
             fontPx: 13,
@@ -50,7 +52,8 @@ Singleton {
             wifi: true,
             bluetooth: true,
             fingerprint: true,
-            llm: false
+            llm: false,
+            vrr: false
         }
     })
     readonly property var profile: profiles[host] ?? profiles.t470

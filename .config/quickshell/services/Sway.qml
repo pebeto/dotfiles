@@ -4,11 +4,13 @@ import QtQuick
 import Quickshell
 import Quickshell.I3
 import Quickshell.Io
+import qs
 
 // What the shell needs from sway beyond Quickshell.I3's workspace list: the
 // active keyboard layout, the binding mode, the focused output and
 // workspace, and whether a fullscreen window covers that output, all kept
-// current from IPC events.
+// current from IPC events. It also turns adaptive sync on and off with
+// fullscreen windows, on hosts whose profile sets vrr.
 //
 // The focus comes from sway's own events rather than I3.focusedMonitor and
 // I3.focusedWorkspace: Quickshell keeps those pointing at an output it has
@@ -26,11 +28,30 @@ Singleton {
     property string focusedWorkspace: ""
     // A fullscreen window showing on the focused output (a game, a video).
     property bool fullscreen: false
+    // What each output was last told about adaptive sync, by name.
+    property var vrrAsked: ({})
 
     function hasFullscreen(node) {
         if (node.fullscreen_mode > 0 && node.visible)
             return true;
         return [...(node.nodes ?? []), ...(node.floating_nodes ?? [])].some(n => hasFullscreen(n));
+    }
+
+    // Adaptive sync only while a fullscreen window shows on the output. On
+    // a still desktop sway sends a frame only when something changes, the
+    // refresh rate sinks in between, and the workstation's monitor pulses
+    // in brightness with it. Each output is asked once per change, since
+    // one without VRR stays "disabled" whatever it's told.
+    function syncVrr(outputs) {
+        for (const o of outputs) {
+            if (!o.adaptive_sync_status)
+                continue;
+            const want = hasFullscreen(o);
+            if (want === (o.adaptive_sync_status === "enabled") || vrrAsked[o.name] === want)
+                continue;
+            vrrAsked[o.name] = want;
+            I3.dispatch(`output ${o.name} adaptive_sync ${want ? "on" : "off"}`);
+        }
     }
 
     onFocusedOutputChanged: treeTimer.restart()
@@ -77,8 +98,11 @@ Singleton {
         stdout: StdioCollector {
             onStreamFinished: {
                 try {
-                    const output = JSON.parse(text).nodes?.find(o => o.name === root.focusedOutput);
+                    const outputs = JSON.parse(text).nodes ?? [];
+                    const output = outputs.find(o => o.name === root.focusedOutput);
                     root.fullscreen = !!output && root.hasFullscreen(output);
+                    if (Theme.profile.vrr)
+                        root.syncVrr(outputs);
                 } catch (e) {}
             }
         }
@@ -104,6 +128,9 @@ Singleton {
                     treeTimer.restart();
                 return;
             }
+            // A reload puts adaptive sync back to what the config says.
+            if (data.change === "reload")
+                root.vrrAsked = {};
             if (data.change === "focus" && data.current?.output) {
                 root.focusedOutput = data.current.output;
                 root.focusedWorkspace = data.current.name;

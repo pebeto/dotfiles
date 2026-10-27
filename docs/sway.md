@@ -14,6 +14,8 @@ Each Linux host has three pieces:
 
 Font sizes differ because the workstation runs its 4K panel unscaled and the T470 doesn't. To add a machine, create the two files named after its hostname and add its profile to `Theme.qml`.
 
+The workstation's monitor pulses in brightness with adaptive sync (VRR) on a still desktop, because the refresh rate drops between frames. Its output line leaves VRR off, and Quickshell turns it on while a window is fullscreen, like a game or a video. A host's profile opts in with `vrr`.
+
 ## Keys
 
 ### Windows and session
