@@ -9,13 +9,13 @@
 | File | Contents |
 |------|----------|
 | `models.yml` | The `vllm` provider at `localhost:8000/v1` with `auth: none`, both models with their real context windows, and each model's sampling settings in `compat.extraBody`, since there's no dedicated field for them. It's called `vllm` because omp v18 reserves `local` for its own on-device models. |
-| `config.yml` | `modelRoles` (all on `qwen3.8-27b`) and `skills.customDirectories`. omp rewrites this file, so it has no comments. |
+| `config.yml` | `modelRoles` (all on `qwen3.8-27b`). omp rewrites this file, so it has no comments. |
 | `lsp.json` | Only Julia. |
 
 The files are small because omp finds most things on its own:
 
 - It reads MCP servers from `~/.config/opencode/opencode.json`, so `context7` and `serena` are defined once, and editing that file changes both tools.
-- It loads skills from `~/.claude/skills`, the same library Claude Code uses. It only looks one level deep, so the two nested collections (`academic-research-skills` and `claude-epub-skill`, 5 skills between them) are listed in `skills.customDirectories`.
+- It loads skills from `~/.claude/skills`, the same library Claude Code uses. It only looks one level deep, so a nested collection of skills has to be added to `skills.customDirectories`.
 - It has built-in LSP setups for clangd, pyright and typescript-language-server, found through root markers and `$PATH`. Julia is the only one it doesn't know, and adding it extends the built-ins instead of replacing them.
 - Every role points at the same model on purpose. The GPU serves one model at a time, so a role aimed at the other model would only work while that server is running. To switch, restart `run.sh` with the other model and run `omp --model vllm/gpt-oss-20b`.
 

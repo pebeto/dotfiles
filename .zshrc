@@ -39,6 +39,7 @@ PATH=$HOME/.juliaup/bin:$PATH        # juliaup
 PATH=$HOME/.julia/bin:$PATH          # Julia-installed apps
 PATH=$HOME/.opencode/bin:$PATH       # opencode
 PATH=$HOME/.npm-global/bin:$PATH     # user-global npm
+PATH=$HOME/go/bin:$PATH              # go install (go-grip)
 PATH=$PATH:$HOME/.local/bin
 export PATH
 

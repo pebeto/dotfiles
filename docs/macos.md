@@ -13,7 +13,7 @@ Like `install.sh`, it only makes symlinks and never overwrites a real file or a 
 
 | What | Where |
 |------|-------|
-| `.zshrc`, `.gitconfig` | `~/` |
+| `.zshrc`, `.gitconfig`, `.gitignore_global` | `~/` |
 | `nvim`, `emacs`, `sioyek`, `ghostty`, `swiftbar`, `bin` | `~/.config/`, whole folders |
 | `opencode/*.json` | `~/.config/opencode/`, file by file, since opencode writes its own state there |
 | `omp/*.yml`, `omp/*.json` | `~/.omp/agent/`, file by file |

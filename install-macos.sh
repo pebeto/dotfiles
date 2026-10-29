@@ -29,7 +29,7 @@ esac
 
 # --- What to deploy on macOS (curate to taste) -----------------------------
 # Top-level dotfiles          ->  ~/.<name>
-TOP=( .zshrc .gitconfig )
+TOP=( .zshrc .gitconfig .gitignore_global )
 # .config dirs (whole-dir symlink) ->  ~/.config/<name>
 CONFIGS=( nvim emacs sioyek ghostty swiftbar bin )
 # Per-file *.json configs (the tool writes its own state into the dir, so link

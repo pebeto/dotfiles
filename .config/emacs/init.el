@@ -59,6 +59,7 @@
 (dolist (dir '("~/.juliaup/bin"   ; julia (juliaup) -> needed by eglot-jl
                "~/.julia/bin"     ; Julia-installed apps
                "~/.npm-global/bin"
+               "~/go/bin"         ; go install (go-grip)
                "~/.bun/bin"
                "~/.local/bin"))
   (let ((d (expand-file-name dir)))
