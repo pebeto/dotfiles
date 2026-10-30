@@ -17,7 +17,7 @@ The blocks on the right, in order:
 | CPU, GPU, RAM | Temperatures and memory, amber and then red as they climb. Click to open `btop`. GPU is workstation-only. |
 | brightness (T470) | Scroll to change it. |
 | volume | Scroll to change it, click to mute, right-click to open the Control Center with the outputs. |
-| batteries (T470) | `i` is the internal pack, `e` the hot-swap one. |
+| batteries (T470) | `i` is the internal pack, `e` the hot-swap one. Click for the [battery panel](#battery-panel). |
 | WiFi, Bluetooth (T470) | Panels for joining networks (through iwd) and connecting devices. `Super+F10` opens the Bluetooth one. |
 | two sliders | The [Control Center](#control-center). It turns into a crossed-out bell while focus mode is on ("focus") or popups are held ("held · N"). |
 | clock | The clock panel. |
@@ -55,6 +55,21 @@ Right-click Focus or Keep awake to give it a time limit: 30 minutes, an hour, or
 - Syncthing's line shows whether everything is synced and which of your other devices are connected.
 
 Keep awake and the night light survive a reload of the shell. A night light pause lasts until gammastep itself restarts.
+
+## Battery panel
+
+On the T470, the battery block's panel shows:
+
+- each pack's charge, what it's doing, its health (what it holds now against when it was new) and its cycle count
+- the power draw and the time left, or the time until the charge limit while charging
+- how long the internal pack lasts on its own, so you know whether to pull the external one now
+- the last 24 hours of charge, colored by whether it was on battery, charging or just plugged in, with gaps where the laptop slept
+- the power modes from power-profiles-daemon: Saver, Balanced and Performance
+- the charge limit: stop at 80% while plugged in, and "Charge to full once" for a trip, which goes back to 80% once both packs are full
+
+`sway/battery-notify.sh` records the history every two minutes, in `~/.local/state/battery/history.tsv`. It also sends a notification when the external pack runs empty and the internal one takes over, once per drain. The ThinkPad drains the external pack first.
+
+The limit is the ThinkPad's own charge thresholds. Both packs get the same one, and a pack you slide in takes the internal one's. Only root can change the thresholds, so the panel needs `quickshell/udev/90-battery-charge-limit.rules`, which lets the `wheel` group change them. The power modes need power-profiles-daemon running. `install.sh` prints the commands for both.
 
 ## LLM panel
 
@@ -129,7 +144,7 @@ Everything above answers to `qs ipc call`:
 
 | Call | Does |
 |------|------|
-| `panel toggle <name>` | opens or closes `clock`, `control`, `wifi`, `bluetooth`, `llm`, `launcher`, `clipboard` or `session` |
+| `panel toggle <name>` | opens or closes `clock`, `control`, `battery`, `wifi`, `bluetooth`, `llm`, `launcher`, `clipboard` or `session` |
 | `notifications toggleFocus` | turns focus mode on or off |
 | `lock lock` | locks the screen |
 | `screenshot preview <file>` | shows a thumbnail for any image |

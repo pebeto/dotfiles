@@ -318,6 +318,30 @@ else
     printf "            gh release download -R pebeto/woverview -p 'woverview-*-x86_64-linux' -O ~/.local/bin/woverview && chmod +x ~/.local/bin/woverview\n"
     n_warn=$((n_warn + 1))
 fi
+# On a laptop, the battery panel's power modes need power-profiles-daemon
+# running from boot, and its charge limit (ThinkPads) a udev rule that lets
+# the wheel group change it.
+if compgen -G '/sys/class/power_supply/BAT*' >/dev/null; then
+    if ! command -v powerprofilesctl >/dev/null 2>&1; then
+        printf '  MISSING powerprofilesctl (power modes in the battery panel)\n'
+        missing_pkgs+=(power-profiles-daemon)
+    elif systemctl is-enabled -q power-profiles-daemon 2>/dev/null; then
+        printf '  ok      power-profiles-daemon\n'
+    else
+        printf '  TODO    power-profiles-daemon is not enabled: sudo systemctl enable --now power-profiles-daemon\n'
+        n_warn=$((n_warn + 1))
+    fi
+    rule="$DOTFILES/.config/quickshell/udev/90-battery-charge-limit.rules"
+    if [ -e /sys/class/power_supply/BAT0/charge_control_end_threshold ]; then
+        if cmp -s "$rule" "/etc/udev/rules.d/${rule##*/}"; then
+            printf '  ok      %s\n' "${rule##*/}"
+        else
+            printf '  TODO    the battery panel needs this rule to change the charge limit:\n'
+            printf '            sudo install -m 644 %s /etc/udev/rules.d/ && sudo udevadm control --reload && sudo udevadm trigger --subsystem-match=power_supply\n' "$rule"
+            n_warn=$((n_warn + 1))
+        fi
+    fi
+fi
 
 echo
 echo "Local LLM stack (.config/llm)"

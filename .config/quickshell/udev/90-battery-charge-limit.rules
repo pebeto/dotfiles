@@ -1,0 +1,5 @@
+# Lets the wheel group change a ThinkPad's charge limit without root, for the
+# battery panel. thinkpad_acpi can add these files just after a pack's add
+# event, so each change event (every status change) applies the rule again.
+# install.sh prints the command that installs it.
+SUBSYSTEM=="power_supply", KERNEL=="BAT[0-9]", ACTION=="add|change", RUN+="/bin/chgrp wheel $sys$devpath/charge_control_start_threshold $sys$devpath/charge_control_end_threshold", RUN+="/bin/chmod g+w $sys$devpath/charge_control_start_threshold $sys$devpath/charge_control_end_threshold"

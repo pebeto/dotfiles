@@ -156,7 +156,10 @@ Singleton {
         control: String.fromCodePoint(0xF1542),
         coffee: String.fromCodePoint(0xF06CA),
         night: String.fromCodePoint(0xF0594),
-        screenshot: String.fromCodePoint(0xF0E51)
+        screenshot: String.fromCodePoint(0xF0E51),
+        leaf: String.fromCodePoint(0xF032A),
+        balance: String.fromCodePoint(0xF05D1),
+        speed: String.fromCodePoint(0xF04C5)
     })
 
     FileView {

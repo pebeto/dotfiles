@@ -20,17 +20,6 @@ Singleton {
     property real memPct: NaN
     property var cpuPaths: []
 
-    // Battery packs as [{ name, capacity, status }]: BAT0 is the T470's
-    // internal pack and BAT1 the hot-swap one.
-    property var batteries: []
-    readonly property bool charging: batteries.some(b => b.status === "Charging")
-    // Red only when one pack is empty and the other is at or below this,
-    // so a drained hot-swap pack alone doesn't raise an alarm.
-    readonly property int batteryPartnerLow: 15
-    readonly property bool batteryLow: batteries.length === 2
-        && ((batteries[0].capacity === 0 && batteries[1].capacity <= batteryPartnerLow)
-            || (batteries[1].capacity === 0 && batteries[0].capacity <= batteryPartnerLow))
-
     property real brightness: NaN
     readonly property string backlightDir: "/sys/class/backlight/" + Theme.profile.backlight
 
@@ -142,28 +131,6 @@ Singleton {
         id: gpuRestart
         interval: 5000
         onTriggered: gpuProc.running = Theme.profile.gpu
-    }
-
-    Process {
-        id: batteryProc
-        command: ["sh", "-c", "for b in /sys/class/power_supply/BAT*; do [ -d \"$b\" ] && printf '%s\\t%s\\t%s\\n' \"${b##*/}\" \"$(cat \"$b/capacity\")\" \"$(cat \"$b/status\")\"; done"]
-        stdout: StdioCollector {
-            onStreamFinished: {
-                const lines = text.trim() ? text.trim().split("\n") : [];
-                root.batteries = lines.map(l => {
-                    const f = l.split("\t");
-                    return { name: f[0], capacity: parseInt(f[1]), status: f[2] };
-                });
-            }
-        }
-    }
-
-    Timer {
-        interval: 5000
-        running: Theme.profile.battery
-        repeat: true
-        triggeredOnStart: true
-        onTriggered: batteryProc.running = true
     }
 
     FileView {

@@ -15,6 +15,7 @@
 - lists missing dependencies and prints the `pacman` command for them, or `yay` for swayfx and JuliaMono, which are only in the AUR
 - warns if dunst is still installed, because it competes with Quickshell for notifications
 - checks for `unicode-emoji`, the list the launcher's emoji search reads
+- on a laptop, checks for power-profiles-daemon and the udev rule behind the battery panel's charge limit, and prints the commands that set them up (they need root)
 
 It skips the LLM checks on machines without an NVIDIA GPU. It never overwrites a real file; it reports the conflict and moves on. `--force-host` re-points the host links when a machine changes profile.
 

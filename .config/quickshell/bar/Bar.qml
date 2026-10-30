@@ -197,17 +197,18 @@ PanelWindow {
         }
 
         // One reading per pack: i for the internal one, e for the hot-swap.
+        // A click opens the battery panel.
         BarBlock {
             id: batteryBlock
 
-            readonly property real average: System.batteries.reduce((sum, b) => sum + b.capacity, 0) / Math.max(1, System.batteries.length)
-            visible: Theme.profile.battery && System.batteries.length > 0
-            interactive: false
+            readonly property real average: Battery.packs.reduce((sum, b) => sum + b.capacity, 0) / Math.max(1, Battery.packs.length)
+            visible: Theme.profile.battery && Battery.packs.length > 0
+            onClicked: Panels.toggle("battery", bar.outputName)
 
             Segment {
-                icon: System.charging ? Theme.icons.batteryCharging : Theme.icons.battery[Math.round(batteryBlock.average / 10)]
-                label: System.batteries.map(b => (({ BAT0: "i", BAT1: "e" })[b.name] ?? "") + b.capacity + "%").join(" ")
-                tint: System.batteryLow ? Theme.low : Theme.fg
+                icon: Battery.charging ? Theme.icons.batteryCharging : Theme.icons.battery[Math.round(batteryBlock.average / 10)]
+                label: Battery.packs.map(b => (({ BAT0: "i", BAT1: "e" })[b.name] ?? "") + b.capacity + "%").join(" ")
+                tint: Battery.low ? Theme.low : Theme.fg
             }
         }
 
@@ -299,6 +300,12 @@ PanelWindow {
 
     ClockPanel {
         anchorItem: clockBlock
+        screen: bar.modelData
+        maxHeight: bar.panelMax
+    }
+
+    BatteryPanel {
+        anchorItem: batteryBlock
         screen: bar.modelData
         maxHeight: bar.panelMax
     }

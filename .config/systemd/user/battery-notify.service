@@ -1,5 +1,5 @@
 [Unit]
-Description=Warn with a notification when the battery is low
+Description=Battery warnings and charge history
 
 [Service]
 Type=oneshot
