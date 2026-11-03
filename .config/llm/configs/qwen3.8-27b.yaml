@@ -3,7 +3,7 @@
 # Schema (see run.sh): `image:` is the Docker image, `env-NAME:` becomes -e NAME=val, and
 # every other `key: value` becomes a `vllm serve --key value` flag.
 
-image: vllm/vllm-openai:v0.30.0      # pin a stable release, not nightly
+image: vllm/vllm-openai:v0.32.0      # pin a stable release, not nightly
 
 # unsloth's build is compressed-tensors W4A4 and runs on the native CUTLASS FP4 kernels.
 # NVIDIA-style ModelOpt builds fall back to Marlin: half the cold-prefill speed here, and
@@ -36,7 +36,7 @@ kv-cache-memory-bytes: 4939212390   # 4.6 GiB
 # speculative-config: '{"method":"mtp","num_speculative_tokens":3}' with max-model-len 81920,
 # image 5 and kv-cache-memory-bytes 3865470566, and lower both clients to match.
 
-# Left to itself 0.30.0 picks FLASHINFER, which needed about 0.6 GiB more than TRITON_ATTN
+# Left to itself vLLM picks FLASHINFER, which needed about 0.6 GiB more than TRITON_ATTN
 # here. The memory peaks above were measured on TRITON_ATTN.
 attention-backend: TRITON_ATTN
 

@@ -5,7 +5,7 @@
 # and every other `key: value` becomes a `vllm serve --key value` flag. run.sh adds
 # --gpus all, --ipc=host, -p PORT:PORT, the HF cache mount, and HF_TOKEN.
 
-image: vllm/vllm-openai:v0.30.0      # same image as qwen3.8-27b, so only one is on disk
+image: vllm/vllm-openai:v0.32.0      # same image as qwen3.8-27b, so only one is on disk
 
 # OpenAI's own repo, not a mirror. Tool calling needs `</call>` (200012) in the checkpoint's
 # generation_config.json eos_token_id, or the model runs past the end of a tool call and
@@ -26,7 +26,7 @@ disable-access-log-for-endpoints: /v1/models,/metrics
 
 # Weights are ~12 GB and the KV cache is small: 24 layers with 8 KV heads at head_dim 64,
 # and every other layer is sliding-window rather than full attention. The native 131072
-# fits easily: 11.7 GiB of KV holds ~496k tokens, 3.8x concurrency.
+# fits easily: 12.3 GiB of KV holds ~519k tokens, 4x concurrency.
 max-model-len: 131072
 gpu-memory-utilization: 0.90
 max-num-seqs: 4
