@@ -21,24 +21,29 @@ disable-access-log-for-endpoints: /v1/models,/metrics
 
 # KV is pinned, not sized from gpu-memory-utilization: vLLM measures device-wide free VRAM
 # while it starts, so desktop allocations during those two minutes come out of the pool and
-# boots fail at random. 4.6 GiB holds 139,810 tokens every time. Measured peaks: 27.3 GiB
-# on a 120k-token prefill and 29.25 GiB with four 4096px images, against the 28.6 GiB that
-# 0.91 allows. fp8 KV is what buys a window this size, at the cost of an uncalibrated
-# q_scale warning.
-kv-cache-dtype: fp8
-max-model-len: 131072
-kv-cache-memory-bytes: 4939212390   # 4.6 GiB
+# boots fail at random. 2.75 GiB holds 104,407 tokens every time. With four 4096px images
+# or a 94k-token prefill the whole card peaks at 31.5 GB, the same as the previous fp8
+# config at 4.6 GiB.
+#
+# nvfp4 fits about 1.8x the tokens of fp8 per byte. Against fp8 it recalled the same 8 of 8
+# facts hidden in 94k tokens and scored 98 vs 99 on 100 GSM8K questions.
+#
+# Prefix-cache hits hold up to about 85k tokens. Beyond that, a prompt plus its reply nearly
+# fills the pool and the next turn prefills from scratch (about 25 s at 94k). omp compacts
+# at the window minus its 16384 output reserve, which keeps sessions under that.
+kv-cache-dtype: nvfp4
+max-model-len: 102400
+kv-cache-memory-bytes: 2952790016   # 2.75 GiB
 
-# No speculative decoding. The checkpoint's MTP layer roughly doubles decode (69 -> 110-160
-# tok/s) but costs KV twice, its own weights plus draft slots per token, so it caps the
-# window at 81920. There omp compacted every 7 turns, against every 14 at 122880, while the
-# faster decode saved about 42 minutes over five weeks of real sessions. To trade back, set
-# speculative-config: '{"method":"mtp","num_speculative_tokens":3}' with max-model-len 81920,
-# image 5 and kv-cache-memory-bytes 3865470566, and lower both clients to match.
+# The checkpoint's MTP layer drafts 3 tokens and about 3.6 land per step, taking decode from
+# 63 to 105-158 tok/s. Its weights and draft KV are what hold the window at 102400; fp8
+# without MTP fit 131072, and omp compacted about a third less often there.
+speculative-config: '{"method":"mtp","num_speculative_tokens":3}'
 
-# Left to itself vLLM picks FLASHINFER, which needed about 0.6 GiB more than TRITON_ATTN
-# here. The memory peaks above were measured on TRITON_ATTN.
-attention-backend: TRITON_ATTN
+# nvfp4 KV needs FLASHINFER on this card, whose XQA decode keeps MTP steps in full CUDA
+# graphs. It holds about 0.85 GiB more than TRITON_ATTN, which the smaller pin pays for, and
+# prefills about a quarter faster.
+attention-backend: FLASHINFER
 
 # Images yes, video no: one video item reserves a six-figure token budget and several GiB
 # this card does not have. 3.8 adds native video understanding, so that stays deliberate
@@ -46,8 +51,8 @@ attention-backend: TRITON_ATTN
 #
 # The image count is per conversation rather than per message, and overrunning it 400s
 # every later request instead of degrading. vLLM caps it at max-model-len over 16384 tokens
-# per image, so 131072 allows 8. Change both together or not at all.
-limit-mm-per-prompt: '{"image": 8, "video": 0}'
+# per image, so 102400 allows 6. Change both together or not at all.
+limit-mm-per-prompt: '{"image": 6, "video": 0}'
 
 # Host RAM for processed images, multiplied by (api_server_count + data_parallel_size), so
 # the 4 GiB default can claim 8 GiB of the box's ~30 GB.
@@ -58,6 +63,8 @@ mm-processor-cache-gb: 1
 # sees is 28.58 GiB, which leaves the desktop 2.83 GiB. The sway session plus browsers runs
 # 1.8-2.9 GiB, so raising this makes launches wait or fail on desktop load.
 gpu-memory-utilization: 0.91
+# With MTP even a short request holds about 26k tokens of the pool, so a fourth parallel
+# request can wait for one to finish.
 max-num-seqs: 4
 enable-chunked-prefill: true
 enable-prefix-caching: true

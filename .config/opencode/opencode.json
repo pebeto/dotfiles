@@ -96,7 +96,7 @@
             "chat_template_kwargs": { "reasoning_effort": "medium" }
           },
           "limit": {
-            "context": 131072,
+            "context": 102400,
             "output": 16384
           }
         }
