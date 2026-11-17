@@ -1,0 +1,39 @@
+# Qwen3.8-27B (apache-2.0) on the MacBook, served by llama-server with Metal: the same
+# served name and context as ../qwen3.8-27b.yaml, so omp and opencode need no changes.
+#
+# Schema (see run.sh): `engine: llamacpp` runs llama-server, and every other `key: value`
+# becomes `llama-server --key value`.
+
+engine: llamacpp
+
+# 4-bit doesn't fit: Q4_K_S is 15.4 GB and Metal allows 18.2 GB of the 24, before KV and
+# buffers. unsloth's UD-Q3_K_XL is 13.1 GB. llama-server also pulls mmproj-F16 (0.9 GB) for
+# images, and both land in ~/.cache/huggingface on the first run.
+hf-repo: unsloth/Qwen3.8-27B-GGUF:UD-Q3_K_XL
+alias: qwen3.8-27b
+host: 127.0.0.1
+port: 8000
+
+# q4_0 KV holds the clients' 102400 window in 1.8 GB, less than q8_0 needs for 65536. That
+# plays the same role as nvfp4 KV on the workstation, and it recalled 8 of 8 facts hidden
+# in 83k tokens. Quantized V turns flash attention on. llama-server plans 14.2 GB of
+# device memory, and macOS keeps about 10% free under a normal app load.
+#
+# It costs speed: at 20k tokens of context q4_0 prefills at 192 tok/s and decodes at 9.8,
+# against 266 and 13.8 for q8_0. Short prompts decode at 16 tok/s, and an 83k prompt
+# prefills in 9.5 minutes. q8_0 at 65536 is faster but needs the clients' window lowered
+# to match.
+ctx-size: 102400
+cache-type-k: q4_0
+cache-type-v: q4_0
+parallel: 1
+
+# The host-RAM prompt cache defaults to 8 GB, which this machine doesn't have to spare.
+cache-ram: 0
+
+# No MTP. `spec-type: draft-mtp` took short-prompt decode from 17 to 28 tok/s, but at 20k
+# tokens of context it was slower (12.7 vs 13.8 tok/s, prefill 220 vs 266) and wired
+# another 1.4 GB.
+
+# The template takes reasoning_effort through chat_template_kwargs, as on vLLM, and
+# llama-server splits thinking into reasoning_content and parses the tool calls itself.

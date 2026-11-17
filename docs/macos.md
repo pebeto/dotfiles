@@ -1,6 +1,6 @@
 # macOS
 
-My work MacBook (Apple Silicon) uses the parts of this repo that make sense on a Mac: the shell, the editors, a terminal and the coding agents. The Wayland desktop, the systemd timers and the LLM server stay on Linux. The Mac doesn't run local models; its agents use the workstation's server or a cloud provider.
+My work MacBook (Apple Silicon) uses the parts of this repo that make sense on a Mac: the shell, the editors, a terminal and the coding agents. The Wayland desktop and the systemd timers stay on Linux. The Mac runs gpt-oss-20b and Qwen3.8-27B locally through `llm`, and its agents can also use the workstation's server or a cloud provider.
 
 ## Install
 
@@ -14,15 +14,15 @@ Like `install.sh`, it only makes symlinks and never overwrites a real file or a 
 | What | Where |
 |------|-------|
 | `.zshrc`, `.gitconfig`, `.gitignore_global` | `~/` |
-| `nvim`, `emacs`, `sioyek`, `ghostty`, `swiftbar`, `bin` | `~/.config/`, whole folders |
+| `nvim`, `emacs`, `sioyek`, `ghostty`, `swiftbar`, `bin`, `llm` | `~/.config/`, whole folders |
 | `opencode/*.json` | `~/.config/opencode/`, file by file, since opencode writes its own state there |
 | `omp/*.yml`, `omp/*.json` | `~/.omp/agent/`, file by file |
 
-Everything Linux-only is left out: `sway`, `quickshell`, `foot`, `swappy`, `systemd`, `xdg-desktop-portal-wlr`, `llm` and the wallpaper. To change the set, edit the arrays at the top of the script.
+Everything Linux-only is left out: `sway`, `quickshell`, `foot`, `swappy`, `systemd`, `xdg-desktop-portal-wlr` and the wallpaper. To change the set, edit the arrays at the top of the script.
 
-It ends with a check for the command-line tools the configs expect (`nvim`, `opencode`, `omp`, `node`, `npm`, `bun`, `uv`, `julia`, `clangd`, `pyright`, `typescript-language-server`, `git`, `gh`, `rg`, `fd`, `fzf`, `jq`). It installs nothing; use Homebrew, npm or juliaup. Apps installed as casks, like Emacs or sioyek, can show as missing there even when they're in `/Applications`.
+It ends with a check for the command-line tools the configs expect (`nvim`, `opencode`, `omp`, `node`, `npm`, `bun`, `uv`, `julia`, `clangd`, `pyright`, `typescript-language-server`, `git`, `gh`, `rg`, `fd`, `fzf`, `jq`, `llama-server`). It installs nothing; use Homebrew, npm or juliaup. Apps installed as casks, like Emacs or sioyek, can show as missing there even when they're in `/Applications`.
 
-`~/.miscrc` lives outside the repo on every machine, and `.zshrc` sources it, so create a Mac one by hand for secrets and local `PATH` entries. The `llm` function in `.zshrc` does nothing on the Mac.
+`~/.miscrc` lives outside the repo on every machine, and `.zshrc` sources it, so create a Mac one by hand for secrets and local `PATH` entries. The `llm` function in `.zshrc` runs the Mac's models on llama-server ([llm.md](llm.md#on-the-mac)).
 
 For the GitHub key and commit signing, run `./github-key-setup.sh` after installing ([signing.md](signing.md)).
 
@@ -52,4 +52,4 @@ Pressing `fn+F5` mutes and unmutes the microphone instead of starting Dictation.
 
 ## Coding agents
 
-omp and opencode get the same config files as on Linux ([coding-agents.md](coding-agents.md)), which point at `localhost:8000`. On the Mac that only works through an SSH tunnel to the workstation, for example `ssh -N -L 8000:localhost:8000 <workstation>`, with a model running there. Without the tunnel, omp falls back to a cloud provider and asks for its API key.
+omp and opencode get the same config files as on Linux ([coding-agents.md](coding-agents.md)), which point at `localhost:8000`. On the Mac that means either `llm <model>` running locally or an SSH tunnel to the workstation, for example `ssh -N -L 8000:localhost:8000 <workstation>`, with a model running there. Both use port 8000, so only one can be up at a time. With neither, omp falls back to a cloud provider and asks for its API key.

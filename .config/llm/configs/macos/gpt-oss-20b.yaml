@@ -1,0 +1,24 @@
+# gpt-oss-20b (OpenAI, apache-2.0) on the MacBook, served by llama-server with Metal: the
+# same model and served name as ../gpt-oss-20b.yaml, so omp and opencode need no changes.
+#
+# Schema (see run.sh): `engine: llamacpp` runs llama-server, and every other `key: value`
+# becomes `llama-server --key value`.
+
+engine: llamacpp
+
+# ggml-org's conversion of OpenAI's repo, MXFP4 as shipped (12.1 GB). llama-server
+# downloads it into ~/.cache/huggingface on the first run. The embedded template carries
+# the harmony format, so reasoning_content, tool_calls and per-request reasoning_effort
+# work without parser flags.
+hf-repo: ggml-org/gpt-oss-20b-GGUF
+alias: gpt-oss-20b
+host: 127.0.0.1
+port: 8000
+
+# The full 131072 window, matching the clients. Weights, KV and buffers wire about 15 GB
+# of the 24, leaving macOS about 10-15% free under a normal app load. A 25k-token prompt
+# prefills at ~1050 tok/s, and decode runs 80 tok/s short and 56 tok/s at 25k.
+ctx-size: 131072
+
+# One user, one slot. The default of 4 wired about 1.2 GB more.
+parallel: 1

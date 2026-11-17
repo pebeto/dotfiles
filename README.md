@@ -10,7 +10,7 @@ My Arch Linux desktop: Sway, the foot terminal, a Quickshell bar that also handl
 |------|---------|------------------|
 | `workstation` | Desktop with the RTX 5090 | A 4K Samsung at 144 Hz, run unscaled. Black bar with CPU, GPU and RAM. Runs the LLM server. |
 | `t470` | ThinkPad T470 | 1080p panel, TrackPoint and touchpad, brightness keys. Gray bar with brightness, WiFi, Bluetooth and both batteries (`i` is the internal pack, `e` the hot-swap one). |
-| MacBook | Work MacBook Pro, Apple Silicon | No Sway or Quickshell. It gets the shell, the editors, a terminal and the coding agents. |
+| MacBook | Work MacBook Pro, Apple Silicon | No Sway or Quickshell. It gets the shell, the editors, a terminal, the coding agents, and gpt-oss-20b and Qwen3.8-27B on llama.cpp. |
 
 The bar colors differ so I can tell at a glance which Linux machine I'm on. Each Linux host is picked by its hostname, and [docs/sway.md](docs/sway.md#hosts) lists what each one sets and how to add another.
 
@@ -31,7 +31,7 @@ The bar colors differ so I can tell at a glance which Linux machine I'm on. Each
 | [install.md](docs/install.md) | What `install.sh` checks and links, and moving a machine off the old swaybar setup |
 | [sway.md](docs/sway.md) | swayfx, the per-host files and every key binding |
 | [quickshell.md](docs/quickshell.md) | The bar and its panels, the launcher, screenshots, notifications and the lock screen |
-| [llm.md](docs/llm.md) | The vLLM server on the workstation, its models and the reasons behind the Qwen config |
+| [llm.md](docs/llm.md) | The vLLM server on the workstation, its models, the reasons behind the Qwen config and the Mac's llama.cpp server |
 | [coding-agents.md](docs/coding-agents.md) | omp and opencode, the two tools that use that server |
 | [macos.md](docs/macos.md) | What the MacBook gets from this repo and how to set it up |
 | [signing.md](docs/signing.md) | The per-device SSH key that does both GitHub auth and commit signing |

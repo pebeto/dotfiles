@@ -35,3 +35,22 @@ Each setting in `configs/qwen3.8-27b.yaml` has a comment with the measurements b
 Each client's context setting has to match the server, so both use 102400. After changing anything here, check `Available KV cache memory` and `GPU KV cache size` in the startup log; vLLM refuses to start if the settings don't fit.
 
 Two tools use this server, omp day to day and opencode as a fallback. [coding-agents.md](coding-agents.md) covers both. Only one model is loaded at a time, so start the one you want first.
+
+## On the Mac
+
+On macOS, `run.sh` reads `configs/macos/` instead and runs each model on llama.cpp's `llama-server` with Metal (`brew install llama.cpp`). Those configs set `engine: llamacpp`, and every other `flag: value` becomes `llama-server --flag value`. The first run of each model downloads it into `~/.cache/huggingface`.
+
+Both models have the same served names, port and context windows as on the workstation, so omp and opencode work with them unchanged:
+
+```sh
+llm gpt-oss-20b        # fast: ~80 tok/s, 56 at 25k tokens of context
+llm qwen3.8-27b        # the main model, but slow: ~16 tok/s, 10 at 20k
+```
+
+gpt-oss-20b runs as shipped (MXFP4) at the full 131072 context and wires about 15 GB of the MacBook's 24.
+
+Qwen3.8-27B is unsloth's UD-Q3_K_XL, because the 4-bit files don't leave room for the KV cache in the 18.2 GB that Metal allows. The KV cache is q4_0, which holds the 102400 window in 1.8 GB and recalled 8 of 8 facts hidden in 83k tokens, but it reads prompts slowly: 192 tokens per second at 20k, and 9.5 minutes for an 83k prompt. Images work, through the mmproj file that llama-server downloads with the model. MTP stays off on the Mac, because at 20k tokens of context it made both prefill and decode slower and used another 1.4 GB.
+
+With either model loaded, the Mac has about 10% of its memory free under a normal app load.
+
+If an SSH tunnel to the workstation already holds port 8000, `llm` refuses to start.

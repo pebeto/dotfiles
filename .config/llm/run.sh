@@ -1,19 +1,23 @@
 #!/usr/bin/env bash
-# Launch a local LLM server for one of the models defined under configs/, using the
-# official vLLM OpenAI server in Docker.
+# Launch a local LLM server for one of the models defined under configs/. On Linux that
+# is the official vLLM OpenAI server in Docker; on macOS the configs come from
+# configs/macos/ and run on llama.cpp's llama-server with Metal.
 #
-# Each config is a flat YAML of "flag: value" pairs. Three keys are special:
+# Each config is a flat YAML of "flag: value" pairs. `engine:` picks the backend
+# (vllm, the default, or llamacpp). For vllm, three more keys are special:
 #   image:        the Docker image to run (required)
 #   model:        positional model_tag for `vllm serve` (required; vLLM deprecated --model)
 #   env-NAME: val a Docker `-e NAME=val` (e.g. env-VLLM_*)
-# Every other `key: value` becomes a `vllm serve --key value` flag, where `key: true`
-# passes the bare flag and `key: false` omits it; JSON-valued flags take a quoted JSON
-# object. run.sh adds the fixed docker scaffolding: --gpus all, --ipc=host, the port
-# publish, the HF cache mount, and HF_TOKEN passthrough.
+# Every other `key: value` becomes a `vllm serve --key value` (or `llama-server --key
+# value`) flag, where `key: true` passes the bare flag and `key: false` omits it;
+# JSON-valued flags take a quoted JSON object. For vllm, run.sh adds the fixed docker
+# scaffolding: --gpus all, --ipc=host, the port publish, the HF cache mount, and HF_TOKEN
+# passthrough. llama-server reads HF_TOKEN itself and downloads `hf-repo:` models into
+# the same HF cache.
 #
 # `port:` (default 8000) both publishes the container port and drives the "already in use"
 # check. `run.sh --print <model>` shows the assembled command without running it. Extra
-# args after <model> are appended to the vllm command.
+# args after <model> are appended to the server command.
 #
 # Resolves to the real script directory so it works through the ~/.config/llm symlink
 # set up by dotfiles install.sh.
@@ -21,6 +25,7 @@ set -euo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 CONFIGS_DIR="$HERE/configs"
+[[ "$(uname -s)" == Darwin ]] && CONFIGS_DIR="$HERE/configs/macos"
 HF_CACHE="${HF_CACHE:-$HOME/.cache/huggingface}"
 PRINT=0
 
@@ -65,12 +70,13 @@ list_models_annotated() {
 
 usage() {
   cat >&2 <<EOF
-usage: $(basename "$0") <model> [extra vllm args...]
+usage: $(basename "$0") <model> [extra server args...]
        $(basename "$0") --print <model>     # show the command, don't run it
        $(basename "$0") --list
 
-Models run in Docker via the vLLM OpenAI server; \`port:\` (default 8000) drives
-the in-use check. Set HF_TOKEN in the environment for gated repos.
+Models run in Docker via the vLLM OpenAI server, or on llama-server for configs
+with \`engine: llamacpp\` (the macOS ones); \`port:\` (default 8000) drives the
+in-use check. Set HF_TOKEN in the environment for gated repos.
 
 available models:
 $(list_models_annotated)
@@ -95,13 +101,48 @@ if [[ ! -f "$CONFIG" ]]; then
 fi
 
 PORT="$(config_get "$CONFIG" port || true)"; PORT="${PORT:-8000}"
+ENGINE="$(config_get "$CONFIG" engine || true)"; ENGINE="${ENGINE:-vllm}"
 
-# Port-in-use guard.
-if [[ "$PRINT" -eq 0 ]] && command -v ss >/dev/null 2>&1 \
-   && ss -ltn 2>/dev/null | awk '{print $4}' | grep -q ":$PORT\$"; then
+# Port-in-use guard. macOS has no ss; lsof also catches an SSH tunnel to the
+# workstation on the same port.
+port_in_use() {
+  if command -v ss >/dev/null 2>&1; then
+    ss -ltn 2>/dev/null | awk '{print $4}' | grep -q ":$PORT\$"
+  elif command -v lsof >/dev/null 2>&1; then
+    lsof -nP -iTCP:"$PORT" -sTCP:LISTEN >/dev/null 2>&1
+  else
+    return 1
+  fi
+}
+if [[ "$PRINT" -eq 0 ]] && port_in_use; then
   echo "error: port $PORT is already in use" >&2
   exit 1
 fi
+
+run_llamacpp() {
+  command -v llama-server >/dev/null 2>&1 || {
+    echo "error: llama-server not found on PATH (brew install llama.cpp)" >&2; exit 1; }
+  local args=() line key val
+  while IFS= read -r line || [[ -n "$line" ]]; do
+    line="${line%%#*}"
+    [[ "$line" == *:* ]] || continue
+    key="$(trim "${line%%:*}")"
+    val="$(trim "${line#*:}")"
+    [[ -z "$key" || "$key" == engine ]] && continue
+    val="${val%\"}"; val="${val#\"}"
+    val="${val%\'}"; val="${val#\'}"
+    case "$val" in
+      true)  args+=("--$key") ;;
+      false) ;;
+      "")    args+=("--$key") ;;
+      *)     args+=("--$key" "$val") ;;
+    esac
+  done < "$CONFIG"
+  if [[ "$PRINT" -eq 1 ]]; then
+    printf 'llama-server'; printf ' %q' "${args[@]}" "$@"; printf '\n'; exit 0
+  fi
+  exec llama-server "${args[@]}" "$@"
+}
 
 run_vllm() {
   command -v docker >/dev/null 2>&1 || {
@@ -116,7 +157,7 @@ run_vllm() {
     val="${val%\"}"; val="${val#\"}"
     val="${val%\'}"; val="${val#\'}"
     case "$key" in
-      engine) ;;                                   # ignored; vLLM is the only backend
+      engine) ;;                                   # dispatch key, not a vllm flag
       image)  image="$val" ;;                      # docker image
       model)  model="$val" ;;                      # positional model_tag (vLLM deprecated --model)
       env-*)  denv+=("-e" "${key#env-}=$val") ;;   # docker environment variable
@@ -185,4 +226,8 @@ run_vllm() {
   exec docker "${docker_args[@]}" "$@"
 }
 
-run_vllm "$@"
+case "$ENGINE" in
+  vllm)     run_vllm "$@" ;;
+  llamacpp) run_llamacpp "$@" ;;
+  *) echo "error: unknown engine '$ENGINE' in $CONFIG (expected: vllm | llamacpp)" >&2; exit 1 ;;
+esac

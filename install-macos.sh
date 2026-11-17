@@ -4,8 +4,8 @@
 # Companion to install.sh (which is Linux/sway-specific). Like install.sh, this ONLY
 # creates symlinks -- it installs no packages. It deliberately links just the configs
 # that are actually used on macOS; the Wayland desktop (sway/quickshell/foot/swappy/
-# xdg-desktop-portal-wlr), the systemd user units, the sway host-profile machinery, and
-# the local-LLM stack (llm/) are all skipped -- none of them apply on a Mac.
+# xdg-desktop-portal-wlr), the systemd user units and the sway host-profile machinery
+# are all skipped -- none of them apply on a Mac.
 #
 # Edit the arrays below to match what you actually use on this Mac. Idempotent; rerun
 # safely. Existing non-symlink files, or symlinks pointing elsewhere, are reported and
@@ -31,16 +31,16 @@ esac
 # Top-level dotfiles          ->  ~/.<name>
 TOP=( .zshrc .gitconfig .gitignore_global )
 # .config dirs (whole-dir symlink) ->  ~/.config/<name>
-CONFIGS=( nvim emacs sioyek ghostty swiftbar bin )
+CONFIGS=( nvim emacs sioyek ghostty swiftbar bin llm )
 # Per-file *.json configs (the tool writes its own state into the dir, so link
 # individual files, not the whole dir). Set to 0 to skip.
 LINK_OPENCODE=1   # -> ~/.config/opencode/*.json
 LINK_OMP=1        # -> ~/.omp/agent/*.{yml,json}  (omp keeps its auth store there)
 # ---------------------------------------------------------------------------
-# Intentionally NOT linked (Linux/Wayland-only, or 5090-only):
-#   quickshell foot swappy sway systemd xdg-desktop-portal-wlr llm wallpaper.jpeg
+# Intentionally NOT linked (Linux/Wayland-only):
+#   quickshell foot swappy sway systemd xdg-desktop-portal-wlr wallpaper.jpeg
 # ~/.miscrc is per-machine and lives OUTSIDE the repo -- create a Mac-specific one by
-# hand (.zshrc sources it). The llm()/_llm completion in .zshrc is inert on the Mac.
+# hand (.zshrc sources it). llm/run.sh serves configs/macos/ through llama-server.
 
 n_ok=0 n_link=0 n_warn=0
 
@@ -96,8 +96,8 @@ fi
 if [ "$LINK_OMP" = 1 ]; then
     echo
     echo "omp config (per-file into ~/.omp/agent)"
-    # models.yml points at localhost:8000, which on the Mac means an SSH tunnel to the
-    # workstation. Without it omp falls back to a cloud provider and asks for an API key.
+    # models.yml points at localhost:8000: `llm <model>` on the Mac, or an SSH tunnel to
+    # the workstation. With neither, omp falls back to a cloud provider and asks for a key.
     src="$DOTFILES/.config/omp"; dst="$HOME/.omp/agent"
     [ "$DRY" = 1 ] || mkdir -p "$dst"
     shopt -s nullglob
@@ -110,7 +110,7 @@ echo "Dependency check (informational only -- installs nothing; use brew/npm/jul
 # CLI tools the deployed configs expect. GUI-only casks (emacs/sioyek if installed as
 # an .app) may show MISSING here even when present -- check /Applications for those.
 for cmd in nvim opencode omp node npm bun uv julia clangd pyright \
-           typescript-language-server git gh rg fd fzf jq; do
+           typescript-language-server git gh rg fd fzf jq llama-server; do
     if command -v "$cmd" >/dev/null 2>&1; then
         printf '  ok      %s\n' "$cmd"
     else

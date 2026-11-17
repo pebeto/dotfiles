@@ -71,7 +71,7 @@ alias grep='grep --color=auto'
 alias fgrep='fgrep --color=auto'
 alias egrep='egrep --color=auto'
 
-# Local LLM server (vLLM in Docker). Only when run.sh is deployed (not on the Mac).
+# Local LLM server (vLLM in Docker, llama-server on the Mac). Only when run.sh is deployed.
 if [ -x "$HOME/.config/llm/run.sh" ]; then
     llm() { ~/.config/llm/run.sh "$@"; }
     _llm() {
