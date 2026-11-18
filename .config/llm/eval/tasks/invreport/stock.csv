@@ -1,0 +1,6 @@
+sku,name,qty,unit_price,category
+A-100,Widget,12,2.50,hardware
+A-101,Gadget,3,10.00,hardware
+B-200,Notebook,40,1.25,stationery
+B-201,Pen,4,0.80,stationery
+C-300,Cable,0,5.00,electronics
