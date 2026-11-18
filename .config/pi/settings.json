@@ -1,0 +1,5 @@
+{
+  "defaultProvider": "vllm",
+  "defaultModel": "qwen3.8-pi",
+  "enabledModels": ["vllm/*"]
+}

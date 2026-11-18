@@ -3,7 +3,7 @@
 # Schema (see run.sh): `image:` is the Docker image, `env-NAME:` becomes -e NAME=val, and
 # every other `key: value` becomes a `vllm serve --key value` flag.
 
-image: vllm/vllm-openai:v0.32.0      # pin a stable release, not nightly
+image: vllm/vllm-openai:v0.34.0      # pin a stable release, not nightly
 
 # unsloth's build is compressed-tensors W4A4 and runs on the native CUTLASS FP4 kernels.
 # NVIDIA-style ModelOpt builds fall back to Marlin: half the cold-prefill speed here, and
@@ -21,9 +21,10 @@ disable-access-log-for-endpoints: /v1/models,/metrics
 
 # KV is pinned, not sized from gpu-memory-utilization: vLLM measures device-wide free VRAM
 # while it starts, so desktop allocations during those two minutes come out of the pool and
-# boots fail at random. 2.75 GiB holds 104,407 tokens every time. With four 4096px images
-# or a 94k-token prefill the whole card peaks at 31.5 GB, the same as the previous fp8
-# config at 4.6 GiB.
+# boots fail at random. 2.9 GiB holds 104,296 tokens every time; at 2.75 GiB vLLM refuses
+# to start, because a 102400 window needs 2.84 GiB. An explicit size also turns off the
+# extensible KV cache, which would size the pool after warmup. With the LoRA below loaded,
+# four 4096px images or a 94k-token prefill take the whole card to 32.0 GB.
 #
 # nvfp4 fits about 1.8x the tokens of fp8 per byte. Against fp8 it recalled the same 8 of 8
 # facts hidden in 94k tokens and scored 98 vs 99 on 100 GSM8K questions.
@@ -33,7 +34,7 @@ disable-access-log-for-endpoints: /v1/models,/metrics
 # at the window minus its 16384 output reserve, which keeps sessions under that.
 kv-cache-dtype: nvfp4
 max-model-len: 102400
-kv-cache-memory-bytes: 2952790016   # 2.75 GiB
+kv-cache-memory-bytes: 3113851290   # 2.9 GiB
 
 # The checkpoint's MTP layer drafts 3 tokens and about 3.6 land per step, taking decode from
 # 63 to 105-158 tok/s. Its weights and draft KV are what hold the window at 102400; fp8
@@ -44,6 +45,17 @@ speculative-config: '{"method":"mtp","num_speculative_tokens":3}'
 # graphs. It holds about 0.85 GiB more than TRITON_ATTN, which the smaller pin pays for, and
 # prefills about a quarter faster.
 attention-backend: FLASHINFER
+
+# harness-hub's pi-adapted LoRA, RL-trained on coding tasks inside pi, served next to the
+# base model as `qwen3.8-pi`. Run with thinking off, as it was trained. In omp on five small
+# coding tasks it passed 17 of 17 runs against 15 of 17 for the base model at medium
+# thinking, in about half the time and output tokens. It adds 0.5 GiB at idle, decodes about
+# 11% slower, and the MTP drafter runs without it, so acceptance falls from 3.4 to 3.3
+# tokens per step.
+enable-lora: true
+max-lora-rank: 32
+max-loras: 1
+lora-modules: qwen3.8-pi=harness-hub/Qwen3.8-27B-pi-adapted
 
 # Images yes, video no: one video item reserves a six-figure token budget and several GiB
 # this card does not have. 3.8 adds native video understanding, so that stays deliberate

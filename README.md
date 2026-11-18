@@ -32,7 +32,7 @@ The bar colors differ so I can tell at a glance which Linux machine I'm on. Each
 | [sway.md](docs/sway.md) | swayfx, the per-host files and every key binding |
 | [quickshell.md](docs/quickshell.md) | The bar and its panels, the launcher, screenshots, notifications and the lock screen |
 | [llm.md](docs/llm.md) | The vLLM server on the workstation, its models, the reasons behind the Qwen config and the Mac's llama.cpp server |
-| [coding-agents.md](docs/coding-agents.md) | omp and opencode, the two tools that use that server |
+| [coding-agents.md](docs/coding-agents.md) | pi, omp and opencode, the three tools that use that server |
 | [macos.md](docs/macos.md) | What the MacBook gets from this repo and how to set it up |
 | [signing.md](docs/signing.md) | The per-device SSH key that does both GitHub auth and commit signing |
 | [vim2emacs.md](docs/vim2emacs.md) | A guide for moving from the Neovim config to Emacs |

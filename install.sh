@@ -46,9 +46,9 @@ SKIP=(.git .gitignore README.md docs install.sh install-macos.sh github-key-setu
 # .config/ entries that need per-file linking instead of a whole-dir
 # symlink, usually because ~/.config/<name>/ already exists as a real
 # dir managed by another tool (e.g. systemd creates ~/.config/systemd/).
-# `omp` is special for a second reason: it reads ~/.omp/agent (not XDG), so
-# its block below links files there instead of into ~/.config/omp.
-CONFIG_SPECIAL=(systemd opencode omp)
+# `omp` and `pi` are special for a second reason: they read ~/.omp/agent and
+# ~/.pi/agent (not XDG), so their blocks below link files there instead.
+CONFIG_SPECIAL=(systemd opencode omp pi)
 
 skip_entry() {
     local name=$1 s
@@ -235,6 +235,24 @@ else
 fi
 
 echo
+echo "pi config (per-file into ~/.pi/agent: pi keeps its install, auth store and"
+echo "sessions there too)"
+pi_src="$DOTFILES/.config/pi"
+pi_dst="$HOME/.pi/agent"
+if [ -d "$pi_src" ]; then
+    [ "$DRY" = 1 ] || mkdir -p "$pi_dst"
+    shopt -s nullglob
+    for f in "$pi_src"/*.json "$pi_src"/*.md "$pi_src"/extensions; do
+        name=$(basename "$f")
+        link "$f" "$pi_dst/$name"
+    done
+    shopt -u nullglob
+else
+    printf '  WARN    %s missing\n' "$pi_src"
+    n_warn=$((n_warn + 1))
+fi
+
+echo
 echo "Misc directories"
 for dir in "$HOME/Pictures/Screenshots" "$HOME/Videos/Screencasts"; do
     if [ -d "$dir" ]; then
@@ -355,6 +373,11 @@ else
     else
         printf '  MISSING docker (run.sh serves every model through vLLM in Docker)\n'
         n_warn=$((n_warn + 1))
+    fi
+    if command -v pi >/dev/null 2>&1; then
+        printf '  ok      pi\n'
+    else
+        printf '  TODO    pi not installed: curl -fsSL https://pi.dev/install.sh | sh\n'
     fi
     if command -v omp >/dev/null 2>&1; then
         printf '  ok      omp (oh-my-pi)\n'

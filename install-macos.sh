@@ -36,6 +36,7 @@ CONFIGS=( nvim emacs sioyek ghostty swiftbar bin llm )
 # individual files, not the whole dir). Set to 0 to skip.
 LINK_OPENCODE=1   # -> ~/.config/opencode/*.json
 LINK_OMP=1        # -> ~/.omp/agent/*.{yml,json}  (omp keeps its auth store there)
+LINK_PI=1         # -> ~/.pi/agent/{*.json,*.md,extensions}  (pi keeps its install there)
 # ---------------------------------------------------------------------------
 # Intentionally NOT linked (Linux/Wayland-only):
 #   quickshell foot swappy sway systemd xdg-desktop-portal-wlr wallpaper.jpeg
@@ -105,11 +106,23 @@ if [ "$LINK_OMP" = 1 ]; then
     shopt -u nullglob
 fi
 
+if [ "$LINK_PI" = 1 ]; then
+    echo
+    echo "pi config (per-file into ~/.pi/agent)"
+    # Same as omp: models.json points at localhost:8000, `llm <model>` on the Mac or an SSH
+    # tunnel to the workstation.
+    src="$DOTFILES/.config/pi"; dst="$HOME/.pi/agent"
+    [ "$DRY" = 1 ] || mkdir -p "$dst"
+    shopt -s nullglob
+    for f in "$src"/*.json "$src"/*.md "$src"/extensions; do link "$f" "$dst/$(basename "$f")"; done
+    shopt -u nullglob
+fi
+
 echo
 echo "Dependency check (informational only -- installs nothing; use brew/npm/juliaup)"
 # CLI tools the deployed configs expect. GUI-only casks (emacs/sioyek if installed as
 # an .app) may show MISSING here even when present -- check /Applications for those.
-for cmd in nvim opencode omp node npm bun uv julia clangd pyright \
+for cmd in nvim opencode omp pi node npm bun uv julia clangd pyright \
            typescript-language-server git gh rg fd fzf jq llama-server; do
     if command -v "$cmd" >/dev/null 2>&1; then
         printf '  ok      %s\n' "$cmd"

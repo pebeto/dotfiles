@@ -1,14 +1,19 @@
 modelRoles:
-  default: vllm/qwen3.8-27b:high
-  smol: vllm/qwen3.8-27b
+  default: vllm/qwen3.8-27b
+  smol: vllm/qwen3.8-pi
   slow: vllm/qwen3.8-27b
   plan: vllm/qwen3.8-27b
-  task: vllm/qwen3.8-27b
-  commit: vllm/qwen3.8-27b
-  tiny: vllm/qwen3.8-27b:high
+  task: vllm/qwen3.8-pi
+  commit: vllm/qwen3.8-pi
+  tiny: vllm/qwen3.8-pi
 symbolPreset: unicode
 theme:
   dark: titanium
-setupVersion: 2
+setupVersion: 3
 composer:
   shape: box
+update:
+  auto: true
+edit:
+  modelVariants:
+    qwen3.8-pi: replace

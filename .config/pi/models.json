@@ -1,0 +1,51 @@
+{
+  "providers": {
+    "vllm": {
+      "baseUrl": "http://localhost:8000/v1",
+      "api": "openai-completions",
+      "apiKey": "none",
+      "models": [
+        {
+          "id": "qwen3.8-pi",
+          "name": "Qwen3.8 27B pi-adapted (local vLLM, NVFP4 + LoRA)",
+          "reasoning": false,
+          "input": ["text", "image"],
+          "contextWindow": 102400,
+          "maxTokens": 16384,
+          "samplingParams": {
+            "temperature": 0.8,
+            "top_p": 1.0,
+            "chat_template_kwargs": { "enable_thinking": false }
+          }
+        },
+        {
+          "id": "qwen3.8-27b",
+          "name": "Qwen3.8 27B (local vLLM, NVFP4)",
+          "reasoning": true,
+          "input": ["text", "image"],
+          "contextWindow": 102400,
+          "maxTokens": 16384,
+          "thinkingLevelMap": { "minimal": "low", "low": "low", "medium": "medium", "high": "xhigh" },
+          "compat": {
+            "thinkingFormat": "chat-template",
+            "chatTemplateKwargs": {
+              "enable_thinking": { "$var": "thinking.enabled" },
+              "reasoning_effort": { "$var": "thinking.effort", "omitWhenOff": true }
+            }
+          },
+          "samplingParams": { "temperature": 1.0, "top_p": 0.95, "top_k": 20 }
+        },
+        {
+          "id": "gpt-oss-20b",
+          "name": "gpt-oss 20B (local vLLM, MXFP4)",
+          "reasoning": true,
+          "input": ["text"],
+          "contextWindow": 131072,
+          "maxTokens": 32768,
+          "compat": { "thinkingFormat": "openai", "supportsReasoningEffort": true },
+          "samplingParams": { "temperature": 1.0, "top_p": 1.0 }
+        }
+      ]
+    }
+  }
+}

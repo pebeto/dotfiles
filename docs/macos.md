@@ -17,10 +17,11 @@ Like `install.sh`, it only makes symlinks and never overwrites a real file or a 
 | `nvim`, `emacs`, `sioyek`, `ghostty`, `swiftbar`, `bin`, `llm` | `~/.config/`, whole folders |
 | `opencode/*.json` | `~/.config/opencode/`, file by file, since opencode writes its own state there |
 | `omp/*.yml`, `omp/*.json` | `~/.omp/agent/`, file by file |
+| `pi/*.json`, `pi/*.md`, `pi/extensions` | `~/.pi/agent/`, file by file |
 
 Everything Linux-only is left out: `sway`, `quickshell`, `foot`, `swappy`, `systemd`, `xdg-desktop-portal-wlr` and the wallpaper. To change the set, edit the arrays at the top of the script.
 
-It ends with a check for the command-line tools the configs expect (`nvim`, `opencode`, `omp`, `node`, `npm`, `bun`, `uv`, `julia`, `clangd`, `pyright`, `typescript-language-server`, `git`, `gh`, `rg`, `fd`, `fzf`, `jq`, `llama-server`). It installs nothing; use Homebrew, npm or juliaup. Apps installed as casks, like Emacs or sioyek, can show as missing there even when they're in `/Applications`.
+It ends with a check for the command-line tools the configs expect (`nvim`, `opencode`, `omp`, `pi`, `node`, `npm`, `bun`, `uv`, `julia`, `clangd`, `pyright`, `typescript-language-server`, `git`, `gh`, `rg`, `fd`, `fzf`, `jq`, `llama-server`). It installs nothing; use Homebrew, npm or juliaup. Apps installed as casks, like Emacs or sioyek, can show as missing there even when they're in `/Applications`.
 
 `~/.miscrc` lives outside the repo on every machine, and `.zshrc` sources it, so create a Mac one by hand for secrets and local `PATH` entries. The `llm` function in `.zshrc` runs the Mac's models on llama-server ([llm.md](llm.md#on-the-mac)).
 
@@ -52,4 +53,4 @@ Pressing `fn+F5` mutes and unmutes the microphone instead of starting Dictation.
 
 ## Coding agents
 
-omp and opencode get the same config files as on Linux ([coding-agents.md](coding-agents.md)), which point at `localhost:8000`. On the Mac that means either `llm <model>` running locally or an SSH tunnel to the workstation, for example `ssh -N -L 8000:localhost:8000 <workstation>`, with a model running there. Both use port 8000, so only one can be up at a time. With neither, omp falls back to a cloud provider and asks for its API key.
+pi, omp and opencode get the same config files as on Linux ([coding-agents.md](coding-agents.md)), which point at `localhost:8000`. On the Mac that means either `llm <model>` running locally or an SSH tunnel to the workstation, for example `ssh -N -L 8000:localhost:8000 <workstation>`, with a model running there. Both use port 8000, so only one can be up at a time. With neither, omp falls back to a cloud provider and asks for its API key. pi and omp start on `qwen3.8-pi`, which only the workstation serves, so with the local server pick `vllm/qwen3.8-27b` or `vllm/gpt-oss-20b` with `--model`.

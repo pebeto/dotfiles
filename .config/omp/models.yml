@@ -39,6 +39,23 @@ providers:
             top_p: 0.95
             top_k: 20
 
+      # The same server with harness-hub's pi-adapted LoRA applied (see the vLLM config).
+      # It was trained with thinking off, so reasoning is off here and the template gets
+      # enable_thinking false. Sampling is the training setting from its model card.
+      - id: qwen3.8-pi
+        name: Qwen3.8 27B pi-adapted (local vLLM, NVFP4 + LoRA)
+        reasoning: false
+        input: [text, image]
+        contextWindow: 102400
+        maxTokens: 16384
+        cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 }
+        compat:
+          thinkingFormat: qwen-chat-template
+          extraBody:
+            temperature: 0.8
+            top_p: 1.0
+            chat_template_kwargs: { enable_thinking: false }
+
       - id: gpt-oss-20b
         name: gpt-oss 20B (local vLLM, MXFP4)
         reasoning: true
