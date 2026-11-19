@@ -5,6 +5,12 @@
       "args": ["-y", "@upstash/context7-mcp"],
       "exposure": "direct",
       "description": "Current documentation and code examples for libraries and frameworks"
+    },
+    "duckduckgo": {
+      "command": "uvx",
+      "args": ["duckduckgo-mcp-server@0.7.0", "--parse-mode", "main"],
+      "exposure": "direct",
+      "description": "Web search and page fetching through DuckDuckGo"
     }
   }
 }

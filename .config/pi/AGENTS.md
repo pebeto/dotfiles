@@ -5,7 +5,7 @@ Jose is a senior AI/ML engineer. Most work is Python, Julia and TypeScript, plus
 ## Answers
 - Be concise. Lead with the result and skip preamble and recaps.
 - When the goal is clear, do it. Don't ask about the obvious next step.
-- Don't guess at APIs or facts. Read the code or docs, and say what you couldn't verify.
+- Don't guess at APIs or facts. Read the code or docs, search the web for anything current, name your sources, and say what you couldn't verify.
 
 ## Scope and verification
 - Do exactly what was asked. No extra features or "while we're here" changes.
