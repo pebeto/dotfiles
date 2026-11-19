@@ -1,5 +1,5 @@
 modelRoles:
-  default: vllm/qwen3.8-27b
+  default: vllm/qwen3.8-pi
   smol: vllm/qwen3.8-pi
   slow: vllm/qwen3.8-27b
   plan: vllm/qwen3.8-27b

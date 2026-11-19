@@ -20,6 +20,7 @@ Jose is a senior AI/ML engineer. Most work is Python, Julia and TypeScript, plus
 ## Code
 - Match the surrounding code. Comments are short and only where needed: no banners, no notes about what changed, no version references.
 - Python: imports at the top of the file. Use uv, not pip. If the project has a `.venv`, run `.venv/bin/python` and `.venv/bin/pytest` directly.
+- Never let a tool create a git repository: use `uv init --vcs none`, and never run `git init`.
 - Don't bump package versions, run benchmark scripts, or stash changes.
 
 ## Machine safety

@@ -1,5 +1,5 @@
 # Qwen3.8-27B (apache-2.0) on the MacBook, served by llama-server with Metal: the same
-# served name and context as ../qwen3.8-27b.yaml, so omp and opencode need no changes.
+# served name and context as ../qwen3.8-27b.yaml, so pi, omp and opencode need no changes.
 #
 # Schema (see run.sh): `engine: llamacpp` runs llama-server, and every other `key: value`
 # becomes `llama-server --key value`.

@@ -13,7 +13,7 @@
 | `mcp.json` | context7 for current library documentation. Its two tools are declared directly, since pi's default `codemode` exposure would have the model call them from scripts. |
 | `AGENTS.md` | Instructions for the local model, loaded in every directory. |
 | `extensions/bash-timeout.ts` | Gives every `bash` call a 300-second timeout unless the model sets its own. |
-| `extensions/guard.ts` | Blocks the model's commands that change git state, `sudo`, `pkill`/`killall` and killing by looked-up name, `rm` on variable or overly broad paths, and stopping the vLLM container or `llm-*` units. The model gets the reason back and tells me what to run. |
+| `extensions/guard.ts` | Blocks the model's commands that change git state (`uv init` without `--vcs none` and deleting a `.git` directory count too), `sudo`, `pkill`/`killall` and killing by looked-up name, `rm` on variable or overly broad paths, and stopping or removing Docker containers, images, volumes or compose stacks or the `llm-*` units. The model gets the reason back and tells me what to run. |
 | `extensions/plan-mode/` | pi's plan-mode example: `/plan` or `Ctrl+Alt+P` makes the session read-only and switches to `qwen3.8-27b` at medium thinking, and leaving it or executing the plan switches back to `qwen3.8-pi`. |
 
 pi is the harness the LoRA was trained in. On five coding tasks with hidden tests it finished about twice as fast as omp running the same model, and ended with about half the context: its base prompt is 3.6k tokens with context7 included, against omp's 6.9k. It starts with four tools (read, bash, edit and write). `defaultTools` can add grep, find and ls, and subagents or web search come as extensions or packages when they're needed.
@@ -22,7 +22,7 @@ pi is the harness the LoRA was trained in. On five coding tasks with hidden test
 
 pi's `bash` tool waits forever when the model gives no timeout, and a test run stuck in a loop once hung a session for 20 minutes. The extension's 300 seconds matches omp's default.
 
-pi has no permission system, so `guard.ts` is what enforces the git and machine-safety rules from `AGENTS.md`. It reads ordinary command lines, including ones wrapped in `bash -c`, `timeout` or `xargs`, but it is a guardrail rather than a sandbox. My own `!` commands are not checked.
+pi has no permission system, so `guard.ts` is what enforces the git and machine-safety rules from `AGENTS.md`. It splits a command line the way the shell would: quoted text, comments and heredoc bodies are data, while `$(...)`, backticks, `bash -c`, `eval`, `find -exec` and wrappers such as `timeout` or `xargs` are checked as commands. Replayed over the 1,541 bash commands in my pi and omp sessions, it blocked 52, all real violations, and none that only mentioned a command in a string or a heredoc. It is still a guardrail rather than a sandbox, and my own `!` commands are not checked. `bun test ./.config/pi/tests/guard.test.ts` runs its tests; bun skips dot directories unless the path starts with `./`.
 
 To start a session in plan mode, write `pi --plan=true` or put `--plan` after the prompt: pi reads the word after a bare `--plan` as its value, so `pi -p --plan "prompt"` runs with no prompt and exits silently. Switching between the two models costs one full prefill, since the LoRA's KV cache isn't shared with the base model's.
 
@@ -39,17 +39,18 @@ The tasks are small Python projects: two bug fixes, one feature, and two harder 
 
 ## omp (oh-my-pi)
 
-The first fallback, with subagents, LSP, web search and many more tools built in. `.config/omp/` has three files. `install.sh` links them into `~/.omp/agent/`, since omp keeps its auth and session state there instead of under XDG.
+The first fallback, with subagents, LSP, web search and many more tools built in. `.config/omp/` has four files. `install.sh` links them into `~/.omp/agent/`, since omp keeps its auth and session state there instead of under XDG.
 
 | File | Contents |
 |------|----------|
 | `models.yml` | The `vllm` provider at `localhost:8000/v1` with `auth: none`, the three models (Qwen, Qwen with the pi-adapted LoRA, and gpt-oss) with their real context windows, and each model's sampling settings in `compat.extraBody`, since there's no dedicated field for them. It's called `vllm` because omp v18 reserves `local` for its own on-device models. |
 | `config.yml` | `modelRoles`: `plan` and `slow` use `qwen3.8-27b` with thinking, every other role uses `qwen3.8-pi`. `edit.modelVariants` gives `qwen3.8-pi` the `replace` edit tool, the string-replace format it was trained on, instead of omp's default hashline. omp rewrites this file, so it has no comments. |
 | `lsp.json` | Only Julia. |
+| `mcp.json` | context7 and Hugging Face's MCP server, which authenticates with `HUGGING_FACE_HUB_TOKEN` from the environment. |
 
 The files are small because omp finds most things on its own:
 
-- It reads MCP servers from `~/.config/opencode/opencode.json`, so `context7` and `serena` are defined once, and editing that file changes both tools.
+- Besides its own `mcp.json`, it reads the MCP servers in `~/.config/opencode/opencode.json`, so it also gets `serena` from there.
 - It loads skills from `~/.claude/skills`, the same library Claude Code uses. It only looks one level deep, so a nested collection of skills has to be added to `skills.customDirectories`.
 - It has built-in LSP setups for clangd, pyright and typescript-language-server, found through root markers and `$PATH`. Julia is the only one it doesn't know, and adding it extends the built-ins instead of replacing them.
 - Every role points at the Qwen server on purpose. The GPU serves one model at a time, so a role aimed at the other model would only work while that server is running. To switch, restart `run.sh` with the other model and run `omp --model vllm/gpt-oss-20b`.

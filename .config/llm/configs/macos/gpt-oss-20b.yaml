@@ -1,5 +1,6 @@
-# gpt-oss-20b (OpenAI, apache-2.0) on the MacBook, served by llama-server with Metal: the
-# same model and served name as ../gpt-oss-20b.yaml, so omp and opencode need no changes.
+# gpt-oss-20b (OpenAI, apache-2.0) on the MacBook, served by llama-server with Metal:
+# the same model and served name as ../gpt-oss-20b.yaml, so pi, omp and opencode need no
+# changes.
 #
 # Schema (see run.sh): `engine: llamacpp` runs llama-server, and every other `key: value`
 # becomes `llama-server --key value`.

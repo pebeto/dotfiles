@@ -27,8 +27,8 @@
 	required = true
 # Commit signing is SSH-based and PER-MACHINE: each box has its own key, so the
 # actual `user.signingkey` (and `gpg.ssh.allowedSignersFile`, safe.directory, etc.)
-# live in ~/.gitconfig.local, written by signing-setup.sh. Loaded last so it wins.
-# Run signing-setup.sh once per machine or commits fail with "need a signingkey".
+# live in ~/.gitconfig.local, written by github-key-setup.sh. Loaded last so it wins.
+# Run github-key-setup.sh once per machine or commits fail with "need a signingkey".
 [include]
 	path = ~/.gitconfig.local
 [push]
