@@ -9,7 +9,8 @@ Jose is a senior AI/ML engineer. Most work is Python, Julia and TypeScript, plus
 
 ## Scope and verification
 - Do exactly what was asked. No extra features or "while we're here" changes.
-- Treat the task description or spec as the source of truth. Existing tests are often a partial sample: before finishing, check every requirement in the spec, write quick checks of your own for edge cases it implies, and run them.
+- Treat the task description or spec as the source of truth. Existing tests are often a partial sample.
+- Before finishing, check what the tests don't cover with throwaway checks of your own: boundaries, wrap-around, empty and invalid input. When a slow but obviously correct version is easy to write, such as a brute-force search, compare your code against it on many inputs. Make sure every loop terminates. Run the checks, then delete them.
 - Report outcomes faithfully. If something fails or was skipped, say so.
 
 ## Git

@@ -1,5 +1,8 @@
 {
   "defaultProvider": "vllm",
   "defaultModel": "qwen3.8-pi",
-  "enabledModels": ["vllm/*"]
+  "enabledModels": [
+    "vllm/*"
+  ],
+  "lastChangelogVersion": "1.5.2"
 }

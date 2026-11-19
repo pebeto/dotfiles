@@ -11,6 +11,8 @@
 #
 # Each harness gets its own agent dir under ~/.cache/llm-eval linked to the real config, so
 # runs use the same models, prompt and extensions without filling the real session history.
+# To try another prompt on pi, set EVAL_AGENTS_MD to its file and EVAL_TAG to a short name;
+# the tag keeps that variant's agent dir and runs apart.
 set -uo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
@@ -32,7 +34,8 @@ if [ ! -x "$venv/bin/pytest" ]; then
     uv venv -q "$venv" && VIRTUAL_ENV="$venv" uv pip install -q pytest || exit 1
 fi
 
-agent="$CACHE/agent-$harness"
+tag=${EVAL_TAG:+-$EVAL_TAG}
+agent="$CACHE/agent-$harness$tag"
 mkdir -p "$agent"
 case $harness in
     pi)  real="$HOME/.pi/agent"; files=(models.json settings.json mcp.json AGENTS.md extensions); cmd=(pi -p --model "$model") ;;
@@ -42,8 +45,9 @@ esac
 for f in "${files[@]}"; do
     [ -e "$real/$f" ] && ln -sfn "$(readlink -f "$real/$f")" "$agent/$f"
 done
+[ "$harness" = pi ] && [ -n "${EVAL_AGENTS_MD:-}" ] && ln -sfn "$(readlink -f "$EVAL_AGENTS_MD")" "$agent/AGENTS.md"
 
-name="$harness-${model//\//_}-$task-$rep"
+name="$harness$tag-${model//\//_}-$task-$rep"
 dir="$CACHE/runs/$name"
 mkdir -p "$CACHE/runs"
 rm -rf -- "$dir"
@@ -68,4 +72,4 @@ fi
 
 session=$(ls -t "$agent"/sessions/*/*.jsonl 2>/dev/null | head -1)
 stats=$([ -n "$session" ] && python3 -I "$HERE/session_stats.py" "$session")
-echo "$harness $model $task $rep: $result exit=$code wall=${wall}s $stats | $(tail -1 "$dir.pytest.log")"
+echo "$harness$tag $model $task $rep: $result exit=$code wall=${wall}s $stats | $(tail -1 "$dir.pytest.log")"

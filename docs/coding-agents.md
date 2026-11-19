@@ -18,7 +18,7 @@
 
 pi is the harness the LoRA was trained in. On five coding tasks with hidden tests it finished about twice as fast as omp running the same model, and ended with about half the context: its base prompt is 3.6k tokens with context7 included, against omp's 6.9k. It starts with four tools (read, bash, edit and write). `defaultTools` can add grep, find and ls, and subagents or web search come as extensions or packages when they're needed.
 
-`AGENTS.md` is not a copy of `~/.claude/CLAUDE.md`. That file is written for Claude Code, and with it the model stopped as soon as the provided tests passed, failing a spec-driven task in 4 runs out of 6. The local version keeps the rules about scope, git, code and machine safety, drops the Claude-only parts, and tells the model to check the spec and its edge cases itself. The same task then passed 22 runs out of 30, against 6 out of 6 for omp.
+`AGENTS.md` is not a copy of `~/.claude/CLAUDE.md`. That file is written for Claude Code, and with it the model stopped as soon as the provided tests passed, failing a spec-driven task in 4 runs out of 6. The local version keeps the rules about scope, git, code and machine safety, drops the Claude-only parts, and tells the model to treat the spec as the source of truth and to cover what the tests don't with throwaway checks: boundaries, wrap-around, invalid input, and a brute-force version to compare against when one is easy to write. In 16 paired runs on that task this wording passed 14 times, against 7 for a vaguer "check the spec and its edge cases", at a median of 36 seconds per run instead of 19. omp passed it 6 times out of 6.
 
 pi's `bash` tool waits forever when the model gives no timeout, and a test run stuck in a loop once hung a session for 20 minutes. The extension's 300 seconds matches omp's default.
 
@@ -28,7 +28,7 @@ To start a session in plan mode, write `pi --plan=true` or put `--plan` after th
 
 ## Comparing harnesses and models
 
-`.config/llm/eval/` holds the five coding tasks behind the numbers above. `run.sh <pi|omp> <provider/model> <task> [rep] [extra args]` runs one task through a harness against the running server, then grades it on the task's tests plus hidden cases, so editing the tests or satisfying only the visible ones fails. It prints one line per run, and `summarize.py` turns a file of them into pass rates, times and token counts. Each harness gets an agent directory under `~/.cache/llm-eval` linked to its real config, so eval sessions stay out of the normal history.
+`.config/llm/eval/` holds the five coding tasks behind the numbers above. `run.sh <pi|omp> <provider/model> <task> [rep] [extra args]` runs one task through a harness against the running server, then grades it on the task's tests plus hidden cases, so editing the tests or satisfying only the visible ones fails. It prints one line per run, and `summarize.py` turns a file of them into pass rates, times and token counts. Each harness gets an agent directory under `~/.cache/llm-eval` linked to its real config, so eval sessions stay out of the normal history. To try a different `AGENTS.md` on pi, point `EVAL_AGENTS_MD` at it and set `EVAL_TAG` to a short name, which keeps that variant's runs and sessions apart.
 
 ```sh
 for rep in 1 2 3; do ~/.config/llm/eval/run.sh pi vllm/qwen3.8-pi cron $rep; done | tee runs.txt
